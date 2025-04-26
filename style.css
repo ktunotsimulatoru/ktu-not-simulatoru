@@ -1,192 +1,69 @@
 /* Google Fonts Import */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-/* --- Renk Değişkenleri Tanımlama (Sadece Aydınlık Tema) --- */
+/* --- Renk Değişkenleri Tanımlama --- */
 :root {
-    --bg-color: #f8f9fa;
-    --text-color: #343a40;
-    --header-bg: rgba(255, 255, 255, 0.85);
-    --header-text: #0B4C8C;
-    --header-subtext: #495057;
-    --header-border: #e9ecef;
-    --main-bg: #ffffff;
-    --tab-bg: #f8f9fa;
-    --tab-border: #dee2e6;
-    --tab-text: #495057;
-    --tab-hover-bg: #e9ecef;
-    --tab-active-text: #0B4C8C;
-    --tab-active-border: #0B4C8C;
-    --content-title: #0B4C8C;
-    --label-color: #343a40;
-    --input-bg: #f8f9fa;
-    --input-border: #ced4da;
-    --input-focus-border: #0B4C8C;
-    --input-focus-shadow: rgba(11, 76, 140, 0.25);
-    --input-text: #495057;
-    --small-text: #6c757d;
-    --button-bg: #0B4C8C;
-    --button-text: #ffffff;
-    --button-hover-bg: #083A68;
-    --result-bg: #f1f7fc;
-    --result-border: #b8d4ea;
-    --result-strong: #0B4C8C;
-    --details-summary: #094074;
-    --details-border: #d0e3f1;
-    --error-text: #721c24;
-    --error-bg: #f8d7da;
-    --error-border: #f5c6cb;
-    --footer-bg: #f8f9fa;
-    --footer-text: #6c757d;
-    --footer-border: #e9ecef;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --radio-check-color: #0B4C8C;
-    --impossible-color: #dc3545;
-    --min-final-color: #fd7e14;
+    --bg-color: #f8f9fa; --text-color: #343a40;
+    --header-bg: rgba(255, 255, 255, 0.85); --header-text: #0B4C8C;
+    --header-subtext: #495057; --header-border: #e9ecef; --main-bg: #ffffff;
+    --tab-bg: #f8f9fa; --tab-border: #dee2e6; --tab-text: #495057;
+    --tab-hover-bg: #e9ecef; --tab-active-text: #0B4C8C; --tab-active-border: #0B4C8C;
+    --content-title: #0B4C8C; --label-color: #343a40; --input-bg: #f8f9fa;
+    --input-border: #ced4da; --input-focus-border: #0B4C8C;
+    --input-focus-shadow: rgba(11, 76, 140, 0.25); --input-text: #495057;
+    --small-text: #6c757d; --button-bg: #0B4C8C; --button-text: #ffffff;
+    --button-hover-bg: #083A68; --result-bg: #f1f7fc; --result-border: #b8d4ea;
+    --result-strong: #0B4C8C; --details-summary: #094074; --details-border: #d0e3f1;
+    --error-text: #721c24; --error-bg: #f8d7da; --error-border: #f5c6cb;
+    --footer-bg: #f8f9fa; --footer-text: #6c757d; --footer-border: #e9ecef;
+    --shadow-color: rgba(0, 0, 0, 0.1); --radio-check-color: #0B4C8C;
+    --impossible-color: #dc3545; --min-final-color: #fd7e14;
+    --table-header-bg: rgba(241, 247, 252, 0.95); /* Tablo başlık arkaplanı */
 }
 
-/* --- Karanlık Tema Medya Sorgusu Kaldırıldı --- */
-
-
-/* --- Genel Stiller (Değişkenleri Kullanarak) --- */
-html {
-    background-color: var(--bg-color);
-}
-
-/* Önceki stiller (html, :root, @media vb.) aynı kalacak */
-
+/* --- Genel Stiller --- */
+html { background-color: var(--bg-color); scroll-behavior: smooth; }
 body {
-    font-family: 'Poppins', sans-serif;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
-    color: var(--text-color);
-    /* Aydınlık tema için logo */
-    background-image: url('ktulogo.png');
-    background-repeat: no-repeat;
-    background-position: center center;
-    /* background-attachment: fixed; Bu satır kaldırıldı veya yorum satırı yapıldı */
-    background-size: contain; /* Veya istediğiniz başka bir boyutlandırma */
-    /* Fallback background color eklemek iyi bir pratik olabilir */
-    background-color: var(--bg-color); /* Resim yüklenmezse görünecek renk */
+    font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
+    color: var(--text-color); background-image: url('ktulogo.png');
+    background-repeat: no-repeat; background-position: center center;
+    background-attachment: fixed; /* Mobil sorun uyarısı geçerli */
+    background-size: contain; background-color: var(--bg-color);
 }
 
-/* Karanlık tema için body arka planını kaldıran @media sorgusu aynı kalacak */
-@media (prefers-color-scheme: dark) {
-    /* ... diğer karanlık tema değişkenleri ... */
-    body {
-       background-image: none; /* Karanlıkta logo yok */
-    }
-}
+/* Header Stilleri */
+.site-header { padding: 20px 25px; text-align: center; border-bottom: 1px solid var(--header-border); margin-bottom: 2.5rem; background-color: var(--header-bg); backdrop-filter: blur(3px); position: relative; z-index: 10; }
+.header-text h1 { margin: 0 0 5px 0; font-size: 2.2em; font-weight: 700; color: var(--header-text); }
+.header-text p { margin: 0; font-size: 0.95em; color: var(--header-subtext); font-weight: 400; }
 
+/* Main Alanı */
+main { max-width: 700px; margin: 0 auto 2rem auto; padding: 0; background-color: var(--main-bg); box-shadow: 0 4px 15px var(--shadow-color); border-radius: 8px; overflow: hidden; position: relative; z-index: 1; }
 
-/* Diğer tüm CSS kuralları (.site-header, main, .tab-buttons vb.) aynı kalacak */
-/* ... */
-.site-header {
-    padding: 20px 25px;
-    text-align: center;
-    border-bottom: 1px solid var(--header-border);
-    margin-bottom: 2.5rem;
-    background-color: var(--header-bg);
-    backdrop-filter: blur(3px);
-    position: relative;
-    z-index: 1;
-}
+/* Sekme Butonları */
+.tab-buttons { overflow: hidden; background-color: var(--tab-bg); border-bottom: 1px solid var(--tab-border); }
+.tab-button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 18px; transition: background-color 0.3s, color 0.3s, border-bottom 0.3s; font-size: 1em; color: var(--tab-text); border-bottom: 3px solid transparent; font-weight: 600; width: calc(100% / 3); text-align: center; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+.tab-button:hover { background-color: var(--tab-hover-bg); color: var(--tab-active-text); }
+.tab-button.active { font-weight: 700; color: var(--tab-active-text); border-bottom: 3px solid var(--tab-active-border); }
 
-.header-text h1 {
-    margin: 0 0 5px 0;
-    font-size: 2.2em;
-    font-weight: 700;
-    color: var(--header-text);
-}
-
-.header-text p {
-    margin: 0;
-    font-size: 0.95em;
-    color: var(--header-subtext);
-    font-weight: 400;
-}
-
-main {
-    max-width: 700px;
-    margin: 0 auto 2rem auto;
-    padding: 0;
-    background-color: var(--main-bg);
-    box-shadow: 0 4px 15px var(--shadow-color);
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    z-index: 1;
-}
-
-/* Sekme Butonları Stilleri */
-.tab-buttons {
-    overflow: hidden;
-    background-color: var(--tab-bg);
-    border-bottom: 1px solid var(--tab-border);
-}
-.tab-button {
-    background-color: inherit; float: left; border: none; outline: none;
-    cursor: pointer; padding: 14px 18px;
-    transition: background-color 0.3s, color 0.3s, border-bottom 0.3s;
-    font-size: 1em; color: var(--tab-text); border-bottom: 3px solid transparent;
-    font-weight: 600;
-}
-.tab-button:hover {
-    background-color: var(--tab-hover-bg); color: var(--tab-active-text);
-}
-.tab-button.active {
-    font-weight: 700; color: var(--tab-active-text); border-bottom: 3px solid var(--tab-active-border);
-}
-
-/* Sekme İçeriği Stilleri */
+/* Sekme İçerikleri */
 .tab-content { display: none; padding: 30px 25px; }
 .tab-content.active { display: block; }
-.tab-content h2 {
-     margin: 0 0 1.5rem 0; color: var(--content-title); padding-bottom: 0;
-     font-size: 1.5em; font-weight: 700; text-align: center;
-}
-p.tab-description {
-    text-align: center; margin-top:-1rem; margin-bottom: 1.5rem;
-    font-size: 0.9em; color: var(--small-text);
-}
+.tab-content h2 { margin: 0 0 1.5rem 0; color: var(--content-title); padding-bottom: 0; font-size: 1.5em; font-weight: 700; text-align: center; }
+p.tab-description { text-align: center; margin-top:-1rem; margin-bottom: 1.5rem; font-size: 0.9em; color: var(--small-text); }
 
 /* Form Stilleri */
 .form-group { margin-bottom: 1.3rem; }
-.form-group label {
-    display: block; margin-bottom: 0.5rem; font-weight: 600;
-    color: var(--label-color); font-size: 0.95em;
-}
-.form-group input[type="number"], .form-group select {
-    width: 100%; padding: 0.9rem; border: 1px solid var(--input-border);
-    border-radius: 5px; box-sizing: border-box; background-color: var(--input-bg);
-    transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
-    font-size: 1em; font-family: 'Poppins', sans-serif; color: var(--input-text);
-}
-.form-group input[type="number"]:focus, .form-group select:focus {
-     border-color: var(--input-focus-border); outline: none;
-     box-shadow: 0 0 0 3px var(--input-focus-shadow); background-color: var(--main-bg);
-}
-.form-group small {
-    display: block; font-size: 0.8em; color: var(--small-text); margin-top: 0.4rem;
-}
-small.weight-warning {
-    text-align: center; display: block; margin-top: -10px; margin-bottom: 15px; font-size: 0.85em;
-}
-button[type="submit"] {
-    display: block; width: 100%; background-color: var(--button-bg);
-    color: var(--button-text); padding: 0.9rem 1.5rem; border: none;
-    border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease; margin-top: 1.5rem;
-    font-family: 'Poppins', sans-serif;
-}
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--label-color); font-size: 0.95em; }
+.form-group input[type="number"], .form-group select { width: 100%; padding: 0.9rem; border: 1px solid var(--input-border); border-radius: 5px; box-sizing: border-box; background-color: var(--input-bg); transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s; font-size: 1em; font-family: 'Poppins', sans-serif; color: var(--input-text); }
+.form-group input[type="number"]:focus, .form-group select:focus { border-color: var(--input-focus-border); outline: none; box-shadow: 0 0 0 3px var(--input-focus-shadow); background-color: var(--main-bg); }
+.form-group small { display: block; font-size: 0.8em; color: var(--small-text); margin-top: 0.4rem; }
+small.weight-warning { text-align: center; display: block; margin-top: -10px; margin-bottom: 15px; font-size: 0.85em; }
+button[type="submit"] { display: block; width: 100%; background-color: var(--button-bg); color: var(--button-text); padding: 0.9rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: background-color 0.3s ease, transform 0.1s ease; margin-top: 1.5rem; font-family: 'Poppins', sans-serif; }
 button[type="submit"]:hover { background-color: var(--button-hover-bg); }
 button[type="submit"]:active { transform: scale(0.99); }
 
 /* Hesaplama Yöntemi Seçim Alanı */
-.calculation-method {
-    margin-bottom: 1.5rem; padding: 15px; background-color: rgba(0,0,0,0.02);
-    border: 1px solid var(--input-border); border-radius: 5px;
-}
+.calculation-method { margin-bottom: 1.5rem; padding: 15px; background-color: rgba(0,0,0,0.02); border: 1px solid var(--input-border); border-radius: 5px; }
 .calculation-method > label { font-weight: 600; margin-bottom: 10px; display: block; font-size: 1em; }
 .calculation-method div { margin-bottom: 8px; display: flex; align-items: center; }
 .calculation-method input[type="radio"] { margin-right: 8px; width: auto; accent-color: var(--radio-check-color); transform: scale(1.1); cursor: pointer; }
@@ -195,8 +72,8 @@ button[type="submit"]:active { transform: scale(0.99); }
 /* Giriş Grupları */
 .input-group { display: none; padding-top: 1rem; animation: fadeIn 0.3s ease-in-out; }
 .input-group.active { display: block; }
-.form-row { display: flex; gap: 15px; }
-.form-row .form-group { flex: 1; margin-bottom: 1rem; }
+.form-row { display: flex; flex-wrap: wrap; gap: 15px; }
+.form-row .form-group { flex: 1; min-width: 120px; margin-bottom: 1rem; }
 .input-separator { border: 0; height: 1px; background-color: var(--tab-border); margin: 1.5rem 0; }
 
 /* Hedef Not Seçim Alanı */
@@ -215,14 +92,32 @@ button[type="submit"]:active { transform: scale(0.99); }
 .result-box details summary:hover { background-color: rgba(0,0,0,0.05); }
 .result-box details p { padding: 10px 0 5px 15px; border-left: 2px solid var(--details-border); margin: 8px 0 0 5px; color: inherit; }
 
+/* Açıklama Metni Stili */
+.info-text { font-size: 0.85em; color: var(--small-text); background-color: var(--tab-bg); border: 1px dashed var(--input-border); padding: 10px 15px; border-radius: 4px; margin-top: -0.5rem; margin-bottom: 1.5rem; line-height: 1.5; }
+
 /* Senaryo Tablosu Stilleri */
-#scenario-table-output table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9em; }
-#scenario-table-output th, #scenario-table-output td { border: 1px solid var(--result-border); padding: 8px 10px; text-align: center; }
-#scenario-table-output th { background-color: rgba(184, 212, 234, 0.3); font-weight: 600; color: var(--content-title); }
+#scenario-table-output { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; margin-top: 1.5rem; border: 1px solid var(--result-border); border-radius: 5px; }
+#scenario-table-output table { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 0.9em; }
+#scenario-table-output th, #scenario-table-output td { border: 1px solid var(--result-border); padding: 9px 12px; text-align: center; white-space: nowrap; }
+#scenario-table-output thead th { /* Üst başlık satırı */
+    background-color: var(--table-header-bg); font-weight: 600;
+    color: var(--content-title);
+    /* position: sticky; kaldırıldı */
+    /* top: 0; kaldırıldı */
+    /* z-index: 1; kaldırıldı */
+}
+#scenario-table-output th[scope="row"] { /* Sol başlık sütunu */
+    background-color: var(--table-header-bg); /* Üst başlıkla aynı */
+    font-weight: 600; color: var(--content-title);
+    /* position: sticky; kaldırıldı */
+    /* left: 0; kaldırıldı */
+    /* z-index: 2; kaldırıldı */
+    /* border-right: 2px solid var(--tab-border); kaldırıldı */
+}
 #scenario-table-output td { background-color: var(--main-bg); color: var(--text-color); }
 #scenario-table-output td.impossible { color: var(--impossible-color); font-style: italic; opacity: 0.8; }
 #scenario-table-output td.min-final { font-weight: bold; color: var(--min-final-color); }
-#scenario-table-output caption { caption-side: bottom; text-align: left; margin-top: 10px; font-size: 0.85em; color: var(--small-text); }
+#scenario-table-output caption { caption-side: bottom; text-align: left; margin-top: 12px; font-size: 0.85em; color: var(--small-text); padding: 0 5px; }
 
 /* Footer Stilleri */
 footer { text-align: center; margin-top: 3rem; padding: 1.5rem; font-size: 0.85em; color: var(--footer-text); border-top: 1px solid var(--footer-border); background-color: var(--footer-bg); position: relative; z-index: 1; }
@@ -234,5 +129,5 @@ footer a:hover { text-decoration: underline; }
 .result-box .error-message { background-color: transparent !important; border: none !important; padding: 0; color: var(--error-text) !important; font-weight: bold; margin-bottom: 0.5rem; }
 
 /* Animasyon */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.input-group.active { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.input-group.active { animation: fadeIn 0.4s ease-in-out; }
