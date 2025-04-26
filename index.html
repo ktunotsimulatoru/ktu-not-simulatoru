@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTÜ Not Simülatörü</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-text">
+            <h1>KTÜ Not Simülatörü</h1>
+            <p>Bağıl Değerlendirme Sistemi Not Hesaplama Aracı</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="openTab(event, 'harfNotu')">Harf Notu Hesaplama</button>
+            <button class="tab-button" onclick="openTab(event, 'gerekliNot')">Gerekli Final Notu</button>
+            <button class="tab-button" onclick="openTab(event, 'gecmeSenaryo')">Geçme Senaryoları</button>
+        </div>
+
+        <div id="harfNotu" class="tab-content active">
+            <h2>Harf Notu Hesaplama (Bağıl Sistem)</h2>
+            <form id="grade-calculator-form" novalidate>
+                <div class="form-group calculation-method">
+                    <label>Ara Sınav Hesaplama Yöntemi:</label>
+                    <div>
+                        <input type="radio" id="tekOrtalamaHarf" name="hesaplamaYontemiHarf" value="tek" checked onchange="toggleInputFields('Harf')">
+                        <label for="tekOrtalamaHarf">Tek Ortalama Girişi</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="detayliGirisHarf" name="hesaplamaYontemiHarf" value="detayli" onchange="toggleInputFields('Harf')">
+                        <label for="detayliGirisHarf">Detaylı Giriş (Örn: Vize + Ödev)</label>
+                    </div>
+                </div>
+
+                <div id="tek-ortalama-grupHarf" class="input-group active">
+                    <div class="form-group">
+                        <label for="midterm-avg">Ara Sınav Notu (%50 Ağırlık):</label>
+                        <input type="number" id="midterm-avg" name="midterm_avg" min="0" max="100" step="0.01" required>
+                        <small>Tüm vize, ödev vb. notlarınızın %50 ağırlığa göre tek bir ortalaması.</small>
+                    </div>
+                </div>
+
+                <div id="detayli-giris-grupHarf" class="input-group">
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="vize-notu-harf">Vize Notu:</label>
+                            <input type="number" id="vize-notu-harf" name="vize_notu_harf" min="0" max="100" step="0.01">
+                        </div>
+                         <div class="form-group">
+                            <label for="vize-agirlik-harf">Vize Ağırlığı (%):</label>
+                            <input type="number" id="vize-agirlik-harf" name="vize_agirlik_harf" min="0" max="50" step="0.1">
+                            <small>Örn: 30</small>
+                        </div>
+                    </div>
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="odev-notu-harf">Ödev/Proje Notu:</label>
+                            <input type="number" id="odev-notu-harf" name="odev_notu_harf" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="odev-agirlik-harf">Ödev/Proje Ağırlığı (%):</label>
+                            <input type="number" id="odev-agirlik-harf" name="odev_agirlik_harf" min="0" max="50" step="0.1">
+                             <small>Örn: 20</small>
+                        </div>
+                     </div>
+                     <small class="weight-warning"><b>Not:</b> Vize ve Ödev ağırlıklarının toplamı 50 olmalıdır.</small>
+                </div>
+
+                <hr class="input-separator">
+
+                <div class="form-group">
+                    <label for="final-grade">Final Notu (%50 Ağırlık):</label>
+                    <input type="number" id="final-grade" name="final_grade" min="0" max="100" step="0.01" required>
+                    <small>Minimum 45 alınmalıdır.</small>
+                </div>
+                <div class="form-group">
+                    <label for="class-avg">Sınıf Ham Başarı Notu Ortalaması:</label>
+                    <input type="number" id="class-avg" name="class_avg" min="0" max="100" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="class-stddev">Sınıf Ham Başarı Notu Standart Sapması:</label>
+                    <input type="number" id="class-stddev" name="class_stddev" min="0" step="0.01" required>
+                    <small>0 olamaz.</small>
+                </div>
+                <button type="submit">Harf Notunu Hesapla</button>
+            </form>
+            <div id="grade-result" class="result-box">
+                <p>Sonuçlar burada gösterilecektir.</p>
+            </div>
+        </div>
+
+        <div id="gerekliNot" class="tab-content">
+             <h2>Gerekli Final Notu Hesaplama (Bağıl Sistem)</h2>
+            <form id="required-grade-form" novalidate>
+                <div class="form-group calculation-method">
+                    <label>Ara Sınav Hesaplama Yöntemi:</label>
+                    <div>
+                        <input type="radio" id="tekOrtalamaGerekli" name="hesaplamaYontemiGerekli" value="tek" checked onchange="toggleInputFields('Gerekli')">
+                        <label for="tekOrtalamaGerekli">Tek Ortalama Girişi</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="detayliGirisGerekli" name="hesaplamaYontemiGerekli" value="detayli" onchange="toggleInputFields('Gerekli')">
+                        <label for="detayliGirisGerekli">Detaylı Giriş (Örn: Vize + Ödev)</label>
+                    </div>
+                </div>
+
+                <div id="tek-ortalama-grupGerekli" class="input-group active">
+                    <div class="form-group">
+                        <label for="req-midterm-avg">Ara Sınav Notu (%50 Ağırlık):</label>
+                        <input type="number" id="req-midterm-avg" name="req_midterm_avg" min="0" max="100" step="0.01" required>
+                    </div>
+                </div>
+
+                <div id="detayli-giris-grupGerekli" class="input-group">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vize-notu-gerekli">Vize Notu:</label>
+                            <input type="number" id="vize-notu-gerekli" name="vize_notu_gerekli" min="0" max="100" step="0.01">
+                        </div>
+                         <div class="form-group">
+                            <label for="vize-agirlik-gerekli">Vize Ağırlığı (%):</label>
+                            <input type="number" id="vize-agirlik-gerekli" name="vize_agirlik_gerekli" min="0" max="50" step="0.1">
+                             <small>Örn: 30</small>
+                        </div>
+                    </div>
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="odev-notu-gerekli">Ödev/Proje Notu:</label>
+                            <input type="number" id="odev-notu-gerekli" name="odev_notu_gerekli" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="odev-agirlik-gerekli">Ödev/Proje Ağırlığı (%):</label>
+                            <input type="number" id="odev-agirlik-gerekli" name="odev_agirlik_gerekli" min="0" max="50" step="0.1">
+                             <small>Örn: 20</small>
+                        </div>
+                     </div>
+                      <small class="weight-warning"><b>Not:</b> Vize ve Ödev ağırlıklarının toplamı 50 olmalıdır.</small>
+                </div>
+
+                 <hr class="input-separator">
+
+                  <div class="form-group">
+                      <label for="target-grade">Hedeflenen Harf Notu:</label>
+                      <select id="target-grade" name="target_grade" required>
+                          <option value="AA">AA</option> <option value="BA">BA</option> <option value="BB">BB</option>
+                          <option value="CB">CB</option> <option value="CC">CC</option> <option value="DC">DC</option>
+                      </select>
+                  </div>
+                   <div class="form-group">
+                     <label for="req-class-avg">Sınıf Ham Başarı Notu Ortalaması:</label>
+                     <input type="number" id="req-class-avg" name="req_class_avg" min="0" max="100" step="0.01" required>
+                 </div>
+                  <div class="form-group">
+                     <label for="req-class-stddev">Sınıf Ham Başarı Notu Standart Sapması:</label>
+                     <input type="number" id="req-class-stddev" name="req_class_stddev" min="0" step="0.01" required>
+                     <small>0 olamaz.</small>
+                 </div>
+                 <button type="submit">Gerekli Final Notunu Hesapla</button>
+            </form>
+            <div id="required-result" class="result-box">
+                 <p>Sonuçlar burada gösterilecektir.</p>
+            </div>
+        </div>
+
+        <div id="gecmeSenaryo" class="tab-content">
+            <h2>Geçme Senaryoları Tablosu</h2>
+            <p class="tab-description">
+                Sınıf ortalaması ve standart sapması belli olmadığında, farklı senaryolara göre hedeflediğiniz nota (CC veya DC) ulaşmak için finalden almanız gereken minimum notları gösterir.
+            </p>
+            <form id="scenario-form" novalidate>
+                 <div class="form-group calculation-method">
+                    <label>Ara Sınav Hesaplama Yöntemi:</label>
+                    <div>
+                        <input type="radio" id="tekOrtalamaSenaryo" name="hesaplamaYontemiSenaryo" value="tek" checked onchange="toggleInputFields('Senaryo')">
+                        <label for="tekOrtalamaSenaryo">Tek Ortalama Girişi</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="detayliGirisSenaryo" name="hesaplamaYontemiSenaryo" value="detayli" onchange="toggleInputFields('Senaryo')">
+                        <label for="detayliGirisSenaryo">Detaylı Giriş (Örn: Vize + Ödev)</label>
+                    </div>
+                </div>
+
+                <div id="tek-ortalama-grupSenaryo" class="input-group active">
+                    <div class="form-group">
+                        <label for="scenario-midterm-avg">Ara Sınav Notu (%50 Ağırlık):</label>
+                        <input type="number" id="scenario-midterm-avg" name="scenario_midterm_avg" min="0" max="100" step="0.01" required>
+                    </div>
+                </div>
+
+                <div id="detayli-giris-grupSenaryo" class="input-group">
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="vize-notu-senaryo">Vize Notu:</label>
+                            <input type="number" id="vize-notu-senaryo" name="vize_notu_senaryo" min="0" max="100" step="0.01">
+                        </div>
+                         <div class="form-group">
+                            <label for="vize-agirlik-senaryo">Vize Ağırlığı (%):</label>
+                            <input type="number" id="vize-agirlik-senaryo" name="vize_agirlik_senaryo" min="0" max="50" step="0.1">
+                         </div>
+                    </div>
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="odev-notu-senaryo">Ödev/Proje Notu:</label>
+                            <input type="number" id="odev-notu-senaryo" name="odev_notu_senaryo" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="odev-agirlik-senaryo">Ödev/Proje Ağırlığı (%):</label>
+                            <input type="number" id="odev-agirlik-senaryo" name="odev_agirlik_senaryo" min="0" max="50" step="0.1">
+                        </div>
+                     </div>
+                      <small class="weight-warning"><b>Not:</b> Ağırlıkların toplamı 50 olmalıdır.</small>
+                </div>
+
+                <hr class="input-separator">
+
+                <div class="form-group target-grade-scenario">
+                     <label>Hedeflenen Minimum Harf Notu:</label>
+                     <div>
+                         <input type="radio" id="targetCC" name="scenarioTargetGrade" value="CC" checked>
+                         <label for="targetCC">CC (Doğrudan Geçme)</label>
+                     </div>
+                     <div>
+                         <input type="radio" id="targetDC" name="scenarioTargetGrade" value="DC">
+                         <label for="targetDC">DC (Koşullu Geçme)</label>
+                     </div>
+                 </div>
+
+                 <button type="submit">Senaryo Tablosunu Oluştur</button>
+            </form>
+
+             <div id="scenario-table-output" class="result-box" style="margin-top: 1.5rem;">
+                  <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
+             </div>
+        </div>
+
+    </main>
+
+    <footer>
+         <p>Bu araç KTÜ Senatosu tarafından belirlenen usul ve esaslara dayanmaktadır. Hesaplamalar bilgilendirme amaçlıdır.</p>
+         <p>İletişim: <a href="mailto:ktunotsimulatoru@gmail.com">ktunotsimulatoru@gmail.com</a></p>
+         <p>&copy; 2025 KTÜ Not Simülatörü</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
