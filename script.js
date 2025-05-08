@@ -42,9 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let araSinavKatkisi = 0; let gecerliGiris = true;
 
             // Ara sınav katkısını hesapla
-             if (secilenYontem === 'tek') { const araSinavOrtalamasiInput = document.getElementById('scenario-midterm-avg'); const araSinavOrtalamasi = parseFloat(araSinavOrtalamasiInput.value); araSinavOrtalamasiInput.required = true; if (isNaN(araSinavOrtalamasi) || araSinavOrtalamasi < 0 || araSinavOrtalamasi > 100) { hataGoster(senaryoTabloAlani, "Hata: Geçerli bir ara sınav ortalaması girin (0-100)."); gecerliGiris = false; } else { araSinavKatkisi = araSinavOrtalamasi * 0.50; } document.getElementById('vize-notu-senaryo').required = false; document.getElementById('vize-agirlik-senaryo').required = false; document.getElementById('odev-notu-senaryo').required = false; document.getElementById('odev-agirlik-senaryo').required = false; }
-             else { document.getElementById('scenario-midterm-avg').required = false; const vizeNotuInput = document.getElementById('vize-notu-senaryo'); const vizeAgirlikInput = document.getElementById('vize-agirlik-senaryo'); const odevNotuInput = document.getElementById('odev-notu-senaryo'); const odevAgirlikInput = document.getElementById('odev-agirlik-senaryo'); vizeNotuInput.required = true; vizeAgirlikInput.required = true; odevNotuInput.required = true; odevAgirlikInput.required = true; const vizeNotu = parseFloat(vizeNotuInput.value); const vizeAgirlik = parseFloat(vizeAgirlikInput.value); const odevNotu = parseFloat(odevNotuInput.value); const odevAgirlik = parseFloat(odevAgirlikInput.value); if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik) || vizeNotu < 0 || vizeNotu > 100 || odevNotu < 0 || odevNotu > 100 || vizeAgirlik < 0 || vizeAgirlik > 50 || odevAgirlik < 0 || odevAgirlik > 50) { hataGoster(senaryoTabloAlani, "Hata: Lütfen detaylı giriş alanlarını (notlar 0-100, ağırlıklar 0-50) doğru şekilde doldurun."); gecerliGiris = false; } else if (Math.abs(vizeAgirlik + odevAgirlik - 50) > 0.01) { hataGoster(senaryoTabloAlani, "Hata: Detaylı girişteki ağırlıkların toplamı 50 olmalıdır."); gecerliGiris = false; } else { araSinavKatkisi = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100); } }
-             if (!gecerliGiris) return;
+            if (secilenYontem === 'tek') { const araSinavOrtalamasiInput = document.getElementById('scenario-midterm-avg'); const araSinavOrtalamasi = parseFloat(araSinavOrtalamasiInput.value); araSinavOrtalamasiInput.required = true; if (isNaN(araSinavOrtalamasi) || araSinavOrtalamasi < 0 || araSinavOrtalamasi > 100) { hataGoster(senaryoTabloAlani, "Hata: Geçerli bir ara sınav ortalaması girin (0-100)."); gecerliGiris = false; } else { araSinavKatkisi = araSinavOrtalamasi * 0.50; } document.getElementById('vize-notu-senaryo').required = false; document.getElementById('vize-agirlik-senaryo').required = false; document.getElementById('odev-notu-senaryo').required = false; document.getElementById('odev-agirlik-senaryo').required = false; }
+            else { document.getElementById('scenario-midterm-avg').required = false; const vizeNotuInput = document.getElementById('vize-notu-senaryo'); const vizeAgirlikInput = document.getElementById('vize-agirlik-senaryo'); const odevNotuInput = document.getElementById('odev-notu-senaryo'); const odevAgirlikInput = document.getElementById('odev-agirlik-senaryo'); vizeNotuInput.required = true; vizeAgirlikInput.required = true; odevNotuInput.required = true; odevAgirlikInput.required = true; const vizeNotu = parseFloat(vizeNotuInput.value); const vizeAgirlik = parseFloat(vizeAgirlikInput.value); const odevNotu = parseFloat(odevNotuInput.value); const odevAgirlik = parseFloat(odevAgirlikInput.value); if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik) || vizeNotu < 0 || vizeNotu > 100 || odevNotu < 0 || odevNotu > 100 || vizeAgirlik < 0 || vizeAgirlik > 50 || odevAgirlik < 0 || odevAgirlik > 50) { hataGoster(senaryoTabloAlani, "Hata: Lütfen detaylı giriş alanlarını (notlar 0-100, ağırlıklar 0-50) doğru şekilde doldurun."); gecerliGiris = false; } else if (Math.abs(vizeAgirlik + odevAgirlik - 50) > 0.01) { hataGoster(senaryoTabloAlani, "Hata: Detaylı girişteki ağırlıkların toplamı 50 olmalıdır."); gecerliGiris = false; } else { araSinavKatkisi = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100); } }
+            if (!gecerliGiris) return;
 
             // --- Senaryo Değerleri (Genişletildi) ---
             const senaryoOrtalamalar = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]; // 25-75 aralığı
@@ -70,13 +70,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Gerekli Finali Hesapla
                         let hesaplananFinal = 2 * (hedefHamBasariNotuNihai - araSinavKatkisi);
-                        let finalYuvarla = Math.round(hesaplananFinal * 100) / 100;
 
                         // Kontroller
-                        if (finalYuvarla > 100) { gerekenFinalNotu = "100+"; cellClass = "impossible"; }
-                        else if (finalYuvarla < MINIMUM_FINAL_NOTU_VARSAYILAN) { gerekenFinalNotu = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClass = "min-final"; }
-                        else { gerekenFinalNotu = finalYuvarla.toFixed(1); cellClass = ""; }
-                         // --- DÜZELTME SONU ---
+                        if (hesaplananFinal > 100) {
+                            gerekenFinalNotu = "100+"; cellClass = "impossible";
+                        }
+                        else if (hesaplananFinal < MINIMUM_FINAL_NOTU_VARSAYILAN) {
+                            gerekenFinalNotu = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClass = "min-final";
+                        }
+                        else { // Bu kısım: MINIMUM_FINAL_NOTU_VARSAYILAN <= hesaplananFinal <= 100
+                            gerekenFinalNotu = Math.ceil(hesaplananFinal).toString(); // <--- DEĞİŞİKLİK BURADA YAPILDI
+                            cellClass = "";
+                        }
+                        // --- DÜZELTME SONU ---
                     }
                     tabloHTML += `<td class="${cellClass}">${gerekenFinalNotu}</td>`;
                 });
@@ -93,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (firstTabButton) {
         openTab(null, firstTabButton.getAttribute('onclick').split("'")[1]);
         if(document.getElementsByClassName('tab-button').length > 0) {
-           document.getElementsByClassName('tab-button')[0].classList.add('active');
+            document.getElementsByClassName('tab-button')[0].classList.add('active');
         }
     }
     toggleInputFields('Harf');
