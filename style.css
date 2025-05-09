@@ -27,7 +27,7 @@ body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
     color: var(--text-color); background-image: url('ktulogo.png');
     background-repeat: no-repeat; background-position: center center;
-    background-attachment: fixed; /* Mobil sorun uyarısı geçerli */
+    background-attachment: fixed;
     background-size: contain; background-color: var(--bg-color);
 }
 
@@ -37,7 +37,17 @@ body {
 .header-text p { margin: 0; font-size: 0.95em; color: var(--header-subtext); font-weight: 400; }
 
 /* Main Alanı */
-main { max-width: 700px; margin: 0 auto 2rem auto; padding: 0; background-color: var(--main-bg); box-shadow: 0 4px 15px var(--shadow-color); border-radius: 8px; overflow: hidden; position: relative; z-index: 1; }
+main {
+    max-width: 700px;
+    margin: 0 auto 2rem auto;
+    padding: 0;
+    background-color: var(--main-bg);
+    box-shadow: 0 4px 15px var(--shadow-color);
+    border-radius: 8px;
+    overflow: hidden; /* Bu önemli, eğer içerdeki bir eleman taşarsa kırpar */
+    position: relative;
+    z-index: 1;
+}
 
 /* Sekme Butonları */
 .tab-buttons { overflow: hidden; background-color: var(--tab-bg); border-bottom: 1px solid var(--tab-border); }
@@ -84,7 +94,19 @@ button[type="submit"]:active { transform: scale(0.99); }
 .target-grade-scenario label[for] { font-weight: 400; margin-bottom: 0; cursor: pointer; font-size: 0.95em; }
 
 /* Sonuç Kutusu Stilleri */
-.result-box { margin-top: 2rem; padding: 1.4rem; border: 1px solid var(--result-border); background-color: var(--result-bg); border-radius: 5px; min-height: 50px; word-wrap: break-word; line-height: 1.7; font-size: 0.95em; color: var(--text-color); }
+.result-box {
+    margin-top: 2rem;
+    padding: 1.4rem;
+    border: 1px solid var(--result-border);
+    background-color: var(--result-bg);
+    border-radius: 5px;
+    min-height: 50px;
+    word-wrap: break-word;
+    line-height: 1.7;
+    font-size: 0.95em;
+    color: var(--text-color);
+    box-sizing: border-box; /* <<< EKLENEN SATIR: Kenarlık ve padding genişliğe dahil edilsin */
+}
 .result-box strong { color: var(--result-strong); font-weight: 700; }
 .result-box hr { border: 0; height: 1px; background-color: var(--result-border); margin: 1rem 0; }
 .result-box details { color: var(--text-color); margin-top: 1rem; }
@@ -96,28 +118,89 @@ button[type="submit"]:active { transform: scale(0.99); }
 .info-text { font-size: 0.85em; color: var(--small-text); background-color: var(--tab-bg); border: 1px dashed var(--input-border); padding: 10px 15px; border-radius: 4px; margin-top: -0.5rem; margin-bottom: 1.5rem; line-height: 1.5; }
 
 /* Senaryo Tablosu Stilleri */
-#scenario-table-output { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; margin-top: 1.5rem; border: 1px solid var(--result-border); border-radius: 5px; }
-#scenario-table-output table { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 0.9em; }
-#scenario-table-output th, #scenario-table-output td { border: 1px solid var(--result-border); padding: 9px 12px; text-align: center; white-space: nowrap; }
-#scenario-table-output thead th { /* Üst başlık satırı */
-    background-color: var(--table-header-bg); font-weight: 600;
+#scenario-table-output {
+    width: 100%;
+    /* overflow-x: auto;  KALDIRILDI */
+    /* -webkit-overflow-scrolling: touch; KALDIRILDI */
+    display: block;
+    margin-top: 1.5rem;
+    /* border ve border-radius .result-box'tan geliyor, ancak orijinalde burada da vardı */
+    border: 1px solid var(--result-border);
+    border-radius: 5px;
+    /* box-sizing: border-box; .result-box'a eklendiği için burada tekrar gerek yok,
+       çünkü #scenario-table-output zaten .result-box sınıfına sahip */
+}
+
+#scenario-table-output table {
+    width: 100%;
+    min-width: 650px;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+#scenario-table-output th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
     color: var(--content-title);
-    /* position: sticky; kaldırıldı */
-    /* top: 0; kaldırıldı */
-    /* z-index: 1; kaldırıldı */
+    border: 1px solid var(--result-border);
+    padding: 9px 12px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
 }
-#scenario-table-output th[scope="row"] { /* Sol başlık sütunu */
-    background-color: var(--table-header-bg); /* Üst başlıkla aynı */
-    font-weight: 600; color: var(--content-title);
-    /* position: sticky; kaldırıldı */
-    /* left: 0; kaldırıldı */
-    /* z-index: 2; kaldırıldı */
-    /* border-right: 2px solid var(--tab-border); kaldırıldı */
+#scenario-table-output th hr {
+    margin:1px 0;
+    border-style: solid;
+    border-width: 0 0 1px 0;
+    border-color: var(--input-focus-border);
 }
-#scenario-table-output td { background-color: var(--main-bg); color: var(--text-color); }
-#scenario-table-output td.impossible { color: var(--impossible-color); font-style: italic; opacity: 0.8; }
-#scenario-table-output td.min-final { font-weight: bold; color: var(--min-final-color); }
-#scenario-table-output caption { caption-side: bottom; text-align: left; margin-top: 12px; font-size: 0.85em; color: var(--small-text); padding: 0 5px; }
+#scenario-table-output td {
+    background-color: var(--main-bg);
+    color: var(--text-color);
+    border: 1px solid var(--result-border);
+    padding: 9px 12px;
+    text-align: center;
+    white-space: nowrap;
+}
+#scenario-table-output td.impossible {
+    color: var(--impossible-color);
+    font-style: italic;
+    opacity: 0.8;
+}
+#scenario-table-output td.min-final {
+    font-weight: bold;
+    color: var(--min-final-color);
+}
+#scenario-table-output caption { /* Artık kullanılmıyor ama kural olarak kalabilir */
+    caption-side: bottom;
+    text-align: left;
+    margin-top: 12px;
+    font-size: 0.85em;
+    color: var(--small-text);
+    padding: 0 5px;
+}
+
+/* Senaryo Tablosu Altındaki Açıklamalar için Stiller */
+.scenario-explanation p, .scenario-notes p {
+    margin-bottom: 10px;
+    text-align: left;
+}
+.scenario-notes ul {
+    margin: 0;
+    padding-left: 0;
+    list-style-type: none;
+}
+.scenario-notes ul li {
+    margin-bottom: 8px;
+    padding-left: 1.8em; /* Emoji/işaret için yer */
+    text-indent: -1.5em; /* Metni hizala */
+}
+.scenario-notes ul ul {
+    padding-left: 1.8em;
+    margin-top: 5px;
+}
+.scenario-notes ul ul li {
+    margin-bottom: 4px;
+}
 
 /* Footer Stilleri */
 footer { text-align: center; margin-top: 3rem; padding: 1.5rem; font-size: 0.85em; color: var(--footer-text); border-top: 1px solid var(--footer-border); background-color: var(--footer-bg); position: relative; z-index: 1; }

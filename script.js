@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             tabloHTML += `</tbody></table>`;
 
-            // --- KULLANICININ SEÇTİĞİ ALTERNATİF C AÇIKLAMALARI ---
+            // --- KULLANICININ SEÇTİĞİ "ALTERNATİF C" METNİ ---
             let aciklamaHTML = `<div class="scenario-explanation" style="margin-top: 20px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
             aciklamaHTML += `<p style="margin-bottom: 8px;">🎯 <strong>"${hedefHarfNotu}" İçin Finalde Kaç Alman Gerek? (Senaryo Tablosu)</strong></p>`;
             aciklamaHTML += `<p style="margin-bottom: 8px;">Bu tablo, bu sekmede verdiğin ara sınav bilgilerine dayanarak, çeşitli "Sınıf Ortalaması" ve "Standart Sapma" ihtimallerine göre finalde alman gereken en düşük notu görmene yardımcı olur.</p>`;
@@ -492,10 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </ul>
                             </li>`;
             aciklamaHTML += `</ul></div>`;
-            tabloHTML += aciklamaHTML;
-            // --- KULLANICININ SEÇTİĞİ ALTERNATİF C AÇIKLAMALARI SONU ---
+            // --- KULLANICININ SEÇTİĞİ "ALTERNATİF C" METNİ SONU ---
 
-            senaryoTabloAlani.innerHTML = tabloHTML;
+            senaryoTabloAlani.innerHTML = `
+                <div class="table-scroll-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    ${tabloHTML}
+                </div>
+                ${aciklamaHTML}
+            `;
         });
     }
 
