@@ -18,7 +18,18 @@
     --footer-bg: #f8f9fa; --footer-text: #6c757d; --footer-border: #e9ecef;
     --shadow-color: rgba(0, 0, 0, 0.1); --radio-check-color: #0B4C8C;
     --impossible-color: #dc3545; --min-final-color: #fd7e14;
-    --table-header-bg: rgba(241, 247, 252, 0.95); /* Tablo başlık arkaplanı */
+    --table-header-bg: rgba(241, 247, 252, 0.95);
+
+    /* Harf Notu Renkleri */
+    --grade-aa-bg: #28a745; --grade-aa-text: #ffffff; /* Yeşil */
+    --grade-ba-bg: #5cb85c; --grade-ba-text: #ffffff; /* Açık Yeşil */
+    --grade-bb-bg: #82ca9c; --grade-bb-text: #212529; /* Daha Açık Yeşil (Koyu Metin) */
+    --grade-cb-bg: #007bff; --grade-cb-text: #ffffff; /* Mavi */
+    --grade-cc-bg: #17a2b8; --grade-cc-text: #ffffff; /* Camgöbeği */
+    --grade-dc-bg: #fd7e14; --grade-dc-text: #ffffff; /* Turuncu */
+    --grade-dd-bg: #ffc107; --grade-dd-text: #212529; /* Sarı (Koyu Metin) */
+    --grade-fd-bg: #dc3545; --grade-fd-text: #ffffff; /* Kırmızı */
+    --grade-ff-bg: #a21427; --grade-ff-text: #ffffff; /* Koyu Kırmızı */
 }
 
 /* --- Genel Stiller --- */
@@ -32,9 +43,28 @@ body {
 }
 
 /* Header Stilleri */
-.site-header { padding: 20px 25px; text-align: center; border-bottom: 1px solid var(--header-border); margin-bottom: 2.5rem; background-color: var(--header-bg); backdrop-filter: blur(3px); position: relative; z-index: 10; }
-.header-text h1 { margin: 0 0 5px 0; font-size: 2.2em; font-weight: 700; color: var(--header-text); }
-.header-text p { margin: 0; font-size: 0.95em; color: var(--header-subtext); font-weight: 400; }
+.site-header {
+    padding: 20px 25px;
+    text-align: center;
+    border-bottom: 1px solid var(--header-border);
+    margin-bottom: 2.5rem;
+    background-color: var(--header-bg);
+    backdrop-filter: blur(3px);
+    position: relative;
+    z-index: 10;
+}
+.header-text h1 {
+    margin: 0 0 5px 0;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: var(--header-text);
+}
+.header-text p {
+    margin: 0;
+    font-size: 0.95em;
+    color: var(--header-subtext);
+    font-weight: 400;
+}
 
 /* Main Alanı */
 main {
@@ -44,7 +74,7 @@ main {
     background-color: var(--main-bg);
     box-shadow: 0 4px 15px var(--shadow-color);
     border-radius: 8px;
-    overflow: hidden; /* Bu önemli, eğer içerdeki bir eleman taşarsa kırpar */
+    overflow: hidden;
     position: relative;
     z-index: 1;
 }
@@ -105,10 +135,15 @@ button[type="submit"]:active { transform: scale(0.99); }
     line-height: 1.7;
     font-size: 0.95em;
     color: var(--text-color);
-    box-sizing: border-box; /* <<< EKLENEN SATIR: Kenarlık ve padding genişliğe dahil edilsin */
+    box-sizing: border-box;
 }
 .result-box strong { color: var(--result-strong); font-weight: 700; }
-.result-box hr { border: 0; height: 1px; background-color: var(--result-border); margin: 1rem 0; }
+.result-box hr.input-separator {
+    border: 0;
+    height: 1px;
+    background-color: var(--result-border);
+    margin: 1rem 0;
+}
 .result-box details { color: var(--text-color); margin-top: 1rem; }
 .result-box details summary { cursor: pointer; font-weight: 600; color: var(--details-summary); display: inline-block; padding: 3px 6px; border-radius: 3px; transition: background-color 0.2s; }
 .result-box details summary:hover { background-color: rgba(0,0,0,0.05); }
@@ -120,15 +155,10 @@ button[type="submit"]:active { transform: scale(0.99); }
 /* Senaryo Tablosu Stilleri */
 #scenario-table-output {
     width: 100%;
-    /* overflow-x: auto;  KALDIRILDI */
-    /* -webkit-overflow-scrolling: touch; KALDIRILDI */
     display: block;
     margin-top: 1.5rem;
-    /* border ve border-radius .result-box'tan geliyor, ancak orijinalde burada da vardı */
     border: 1px solid var(--result-border);
     border-radius: 5px;
-    /* box-sizing: border-box; .result-box'a eklendiği için burada tekrar gerek yok,
-       çünkü #scenario-table-output zaten .result-box sınıfına sahip */
 }
 
 #scenario-table-output table {
@@ -170,18 +200,10 @@ button[type="submit"]:active { transform: scale(0.99); }
     font-weight: bold;
     color: var(--min-final-color);
 }
-#scenario-table-output caption { /* Artık kullanılmıyor ama kural olarak kalabilir */
-    caption-side: bottom;
-    text-align: left;
-    margin-top: 12px;
-    font-size: 0.85em;
-    color: var(--small-text);
-    padding: 0 5px;
-}
 
 /* Senaryo Tablosu Altındaki Açıklamalar için Stiller */
-.scenario-explanation p, .scenario-notes p {
-    margin-bottom: 10px;
+.scenario-explanation, .scenario-notes {
+    padding: 0 5px;
     text-align: left;
 }
 .scenario-notes ul {
@@ -190,9 +212,9 @@ button[type="submit"]:active { transform: scale(0.99); }
     list-style-type: none;
 }
 .scenario-notes ul li {
-    margin-bottom: 8px;
-    padding-left: 1.8em; /* Emoji/işaret için yer */
-    text-indent: -1.5em; /* Metni hizala */
+    margin-bottom: 10px;
+    padding-left: 1.8em;
+    text-indent: -1.5em;
 }
 .scenario-notes ul ul {
     padding-left: 1.8em;
@@ -214,3 +236,65 @@ footer a:hover { text-decoration: underline; }
 /* Animasyon */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 .input-group.active { animation: fadeIn 0.4s ease-in-out; }
+
+/* --- Form Doğrulama Stilleri --- */
+.form-group input.invalid-input,
+.form-group select.invalid-input {
+    border-color: var(--error-text) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+}
+
+.error-feedback {
+    display: block;
+    width: 100%;
+    margin-top: .25rem;
+    font-size: .8em;
+    color: var(--error-text);
+    font-weight: 500;
+}
+
+.error-feedback.fade-in {
+    animation: fadeInError 0.3s ease-out;
+}
+.error-feedback.fade-out {
+    animation: fadeOutError 0.3s ease-in;
+}
+
+@keyframes fadeInError {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOutError {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-5px); }
+} /* Bu kapanış parantezi eklendi */
+
+
+/* --- Harf Notu Görselleştirme Stilleri --- */
+.grade-display-badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.9em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.35rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.grade-display-badge.grade-display-aa { background-color: var(--grade-aa-bg); color: var(--grade-aa-text); }
+.grade-display-badge.grade-display-ba { background-color: var(--grade-ba-bg); color: var(--grade-ba-text); }
+.grade-display-badge.grade-display-bb { background-color: var(--grade-bb-bg); color: var(--grade-bb-text); }
+.grade-display-badge.grade-display-cb { background-color: var(--grade-cb-bg); color: var(--grade-cb-text); }
+.grade-display-badge.grade-display-cc { background-color: var(--grade-cc-bg); color: var(--grade-cc-text); }
+.grade-display-badge.grade-display-dc { background-color: var(--grade-dc-bg); color: var(--grade-dc-text); }
+.grade-display-badge.grade-display-dd { background-color: var(--grade-dd-bg); color: var(--grade-dd-text); }
+.grade-display-badge.grade-display-fd { background-color: var(--grade-fd-bg); color: var(--grade-fd-text); }
+.grade-display-badge.grade-display-ff { background-color: var(--grade-ff-bg); color: var(--grade-ff-text); }
+
+.result-box strong {
+    color: var(--result-strong);
+}

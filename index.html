@@ -10,7 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-</head><body>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
 
     <header class="site-header">
         <div class="header-text">
@@ -40,7 +44,6 @@
                         <label for="detayliGirisHarf">Detaylı Giriş (Örn: Vize + Ödev)</label>
                     </div>
                 </div>
-
                 <div id="tek-ortalama-grupHarf" class="input-group active">
                     <div class="form-group">
                         <label for="midterm-avg">Ara Sınavlar Ortalaması (%50 Ağırlık):</label>
@@ -48,7 +51,6 @@
                         <small>Tüm vize, ödev vb. notlarınızın %50 ağırlığa göre tek bir ortalaması.</small>
                     </div>
                 </div>
-
                 <div id="detayli-giris-grupHarf" class="input-group">
                      <div class="form-row">
                         <div class="form-group">
@@ -74,9 +76,7 @@
                      </div>
                      <small class="weight-warning"><b>Not:</b> Vize ve Ödev ağırlıklarının toplamı 50 olmalıdır.</small>
                 </div>
-
                 <hr class="input-separator">
-
                 <div class="form-group">
                     <label for="final-grade">Final Notu (%50 Ağırlık):</label>
                     <input type="number" id="final-grade" name="final_grade" min="0" max="100" step="0.01" required>
@@ -89,7 +89,7 @@
                 <div class="form-group">
                     <label for="class-stddev">Sınıf Ham Başarı Notu Standart Sapması:</label>
                     <input type="number" id="class-stddev" name="class_stddev" min="0" step="0.01" required>
-                    <small>0 olamaz.</small>
+                    <small>Sınıf ortalaması 80'den düşükse 0 olamaz.</small>
                 </div>
                 <p class="info-text">
                     <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
@@ -99,10 +99,18 @@
             <div id="grade-result" class="result-box">
                 <p>Sonuçlar burada gösterilecektir.</p>
             </div>
+            
+            <div id="tScoreChartContainer" style="width:100%; max-width:650px; height: 400px; margin: 25px auto 0 auto; padding: 15px; background-color: #f8f9fa; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none;">
+                <h3 style="text-align: center; color: var(--content-title); margin-top:0; margin-bottom: 15px;">T-Skoru Dağılım Grafiği</h3>
+                <canvas id="tScoreChart"></canvas>
+                <div id="tScoreChartExplanation" style="font-size: 0.85em; color: #454545; margin-top: 15px; padding: 10px 15px; background-color: #fff; border: 1px solid #e0e0e0; border-radius: 4px; line-height: 1.5;">
+                    {/* Açıklama buraya JavaScript ile eklenecek */}
+                </div>
+            </div>
         </div>
 
         <div id="gerekliNot" class="tab-content">
-             <h2>Gerekli Final Notu Hesaplama (Bağıl Sistem)</h2>
+            <h2>Gerekli Final Notu Hesaplama (Bağıl Sistem)</h2>
             <form id="required-grade-form" novalidate>
                 <div class="form-group calculation-method">
                     <label>Ara Sınav Hesaplama Yöntemi:</label>
@@ -115,14 +123,12 @@
                         <label for="detayliGirisGerekli">Detaylı Giriş (Örn: Vize + Ödev)</label>
                     </div>
                 </div>
-
                 <div id="tek-ortalama-grupGerekli" class="input-group active">
                     <div class="form-group">
                         <label for="req-midterm-avg">Ara Sınavlar Ortalaması (%50 Ağırlık):</label>
                         <input type="number" id="req-midterm-avg" name="req_midterm_avg" min="0" max="100" step="0.01" required>
                     </div>
                 </div>
-
                 <div id="detayli-giris-grupGerekli" class="input-group">
                     <div class="form-row">
                         <div class="form-group">
@@ -148,9 +154,7 @@
                      </div>
                       <small class="weight-warning"><b>Not:</b> Vize ve Ödev ağırlıklarının toplamı 50 olmalıdır.</small>
                 </div>
-
                  <hr class="input-separator">
-
                   <div class="form-group">
                       <label for="target-grade">Hedeflenen Harf Notu:</label>
                       <select id="target-grade" name="target_grade" required>
@@ -165,7 +169,7 @@
                   <div class="form-group">
                      <label for="req-class-stddev">Sınıf Ham Başarı Notu Standart Sapması:</label>
                      <input type="number" id="req-class-stddev" name="req_class_stddev" min="0" step="0.01" required>
-                     <small>0 olamaz.</small>
+                     <small>Sınıf ortalaması 80'den düşükse 0 olamaz.</small>
                  </div>
                   <p class="info-text">
                       <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
@@ -178,7 +182,7 @@
         </div>
 
         <div id="gecmeSenaryo" class="tab-content">
-            <h2>Geçme Senaryoları Tablosu</h2>
+             <h2>Geçme Senaryoları Tablosu</h2>
             <p class="tab-description">
                 Sınıf ortalaması ve standart sapması belli olmadığında, farklı senaryolara göre hedeflediğiniz nota (CC veya DC) ulaşmak için finalden almanız gereken minimum notları gösterir.
             </p>
@@ -197,14 +201,12 @@
                         <label for="detayliGirisSenaryo">Detaylı Giriş (Örn: Vize + Ödev)</label>
                     </div>
                 </div>
-
                 <div id="tek-ortalama-grupSenaryo" class="input-group active">
                     <div class="form-group">
                         <label for="scenario-midterm-avg">Ara Sınavlar Ortalaması (%50 Ağırlık):</label>
                         <input type="number" id="scenario-midterm-avg" name="scenario_midterm_avg" min="0" max="100" step="0.01" required>
                     </div>
                 </div>
-
                 <div id="detayli-giris-grupSenaryo" class="input-group">
                      <div class="form-row">
                         <div class="form-group">
@@ -228,9 +230,7 @@
                      </div>
                       <small class="weight-warning"><b>Not:</b> Ağırlıkların toplamı 50 olmalıdır.</small>
                 </div>
-
                 <hr class="input-separator">
-
                 <div class="form-group target-grade-scenario">
                      <label>Hedeflenen Minimum Harf Notu:</label>
                      <div>
@@ -242,15 +242,12 @@
                          <label for="targetDC">DC (Koşullu Geçme)</label>
                      </div>
                  </div>
-
                  <button type="submit">Senaryo Tablosunu Oluştur</button>
             </form>
-
              <div id="scenario-table-output" class="result-box" style="margin-top: 1.5rem;">
                   <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
              </div>
         </div>
-
     </main>
 
     <footer>

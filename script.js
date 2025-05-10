@@ -4,7 +4,126 @@ const HARF_NOTU_KATSAYILARI = { "AA": 4.0, "BA": 3.5, "BB": 3.0, "CB": 2.5, "CC"
 const MINIMUM_FINAL_NOTU_VARSAYILAN = 45;
 const T_SKOR_ARALIKLARI_ORTALAMAYA_GORE = { "0_42.5": { "FF": [-Infinity, 35.99], "FD": [36, 40.99], "DD": [41, 45.99], "DC": [46, 50.99], "CC": [51, 55.99], "CB": [56, 60.99], "BB": [61, 65.99], "BA": [66, 70.99], "AA": [71, Infinity] }, "42.5_47.5": { "FF": [-Infinity, 33.99], "FD": [34, 38.99], "DD": [39, 43.99], "DC": [44, 48.99], "CC": [49, 53.99], "CB": [54, 58.99], "BB": [59, 63.99], "BA": [64, 68.99], "AA": [69, Infinity] }, "47.5_52.5": { "FF": [-Infinity, 31.99], "FD": [32, 36.99], "DD": [37, 41.99], "DC": [42, 46.99], "CC": [47, 51.99], "CB": [52, 56.99], "BB": [57, 61.99], "BA": [62, 66.99], "AA": [67, Infinity] }, "52.5_57.5": { "FF": [-Infinity, 29.99], "FD": [30, 34.99], "DD": [35, 39.99], "DC": [40, 44.99], "CC": [45, 49.99], "CB": [50, 54.99], "BB": [55, 59.99], "BA": [60, 64.99], "AA": [65, Infinity] }, "57.5_62.5": { "FF": [-Infinity, 27.99], "FD": [28, 32.99], "DD": [33, 37.99], "DC": [38, 42.99], "CC": [43, 47.99], "CB": [48, 52.99], "BB": [53, 57.99], "BA": [58, 62.99], "AA": [63, Infinity] }, "62.5_70": { "FF": [-Infinity, 25.99], "FD": [26, 30.99], "DD": [31, 35.99], "DC": [36, 40.99], "CC": [41, 45.99], "CB": [46, 50.99], "BB": [51, 55.99], "BA": [56, 60.99], "AA": [61, Infinity] }, "70_80": { "FF": [-Infinity, 23.99], "FD": [24, 28.99], "DD": [29, 33.99], "DC": [34, 38.99], "CC": [39, 43.99], "CB": [44, 48.99], "BB": [49, 53.99], "BA": [54, 58.99], "AA": [59, Infinity] } };
 
-// --- Yardımcı Fonksiyonlar (Global Kapsamda) ---
+// --- Form Doğrulama ve Yardımcı Fonksiyonlar ---
+function showFieldError(inputElement, message) {
+    const formGroup = inputElement.closest('.form-group');
+    if (!formGroup) return;
+    clearFieldError(inputElement);
+    inputElement.classList.add('invalid-input');
+    const errorSpan = document.createElement('span');
+    errorSpan.className = 'error-feedback fade-in';
+    errorSpan.textContent = message;
+    const hintElement = formGroup.querySelector('small');
+    if (hintElement && hintElement.parentElement === formGroup) {
+        hintElement.insertAdjacentElement('afterend', errorSpan);
+    } else {
+        formGroup.appendChild(errorSpan);
+    }
+}
+
+function clearFieldError(inputElement) {
+    if (!inputElement) return;
+    const formGroup = inputElement.closest('.form-group');
+    if (!formGroup) return;
+    inputElement.classList.remove('invalid-input');
+    const errorSpan = formGroup.querySelector('span.error-feedback');
+    if (errorSpan) {
+        errorSpan.classList.remove('fade-in');
+        errorSpan.classList.add('fade-out');
+        setTimeout(() => {
+            if (errorSpan.parentNode) {
+                errorSpan.parentNode.removeChild(errorSpan);
+            }
+        }, 280);
+    }
+}
+
+function validateRequiredField(inputElement, fieldName) {
+    if (!inputElement) return true;
+    const value = inputElement.value; // select için .trim() gereksiz
+    if (!value) {
+        showFieldError(inputElement, `${fieldName} alanı boş bırakılamaz.`);
+        return false;
+    }
+    clearFieldError(inputElement);
+    return true;
+}
+
+function validateNumberField(inputElement, fieldName, min, max) {
+    if (!inputElement) return true;
+    const value = inputElement.value.trim();
+    if (!value) {
+        if (inputElement.required) {
+            showFieldError(inputElement, `${fieldName} alanı boş bırakılamaz.`);
+            return false;
+        }
+        clearFieldError(inputElement);
+        return true;
+    }
+    const numberValue = parseFloat(value);
+    if (isNaN(numberValue)) {
+        showFieldError(inputElement, `${fieldName} geçerli bir sayı olmalıdır.`);
+        return false;
+    }
+    if (min !== null && numberValue < min) {
+        showFieldError(inputElement, `${fieldName} en az ${min} olmalıdır.`);
+        return false;
+    }
+    if (max !== null && numberValue > max) {
+        showFieldError(inputElement, `${fieldName} en fazla ${max} olmalıdır.`);
+        return false;
+    }
+    clearFieldError(inputElement);
+    return true;
+}
+
+function validateDetailedWeights(vizeAgirlikInput, odevAgirlikInput, formTypeSuffix) {
+    // Bu fonksiyon zaten formTypeSuffix alıyordu, bu iyi.
+    // Ancak, mesajları input'lara özel göstermek için showFieldError kullanmalı.
+    // Ve sadece her iki alan da geçerli sayılar içeriyorsa toplam kontrolü yapılmalı.
+
+    if (!vizeAgirlikInput || !odevAgirlikInput) return true;
+
+    const vizeAgirlikVal = parseFloat(vizeAgirlikInput.value);
+    const odevAgirlikVal = parseFloat(odevAgirlikInput.value);
+
+    // Bireysel alanların geçerli sayı olup olmadığı validateNumberField ile submit anında kontrol edilecek.
+    // Burada sadece her ikisi de doluysa ve sayıysa toplamı kontrol ediyoruz.
+    if (vizeAgirlikInput.value.trim() && odevAgirlikInput.value.trim() &&
+        !isNaN(vizeAgirlikVal) && !isNaN(odevAgirlikVal) &&
+        vizeAgirlikVal >= 0 && vizeAgirlikVal <= 50 && // Bu kontroller validateNumberField'da var
+        odevAgirlikVal >= 0 && odevAgirlikVal <= 50) {  // Bu kontroller validateNumberField'da var
+
+        if (Math.abs(vizeAgirlikVal + odevAgirlikVal - 50) > 0.01) {
+            const message = "Vize ve Ödev ağırlıklarının toplamı 50 olmalıdır.";
+            // Önce mevcut "toplam 50" hatasını temizle, sonra yenisini ekle
+            const vizeErrorSpanOld = vizeAgirlikInput.closest('.form-group').querySelector('span.error-feedback[data-type="weight-sum"]');
+            if(vizeErrorSpanOld) clearFieldError(vizeAgirlikInput);
+            const odevErrorSpanOld = odevAgirlikInput.closest('.form-group').querySelector('span.error-feedback[data-type="weight-sum"]');
+            if(odevErrorSpanOld) clearFieldError(odevAgirlikInput);
+
+            showFieldError(vizeAgirlikInput, message);
+            let vizeErrorSpanNew = vizeAgirlikInput.closest('.form-group').querySelector('span.error-feedback');
+            if(vizeErrorSpanNew) vizeErrorSpanNew.dataset.type = "weight-sum";
+
+            showFieldError(odevAgirlikInput, message);
+            let odevErrorSpanNew = odevAgirlikInput.closest('.form-group').querySelector('span.error-feedback');
+            if(odevErrorSpanNew) odevErrorSpanNew.dataset.type = "weight-sum";
+            return false;
+        } else {
+            // Toplam doğruysa ve daha önce bu özel hata gösterilmişse temizle
+            const vizeErrorSpan = vizeAgirlikInput.closest('.form-group').querySelector('span.error-feedback[data-type="weight-sum"]');
+            if (vizeErrorSpan) clearFieldError(vizeAgirlikInput);
+
+            const odevErrorSpan = odevAgirlikInput.closest('.form-group').querySelector('span.error-feedback[data-type="weight-sum"]');
+            if (odevErrorSpan) clearFieldError(odevAgirlikInput);
+        }
+    }
+    return true;
+}
+
+
+// --- Hesaplama Yardımcı Fonksiyonları ---
 function getMutlakDegerlendirmeNotu(hamBasariNotu) {
     const yuvarlanmisHBN = Math.round(hamBasariNotu);
     for (const grade in MUTLAK_DEGERLENDIRME_ARALIKLARI) {
@@ -27,11 +146,20 @@ function getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasi) {
         }
     }
     if (!hedefAralikAnahtari) {
-        if (sinifOrtalamasi > 0 && sinifOrtalamasi <= 42.5) {
+        if (sinifOrtalamasi >= 0 && sinifOrtalamasi <= 42.5) {
             hedefAralikAnahtari = "0_42.5";
+        } else if (sinifOrtalamasi > 80) {
+             console.warn("getBagilDegerlendirmeNotuTskor: Sınıf ortalaması > 80 ise T-skor anlamsızdır.");
+            return null; // Sınıf ortalaması 80 üzeriyse T-skor kullanılmaz, mutlak değerlendirme yapılır.
         } else {
-            console.error("Sınıf ortalaması ("+ sinifOrtalamasi +") için geçerli bir T-Skor aralığı bulunamadı (Ort < 80).");
-            return null;
+            const lastIntervalKey = siraliOrtalamaAraliklari[siraliOrtalamaAraliklari.length-1];
+             if (sinifOrtalamasi > parseFloat(lastIntervalKey.split('_')[1])) {
+                 console.warn(`Sınıf ortalaması (${sinifOrtalamasi}) tanımlı aralıkların üzerinde. En yüksek aralık (${lastIntervalKey}) kullanılacak.`);
+                hedefAralikAnahtari = lastIntervalKey;
+            } else {
+                console.error("Sınıf ortalaması (" + sinifOrtalamasi + ") için geçerli bir T-Skor aralığı bulunamadı.");
+                return null;
+            }
         }
     }
     if (!T_SKOR_ARALIKLARI_ORTALAMAYA_GORE[hedefAralikAnahtari]) {
@@ -39,13 +167,14 @@ function getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasi) {
         return null;
     }
     const notlar = T_SKOR_ARALIKLARI_ORTALAMAYA_GORE[hedefAralikAnahtari];
+    const yuvarlanmisTskor = Math.round(tSkoru * 100) / 100;
     for (const not in notlar) {
         const [minT, maxT] = notlar[not];
-        if (tSkoru >= minT && (maxT === Infinity ? true : tSkoru <= maxT)) {
+        if (yuvarlanmisTskor >= minT && (maxT === Infinity ? true : yuvarlanmisTskor <= maxT)) {
             return not;
         }
     }
-    console.error("T-skor için harf notu bulunamadı. T-Skoru:", tSkoru, "Aralık:", hedefAralikAnahtari);
+    console.error("T-skor için harf notu bulunamadı. T-Skoru:", yuvarlanmisTskor, "Aralık:", hedefAralikAnahtari, "Notlar:", notlar);
     return null;
 }
 
@@ -58,8 +187,7 @@ function karsilastirHarfNotlari(not1, not2) {
 }
 
 function getHedefNotIcinMinTskor(hedefNot, sinifOrtalamasi) {
-    if (sinifOrtalamasi >= 80) {
-        console.warn("getHedefNotIcinMinTskor: Sınıf ortalaması >= 80 ise T-skoru anlamsızdır, Mutlak Sistem geçerlidir.");
+    if (sinifOrtalamasi >= 80) { // Sınıf ortalaması >= 80 ise bağıl sistem kullanılmaz.
         return null;
     }
     let hedefAralikAnahtari = null;
@@ -73,8 +201,8 @@ function getHedefNotIcinMinTskor(hedefNot, sinifOrtalamasi) {
             break;
         }
     }
-    if (!hedefAralikAnahtari) {
-         if (sinifOrtalamasi > 0 && sinifOrtalamasi <= 42.5) {
+     if (!hedefAralikAnahtari) {
+        if (sinifOrtalamasi >= 0 && sinifOrtalamasi <= 42.5) {
             hedefAralikAnahtari = "0_42.5";
         } else {
             console.error("Hedef T-skor için uygun ortalama aralığı bulunamadı (Ort < 80):", sinifOrtalamasi);
@@ -86,12 +214,109 @@ function getHedefNotIcinMinTskor(hedefNot, sinifOrtalamasi) {
         return null;
     }
     const minT = T_SKOR_ARALIKLARI_ORTALAMAYA_GORE[hedefAralikAnahtari][hedefNot][0];
-    return minT === -Infinity ? null : minT;
+    return minT === -Infinity ? 0 : minT; // En düşük T-skor 0 olabilir.
 }
 
-function hataGoster(element, mesaj) { element.innerHTML = `<p class="error-message">${mesaj}</p>`; }
-function openTab(evt, tabName) { let i, tabcontent, tabbuttons; tabcontent = document.getElementsByClassName("tab-content"); for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); } tabbuttons = document.getElementsByClassName("tab-button"); for (i = 0; i < tabbuttons.length; i++) { tabbuttons[i].classList.remove("active"); } const currentTab = document.getElementById(tabName); if (currentTab) { currentTab.style.display = "block"; currentTab.classList.add("active"); } if (evt && evt.currentTarget) { evt.currentTarget.classList.add("active"); } }
-function toggleInputFields(formType) { const tekOrtalamaRadioId = `tekOrtalama${formType}`; const tekOrtalamaGrupId = `tek-ortalama-grup${formType}`; const detayliGirisGrupId = `detayli-giris-grup${formType}`; const tekOrtalamaRadio = document.getElementById(tekOrtalamaRadioId); const tekOrtalamaGrup = document.getElementById(tekOrtalamaGrupId); const detayliGirisGrup = document.getElementById(detayliGirisGrupId); const tekOrtalamaInput = tekOrtalamaGrup ? tekOrtalamaGrup.querySelector('input[type="number"]') : null; const detayliInputs = detayliGirisGrup ? detayliGirisGrup.querySelectorAll('input[type="number"]') : []; if (tekOrtalamaRadio && tekOrtalamaGrup && detayliGirisGrup) { if (tekOrtalamaRadio.checked) { tekOrtalamaGrup.classList.add('active'); detayliGirisGrup.classList.remove('active'); if (tekOrtalamaInput) tekOrtalamaInput.required = true; detayliInputs.forEach(input => { input.required = false; }); } else { tekOrtalamaGrup.classList.remove('active'); detayliGirisGrup.classList.add('active'); if (tekOrtalamaInput) { tekOrtalamaInput.required = false; } } } else { console.error(`toggleInputFields: Elementler bulunamadı - Form Tipi: ${formType}`); } }
+// --- Arayüz Fonksiyonları ---
+function openTab(evt, tabName) {
+    let i, tabcontent, tabbuttons;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabcontent[i].classList.remove("active");
+    }
+    tabbuttons = document.getElementsByClassName("tab-button");
+    for (i = 0; i < tabbuttons.length; i++) {
+        tabbuttons[i].classList.remove("active");
+    }
+    const currentTab = document.getElementById(tabName);
+    if (currentTab) {
+        currentTab.style.display = "block";
+        currentTab.classList.add("active");
+    }
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+    }
+}
+
+function toggleInputFields(formType) {
+    const tekOrtalamaRadioId = `tekOrtalama${formType}`;
+    const tekOrtalamaGrupId = `tek-ortalama-grup${formType}`;
+    const detayliGirisGrupId = `detayli-giris-grup${formType}`;
+
+    const tekOrtalamaRadio = document.getElementById(tekOrtalamaRadioId);
+    const tekOrtalamaGrup = document.getElementById(tekOrtalamaGrupId);
+    const detayliGirisGrup = document.getElementById(detayliGirisGrupId);
+
+    if (!tekOrtalamaRadio || !tekOrtalamaGrup || !detayliGirisGrup) {
+        console.error(`toggleInputFields: Elementler bulunamadı - Form Tipi: ${formType}`);
+        return;
+    }
+
+    const tekOrtalamaInput = tekOrtalamaGrup.querySelector('input[type="number"]');
+    const detayliInputs = detayliGirisGrup.querySelectorAll('input[type="number"]');
+
+    // formTypeSuffix küçük harf olmalı ID'lerde kullanıldığı gibi.
+    const formSuffixLower = formType.toLowerCase();
+    const vizeNotuInputDetayli = document.getElementById(`vize-notu-${formSuffixLower}`);
+    const vizeAgirlikInputDetayli = document.getElementById(`vize-agirlik-${formSuffixLower}`);
+    const odevNotuInputDetayli = document.getElementById(`odev-notu-${formSuffixLower}`);
+    const odevAgirlikInputDetayli = document.getElementById(`odev-agirlik-${formSuffixLower}`);
+
+    if (tekOrtalamaRadio.checked) {
+        tekOrtalamaGrup.classList.add('active');
+        detayliGirisGrup.classList.remove('active');
+        if (tekOrtalamaInput) tekOrtalamaInput.required = true;
+        detayliInputs.forEach(input => {
+            input.required = false;
+            clearFieldError(input); // Seçili olmayan gruptaki hataları temizle
+        });
+    } else { // Detaylı Giriş Seçili
+        tekOrtalamaGrup.classList.remove('active');
+        detayliGirisGrup.classList.add('active');
+        if (tekOrtalamaInput) {
+            tekOrtalamaInput.required = false;
+            clearFieldError(tekOrtalamaInput); // Seçili olmayan gruptaki hataları temizle
+        }
+        if (vizeNotuInputDetayli) vizeNotuInputDetayli.required = true;
+        if (vizeAgirlikInputDetayli) vizeAgirlikInputDetayli.required = true;
+        if (odevNotuInputDetayli) odevNotuInputDetayli.required = true;
+        if (odevAgirlikInputDetayli) odevAgirlikInputDetayli.required = true;
+    }
+}
+
+// Yeni Ortak Fonksiyon: Ara Sınavların HBN'ye Katkısını Hesapla
+function calculateMidtermContribution(formTypeSuffix, formElement) {
+    const methodRadio = formElement.querySelector(`input[name="hesaplamaYontemi${formTypeSuffix}"]:checked`);
+    if (!methodRadio) {
+        console.error(`Hesaplama yöntemi radio butonu bulunamadı: ${formTypeSuffix}`);
+        return NaN;
+    }
+    const method = methodRadio.value;
+    let contribution = 0;
+    const formSuffixLower = formTypeSuffix.toLowerCase();
+
+    if (method === 'tek') {
+        const avgInputId = formTypeSuffix === 'Harf' ? 'midterm-avg' : (formTypeSuffix === 'Gerekli' ? 'req-midterm-avg' : 'scenario-midterm-avg');
+        const avgInput = document.getElementById(avgInputId);
+        const avgGrade = parseFloat(avgInput.value);
+        // Bu fonksiyon çağrılmadan önce alanların geçerli olduğu varsayılacak (submit handler'da kontrol edilecek)
+        // Ancak yine de temel bir kontrol yapılabilir.
+        if (isNaN(avgGrade)) return NaN;
+        contribution = avgGrade * 0.50; // %50 etki
+    } else { // Detaylı
+        const vizeNotu = parseFloat(document.getElementById(`vize-notu-${formSuffixLower}`).value);
+        const vizeAgirlik = parseFloat(document.getElementById(`vize-agirlik-${formSuffixLower}`).value);
+        const odevNotu = parseFloat(document.getElementById(`odev-notu-${formSuffixLower}`).value);
+        const odevAgirlik = parseFloat(document.getElementById(`odev-agirlik-${formSuffixLower}`).value);
+
+        if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik)) return NaN;
+        // Ağırlıkların toplamı ve bireysel geçerlilikleri submit handler'da kontrol edilecek.
+        contribution = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100); // Bu zaten %50'lik toplam katkı
+    }
+    return contribution;
+}
+
 
 // --- DOM Yüklendiğinde Çalışacak Kodlar ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,101 +328,126 @@ document.addEventListener('DOMContentLoaded', () => {
     const gerekliNotSonucAlani = document.getElementById('required-result');
     const senaryoTabloAlani = document.getElementById('scenario-table-output');
 
+    // --- Harf Notu Formu İşlemleri ---
     if (harfNotuFormu) {
+        const midtermAvgInput = document.getElementById('midterm-avg');
+        const vizeNotuHarfInput = document.getElementById('vize-notu-harf');
+        const vizeAgirlikHarfInput = document.getElementById('vize-agirlik-harf');
+        const odevNotuHarfInput = document.getElementById('odev-notu-harf');
+        const odevAgirlikHarfInput = document.getElementById('odev-agirlik-harf');
+        const finalGradeInput = document.getElementById('final-grade');
+        const classAvgInput = document.getElementById('class-avg');
+        const classStdDevInput = document.getElementById('class-stddev');
+
+        const inputsToValidateHarf = [
+            { el: midtermAvgInput, name: 'Ara Sınav Ortalaması', min: 0, max: 100, isTekOrtalamaOnly: true },
+            { el: vizeNotuHarfInput, name: 'Vize Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: vizeAgirlikHarfInput, name: 'Vize Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true },
+            { el: odevNotuHarfInput, name: 'Ödev/Proje Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: odevAgirlikHarfInput, name: 'Ödev/Proje Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true },
+            { el: finalGradeInput, name: 'Final Notu', min: 0, max: 100 },
+            { el: classAvgInput, name: 'Sınıf Ortalaması', min: 0, max: 100 },
+            { el: classStdDevInput, name: 'Standart Sapma', min: 0.0001, max: null } // Std Sapma 0 olamaz (eğer Ort < 80)
+        ];
+
+        inputsToValidateHarf.forEach(item => {
+            if (item.el) {
+                item.el.addEventListener('blur', () => {
+                    const secilenYontem = harfNotuFormu.querySelector('input[name="hesaplamaYontemiHarf"]:checked').value;
+                    const isTekOrtalamaActive = secilenYontem === 'tek';
+
+                    if ((item.isTekOrtalamaOnly && !isTekOrtalamaActive) || (item.isDetayliOnly && isTekOrtalamaActive)) {
+                        clearFieldError(item.el); return;
+                    }
+
+                    let isValid = validateNumberField(item.el, item.name, item.min, item.max);
+
+                    if (isValid && item.isWeight && !isTekOrtalamaActive) {
+                        validateDetailedWeights(vizeAgirlikHarfInput, odevAgirlikHarfInput, 'Harf');
+                    }
+                    // Std Sapma 0 kontrolü blur'da
+                    if (item.el === classStdDevInput && parseFloat(classAvgInput.value) < 80 && parseFloat(item.el.value) === 0) {
+                        showFieldError(item.el, "Sınıf ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                    } else if (item.el === classStdDevInput && parseFloat(item.el.value) !== 0) {
+                        const errorSpan = item.el.closest('.form-group').querySelector('span.error-feedback');
+                        if (errorSpan && errorSpan.textContent.includes("0 olamaz")) {
+                           clearFieldError(item.el);
+                        }
+                    }
+                });
+            }
+        });
+
         harfNotuFormu.addEventListener('submit', (event) => {
             event.preventDefault();
             harfNotuSonucAlani.innerHTML = "<p>Hesaplanıyor...</p>";
-
+            let formGecerli = true;
             const secilenYontem = harfNotuFormu.querySelector('input[name="hesaplamaYontemiHarf"]:checked').value;
-            const finalNotu = parseFloat(document.getElementById('final-grade').value);
-            const sinifOrtalamasi = parseFloat(document.getElementById('class-avg').value);
-            const sinifStandartSapma = parseFloat(document.getElementById('class-stddev').value);
-            let araSinavKatkisi = 0;
-            let gecerliGiris = true;
 
             if (secilenYontem === 'tek') {
-                const araSinavOrtalamasiInput = document.getElementById('midterm-avg');
-                araSinavKatkisi = parseFloat(araSinavOrtalamasiInput.value);
-                araSinavOrtalamasiInput.required = true;
-                if (isNaN(araSinavKatkisi) || araSinavKatkisi < 0 || araSinavKatkisi > 100) {
-                    hataGoster(harfNotuSonucAlani, "Hata: Geçerli bir ara sınav ortalaması girin (0-100).");
-                    gecerliGiris = false;
-                }
-                document.getElementById('vize-notu-harf').required = false;
-                document.getElementById('vize-agirlik-harf').required = false;
-                document.getElementById('odev-notu-harf').required = false;
-                document.getElementById('odev-agirlik-harf').required = false;
+                if (!validateNumberField(midtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
             } else {
-                document.getElementById('midterm-avg').required = false;
-                const vizeNotuInput = document.getElementById('vize-notu-harf');
-                const vizeAgirlikInput = document.getElementById('vize-agirlik-harf');
-                const odevNotuInput = document.getElementById('odev-notu-harf');
-                const odevAgirlikInput = document.getElementById('odev-agirlik-harf');
-                vizeNotuInput.required = true; vizeAgirlikInput.required = true;
-                odevNotuInput.required = true; odevAgirlikInput.required = true;
-                const vizeNotu = parseFloat(vizeNotuInput.value);
-                const vizeAgirlik = parseFloat(vizeAgirlikInput.value);
-                const odevNotu = parseFloat(odevNotuInput.value);
-                const odevAgirlik = parseFloat(odevAgirlikInput.value);
-                if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik) ||
-                    vizeNotu < 0 || vizeNotu > 100 || odevNotu < 0 || odevNotu > 100 ||
-                    vizeAgirlik < 0 || vizeAgirlik > 50 || odevAgirlik < 0 || odevAgirlik > 50) {
-                    hataGoster(harfNotuSonucAlani, "Hata: Lütfen detaylı giriş alanlarını (notlar 0-100, ağırlıklar 0-50) doğru şekilde doldurun.");
-                    gecerliGiris = false;
-                } else if (Math.abs(vizeAgirlik + odevAgirlik - 50) > 0.01) {
-                    hataGoster(harfNotuSonucAlani, "Hata: Detaylı girişteki ağırlıkların (vize+ödev) HBN'ye toplam katkısı %50 olmalıdır.");
-                    gecerliGiris = false;
-                } else {
-                    araSinavKatkisi = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100);
+                if (!validateNumberField(vizeNotuHarfInput, 'Vize Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(vizeAgirlikHarfInput, 'Vize Ağırlığı', 0, 50)) formGecerli = false;
+                if (!validateNumberField(odevNotuHarfInput, 'Ödev/Proje Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(odevAgirlikHarfInput, 'Ödev/Proje Ağırlığı', 0, 50)) formGecerli = false;
+                if (formGecerli) { // Sadece bireysel alanlar geçerliyse toplamı kontrol et
+                    if (!validateDetailedWeights(vizeAgirlikHarfInput, odevAgirlikHarfInput, 'Harf')) formGecerli = false;
                 }
             }
+            if (!validateNumberField(finalGradeInput, 'Final Notu', 0, 100)) formGecerli = false;
+            if (!validateNumberField(classAvgInput, 'Sınıf Ortalaması', 0, 100)) formGecerli = false;
+            // Standart sapma için min 0.0001 (çok küçük bir değer) eğer ort < 80, yoksa 0 olabilir.
+            const sinifOrtalamasiVal = parseFloat(classAvgInput.value);
+            const minStdDev = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
+            if (!validateNumberField(classStdDevInput, 'Standart Sapma', minStdDev, null)) formGecerli = false;
 
-            if (isNaN(finalNotu) || isNaN(sinifOrtalamasi) || isNaN(sinifStandartSapma)) {
-                hataGoster(harfNotuSonucAlani, "Hata: Lütfen Final Notu, Sınıf Ortalaması ve Standart Sapma alanlarını sayısal olarak doldurun.");
-                gecerliGiris = false;
+            if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(classStdDevInput.value) === 0) {
+                 showFieldError(classStdDevInput, "Sınıf ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                 formGecerli = false;
             }
-            if (finalNotu < 0 || finalNotu > 100 || sinifOrtalamasi < 0 || sinifOrtalamasi > 100 || sinifStandartSapma < 0) {
-                hataGoster(harfNotuSonucAlani, "Hata: Final Notu ve ortalama 0-100, standart sapma 0 veya üzeri olmalıdır.");
-                gecerliGiris = false;
-            }
-            if (!gecerliGiris) return;
 
-            let hamBasariNotu = 0;
-            if (secilenYontem === 'tek') {
-                 hamBasariNotu = (araSinavKatkisi * 0.50) + (finalNotu * 0.50);
-            } else {
-                 hamBasariNotu = araSinavKatkisi + (finalNotu * 0.50);
+
+            if (!formGecerli) {
+                harfNotuSonucAlani.innerHTML = `<p class="error-message">Lütfen formdaki işaretli hataları düzeltin.</p>`;
+                const firstInvalidInput = harfNotuFormu.querySelector('input.invalid-input, select.invalid-input');
+                if (firstInvalidInput) firstInvalidInput.focus();
+                return;
             }
+
+            const araSinavHBNKatkisi = calculateMidtermContribution('Harf', harfNotuFormu);
+            const finalNotu = parseFloat(finalGradeInput.value);
+            const hamBasariNotu = araSinavHBNKatkisi + (finalNotu * 0.50); // Ara sınav katkısı zaten %50'lik dilimi ifade ediyor.
 
             let harfNotu = null;
             let anaMesaj = "";
             let tSkoru = null;
             let hesaplamaDetaylari = "";
+            const sinifStandartSapmaVal = parseFloat(classStdDevInput.value);
+
 
             if (finalNotu < MINIMUM_FINAL_NOTU_VARSAYILAN) {
                 harfNotu = "FF";
-                anaMesaj = `Final notunuz (${finalNotu}) minimum (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altında olduğu için harf notunuz doğrudan <strong>FF</strong> olarak belirlenmiştir.`;
+                anaMesaj = `Final notunuz (${finalNotu.toFixed(2)}) minimum (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altında olduğu için harf notunuz doğrudan <strong>FF</strong> olarak belirlenmiştir.`;
             } else if (hamBasariNotu <= 15) {
                 harfNotu = "FF";
                 anaMesaj = `Hesaplanan Ham Başarı Notu (${hamBasariNotu.toFixed(2)}) 15 veya altında olduğu için harf notunuz doğrudan <strong>FF</strong> olarak belirlenmiştir.`;
             } else {
                 const mutlakNotKarsiligi = getMutlakDegerlendirmeNotu(hamBasariNotu);
-                if (sinifOrtalamasi >= 80) {
+                if (sinifOrtalamasiVal >= 80) {
                     harfNotu = mutlakNotKarsiligi;
-                    anaMesaj = `Sınıf ortalaması (${sinifOrtalamasi.toFixed(2)}) 80 veya üzeri olduğu için notunuz doğrudan Mutlak Değerlendirme Sistemine (Tablo-3) göre belirlenmiştir.`;
+                    anaMesaj = `Sınıf ortalaması (${sinifOrtalamasiVal.toFixed(2)}) 80 veya üzeri olduğu için notunuz doğrudan Mutlak Değerlendirme Sistemine (Tablo-3) göre belirlenmiştir.`;
                     hesaplamaDetaylari = `Mutlak Değerlendirme (Tablo-3) sonucu: <strong>${mutlakNotKarsiligi}</strong>.`;
                 } else {
-                    if (sinifStandartSapma === 0) {
-                        hataGoster(harfNotuSonucAlani, "Hata: Sınıf Ortalaması 80'den düşük olduğunda Standart Sapma 0 olamaz. Bu durumda bağıl değerlendirme yapılamaz.");
-                        return;
-                    }
-                    tSkoru = ((hamBasariNotu - sinifOrtalamasi) / sinifStandartSapma) * 10 + 50;
-                    tSkoru = Math.round(tSkoru * 100) / 100;
-                    const bagilNot = getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasi);
+                    // sinifStandartSapmaVal === 0 durumu yukarıda formGecerli ile engellendi (eğer ort < 80)
+                    tSkoru = ((hamBasariNotu - sinifOrtalamasiVal) / sinifStandartSapmaVal) * 10 + 50;
+                    tSkoru = Math.round(tSkoru * 10000) / 10000;
+                    const bagilNot = getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasiVal);
+
                     if (bagilNot === null) {
-                        anaMesaj = `Bağıl değerlendirme için T-Skor (${tSkoru.toFixed(2)}) karşılığı bir harf notu aralığı bulunamadı (Sınıf Ort: ${sinifOrtalamasi.toFixed(2)}). Bu durumda Mutlak Değerlendirme (Tablo-3) notunuz esas alınmıştır.`;
+                        anaMesaj = `Bağıl değerlendirme için T-Skor (${tSkoru.toFixed(2)}) karşılığı bir harf notu aralığı bulunamadı (Sınıf Ort: ${sinifOrtalamasiVal.toFixed(2)}). Bu durumda Mutlak Değerlendirme (Tablo-3) notunuz (${mutlakNotKarsiligi}) esas alınmıştır.`;
                         harfNotu = mutlakNotKarsiligi;
-                        hesaplamaDetaylari = `Mutlak Değerlendirme (Tablo-3) sonucu: <strong>${mutlakNotKarsiligi}</strong>.`;
+                        hesaplamaDetaylari = `T-Skoru: <strong>${tSkoru.toFixed(2)}</strong> (Bağıl not bulunamadı).<br>Mutlak Değerlendirme (Tablo-3) sonucu: <strong>${mutlakNotKarsiligi}</strong>.`;
                     } else {
                         harfNotu = karsilastirHarfNotlari(bagilNot, mutlakNotKarsiligi);
                         hesaplamaDetaylari = `Hesaplanan T-Skoru: <strong>${tSkoru.toFixed(2)}</strong>.<br>`;
@@ -206,9 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (harfNotu === mutlakNotKarsiligi && harfNotu !== bagilNot && bagilNot !== null) {
                             hesaplamaDetaylari += `Mutlak değerlendirme notunuz (${mutlakNotKarsiligi}), bağıl notunuzdan (${bagilNot}) daha iyi olduğu için esas alınmıştır (KTÜ Yön. Madde 9, Alt Madde 6).<br>`;
                         } else if (harfNotu === bagilNot && harfNotu !== mutlakNotKarsiligi) {
-                             hesaplamaDetaylari += `Bağıl değerlendirme notunuz (${bagilNot}) esas alınmıştır.<br>`;
+                            hesaplamaDetaylari += `Bağıl değerlendirme notunuz (${bagilNot}) esas alınmıştır.<br>`;
                         } else if (harfNotu === bagilNot && harfNotu === mutlakNotKarsiligi && bagilNot !== null) {
-                            hesaplamaDetaylari += `Bağıl ve Mutlak değerlendirme notlarınız aynı (${harfNotu}) olduğu için bu not esas alınmıştır.<br>`;
+                             hesaplamaDetaylari += `Bağıl ve Mutlak değerlendirme notlarınız aynı (${harfNotu}) olduğu için bu not esas alınmıştır.<br>`;
                         }
                     }
                 }
@@ -218,7 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 sonucMesaji += `<p>${anaMesaj}</p><hr class="input-separator">`;
             }
             sonucMesaji += `Hesaplanan Ham Başarı Notu: <strong>${hamBasariNotu.toFixed(2)}</strong><br>`;
-            sonucMesaji += `Harf Notu: <strong style="font-size: 1.2em;">${harfNotu}</strong>`;
+            let harfNotuBadgeHTML = harfNotu ? `<span class="grade-display-badge grade-display-${harfNotu.toLowerCase()}">${harfNotu}</span>` : "Hesaplanamadı";
+            sonucMesaji += `Harf Notu: <strong style="font-size: 1.1em; vertical-align: middle;">${harfNotuBadgeHTML}</strong>`;
+
             if (hesaplamaDetaylari) {
                 sonucMesaji += `<br><details style="margin-top: 10px; font-size: 0.9em; color: #555;"><summary>Hesaplama Detayları</summary><p style="margin-top: 5px;">${hesaplamaDetaylari}</p></details>`;
             }
@@ -231,210 +483,277 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Gerekli Final Notu Formu İşlemleri ---
     if (gerekliNotFormu) {
+        const reqMidtermAvgInput = document.getElementById('req-midterm-avg');
+        const vizeNotuGerekliInput = document.getElementById('vize-notu-gerekli');
+        const vizeAgirlikGerekliInput = document.getElementById('vize-agirlik-gerekli');
+        const odevNotuGerekliInput = document.getElementById('odev-notu-gerekli');
+        const odevAgirlikGerekliInput = document.getElementById('odev-agirlik-gerekli');
+        const targetGradeSelect = document.getElementById('target-grade');
+        const reqClassAvgInput = document.getElementById('req-class-avg');
+        const reqClassStdDevInput = document.getElementById('req-class-stddev');
+
+        const inputsToValidateGerekli = [
+            { el: reqMidtermAvgInput, name: 'Ara Sınav Ortalaması', min: 0, max: 100, isTekOrtalamaOnly: true },
+            { el: vizeNotuGerekliInput, name: 'Vize Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: vizeAgirlikGerekliInput, name: 'Vize Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true },
+            { el: odevNotuGerekliInput, name: 'Ödev/Proje Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: odevAgirlikGerekliInput, name: 'Ödev/Proje Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true },
+            { el: targetGradeSelect, name: 'Hedeflenen Harf Notu', isSelect: true },
+            { el: reqClassAvgInput, name: 'Sınıf Ortalaması', min: 0, max: 100 },
+            { el: reqClassStdDevInput, name: 'Standart Sapma', min: 0.0001, max: null } // Std Sapma 0 olamaz (eğer Ort < 80)
+        ];
+
+        inputsToValidateGerekli.forEach(item => {
+            if (item.el) {
+                item.el.addEventListener('blur', () => {
+                    const secilenYontem = gerekliNotFormu.querySelector('input[name="hesaplamaYontemiGerekli"]:checked').value;
+                    const isTekOrtalamaActive = secilenYontem === 'tek';
+
+                    if ((item.isTekOrtalamaOnly && !isTekOrtalamaActive) || (item.isDetayliOnly && isTekOrtalamaActive)) {
+                        clearFieldError(item.el); return;
+                    }
+                    let isValid;
+                    if(item.isSelect){
+                        isValid = validateRequiredField(item.el, item.name);
+                    } else {
+                        isValid = validateNumberField(item.el, item.name, item.min, item.max);
+                    }
+
+                    if (isValid && item.isWeight && !isTekOrtalamaActive) {
+                        validateDetailedWeights(vizeAgirlikGerekliInput, odevAgirlikGerekliInput, 'Gerekli');
+                    }
+                     if (item.el === reqClassStdDevInput && parseFloat(reqClassAvgInput.value) < 80 && parseFloat(item.el.value) === 0) {
+                        showFieldError(item.el, "Sınıf ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                    } else if (item.el === reqClassStdDevInput && parseFloat(item.el.value) !== 0) {
+                        const errorSpan = item.el.closest('.form-group').querySelector('span.error-feedback');
+                        if (errorSpan && errorSpan.textContent.includes("0 olamaz")) {
+                           clearFieldError(item.el);
+                        }
+                    }
+                });
+            }
+        });
+
         gerekliNotFormu.addEventListener('submit', (event) => {
             event.preventDefault();
             gerekliNotSonucAlani.innerHTML = "<p>Hesaplanıyor...</p>";
-            let araSinavHBNKatkisi = 0;
-            let gecerliGiris = true;
+            let formGecerli = true;
             const secilenYontem = gerekliNotFormu.querySelector('input[name="hesaplamaYontemiGerekli"]:checked').value;
 
             if (secilenYontem === 'tek') {
-                const araSinavOrtalamasiInput = document.getElementById('req-midterm-avg');
-                const araSinavOrtalamasi = parseFloat(araSinavOrtalamasiInput.value);
-                araSinavOrtalamasiInput.required = true;
-                if (isNaN(araSinavOrtalamasi) || araSinavOrtalamasi < 0 || araSinavOrtalamasi > 100) {
-                    hataGoster(gerekliNotSonucAlani, "Hata: Geçerli bir ara sınav ortalaması girin (0-100)."); gecerliGiris = false;
-                } else {
-                    araSinavHBNKatkisi = araSinavOrtalamasi * 0.50;
-                }
-                document.getElementById('vize-notu-gerekli').required = false; document.getElementById('vize-agirlik-gerekli').required = false;
-                document.getElementById('odev-notu-gerekli').required = false; document.getElementById('odev-agirlik-gerekli').required = false;
+                if (!validateNumberField(reqMidtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
             } else {
-                document.getElementById('req-midterm-avg').required = false;
-                const vizeNotu = parseFloat(document.getElementById('vize-notu-gerekli').value);
-                const vizeAgirlik = parseFloat(document.getElementById('vize-agirlik-gerekli').value);
-                const odevNotu = parseFloat(document.getElementById('odev-notu-gerekli').value);
-                const odevAgirlik = parseFloat(document.getElementById('odev-agirlik-gerekli').value);
-                document.getElementById('vize-notu-gerekli').required = true; document.getElementById('vize-agirlik-gerekli').required = true;
-                document.getElementById('odev-notu-gerekli').required = true; document.getElementById('odev-agirlik-gerekli').required = true;
-                if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik) ||
-                    vizeNotu < 0 || vizeNotu > 100 || odevNotu < 0 || odevNotu > 100 ||
-                    vizeAgirlik < 0 || vizeAgirlik > 50 || odevAgirlik < 0 || odevAgirlik > 50) {
-                    hataGoster(gerekliNotSonucAlani, "Hata: Lütfen detaylı giriş alanlarını (notlar 0-100, ağırlıklar 0-50) doğru şekilde doldurun."); gecerliGiris = false;
-                } else if (Math.abs(vizeAgirlik + odevAgirlik - 50) > 0.01) {
-                    hataGoster(gerekliNotSonucAlani, "Hata: Detaylı girişteki ağırlıkların (vize+ödev) HBN'ye toplam katkısı %50 olmalıdır."); gecerliGiris = false;
-                } else {
-                    araSinavHBNKatkisi = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100);
+                if (!validateNumberField(vizeNotuGerekliInput, 'Vize Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(vizeAgirlikGerekliInput, 'Vize Ağırlığı', 0, 50)) formGecerli = false;
+                if (!validateNumberField(odevNotuGerekliInput, 'Ödev/Proje Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(odevAgirlikGerekliInput, 'Ödev/Proje Ağırlığı', 0, 50)) formGecerli = false;
+                if (formGecerli) {
+                    if (!validateDetailedWeights(vizeAgirlikGerekliInput, odevAgirlikGerekliInput, 'Gerekli')) formGecerli = false;
                 }
             }
-            const hedefHarfNotu = document.getElementById('target-grade').value;
-            const sinifOrtalamasi = parseFloat(document.getElementById('req-class-avg').value);
-            const sinifStandartSapma = parseFloat(document.getElementById('req-class-stddev').value);
-            if (!hedefHarfNotu || isNaN(sinifOrtalamasi) || isNaN(sinifStandartSapma)) {
-                hataGoster(gerekliNotSonucAlani, "Hata: Lütfen Hedef Not, Sınıf Ortalaması ve Standart Sapma alanlarını doğru şekilde doldurun."); gecerliGiris = false;
+            if (!validateRequiredField(targetGradeSelect, 'Hedeflenen Harf Notu')) formGecerli = false;
+            if (!validateNumberField(reqClassAvgInput, 'Sınıf Ortalaması', 0, 100)) formGecerli = false;
+
+            const sinifOrtalamasiVal = parseFloat(reqClassAvgInput.value);
+            const minStdDevGerekli = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
+            if (!validateNumberField(reqClassStdDevInput, 'Standart Sapma', minStdDevGerekli, null)) formGecerli = false;
+
+            if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(reqClassStdDevInput.value) === 0) {
+                 showFieldError(reqClassStdDevInput, "Sınıf ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                 formGecerli = false;
             }
-            if (sinifOrtalamasi < 0 || sinifOrtalamasi > 100 || sinifStandartSapma < 0) {
-                hataGoster(gerekliNotSonucAlani, "Hata: Sınıf Ortalaması 0-100, standart sapma 0 veya üzeri olmalıdır."); gecerliGiris = false;
+
+
+            if (!formGecerli) {
+                gerekliNotSonucAlani.innerHTML = `<p class="error-message">Lütfen formdaki işaretli hataları düzeltin.</p>`;
+                const firstInvalidInput = gerekliNotFormu.querySelector('input.invalid-input, select.invalid-input');
+                if (firstInvalidInput) firstInvalidInput.focus();
+                return;
             }
-            if (!gecerliGiris) return;
+
+            const araSinavHBNKatkisi = calculateMidtermContribution('Gerekli', gerekliNotFormu);
+            const hedefHarfNotu = targetGradeSelect.value;
+            const sinifStandartSapmaVal = parseFloat(reqClassStdDevInput.value);
 
             let sonucMetni = "";
-            let anaMesaj = "";
-            let hesaplamaDetaylari = "";
-            let sistemTuru = "";
+            let anaMesajReq = "";
+            let hesaplamaDetaylariReq = "";
+            let sistemTuru = ""; // "Mutlak Sistem" veya "Bağıl Sistem"
 
-            if (sinifOrtalamasi >= 80) {
+            if (sinifOrtalamasiVal >= 80) {
                 sistemTuru = "Mutlak Sistem";
                 const mutlakAralik = MUTLAK_DEGERLENDIRME_ARALIKLARI[hedefHarfNotu];
                 if (!mutlakAralik) {
-                    hataGoster(gerekliNotSonucAlani, `Hata: Hedeflenen harf notu (${hedefHarfNotu}) için mutlak değerlendirme aralığı bulunamadı.`);
+                    gerekliNotSonucAlani.innerHTML = `<p class="error-message">Hata: Hedeflenen harf notu (${hedefHarfNotu}) için mutlak değerlendirme aralığı bulunamadı.</p>`;
                     return;
                 }
-                const hedefHamBasariNotu = mutlakAralik[0];
+                const hedefHamBasariNotu = mutlakAralik[0]; // Hedef HBN alt sınırı
                 let gerekenFinalNotu = (hedefHamBasariNotu - araSinavHBNKatkisi) / 0.50;
-                gerekenFinalNotu = Math.max(0, gerekenFinalNotu);
-                const gerekenFinalNotuYuvarla = Math.ceil(gerekenFinalNotu * 100) / 100;
-                hesaplamaDetaylari = `Sınıf ortalaması (${sinifOrtalamasi.toFixed(2)}) 80 veya üzeri olduğu için Mutlak Değerlendirme (Tablo-3) hedeflenmiştir.<br>`;
-                hesaplamaDetaylari += `Hedeflenen <strong>${hedefHarfNotu}</strong> notu için Mutlak Sistemde gereken Ham Başarı Notu alt sınırı: <strong>${hedefHamBasariNotu.toFixed(2)}</strong>.<br>`;
+                gerekenFinalNotu = Math.max(0, gerekenFinalNotu); // Final notu negatif olamaz
+                const gerekenFinalNotuYuvarla = Math.ceil(gerekenFinalNotu * 100) / 100; // Yukarı yuvarla
+
+                hesaplamaDetaylariReq = `Sınıf ortalaması (${sinifOrtalamasiVal.toFixed(2)}) 80 veya üzeri olduğu için Mutlak Değerlendirme (Tablo-3) hedeflenmiştir.<br>`;
+                hesaplamaDetaylariReq += `Hedeflenen <strong>${hedefHarfNotu}</strong> notu için Mutlak Sistemde gereken Ham Başarı Notu alt sınırı: <strong>${hedefHamBasariNotu.toFixed(2)}</strong>.<br>`;
+
                 if (gerekenFinalNotuYuvarla > 100) {
-                    anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}) <strong>100'den yüksek</strong>. Bu hedefe ulaşmak imkansız.`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}) <strong>100'den yüksek</strong>. Bu hedefe ulaşmak imkansız.`;
                     sonucMetni = "İmkansız (>100)";
                 } else if (gerekenFinalNotuYuvarla < MINIMUM_FINAL_NOTU_VARSAYILAN) {
-                     anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için teorik olarak gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}), minimum final (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altındadır. Yine de finalden <strong>en az ${MINIMUM_FINAL_NOTU_VARSAYILAN}</strong> almalısınız.`;
-                    sonucMetni = `En az ${MINIMUM_FINAL_NOTU_VARSAYILAN} <small>(Hesap: ${gerekenFinalNotuYuvarla.toFixed(2)})</small>`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için teorik olarak gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}), minimum final (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altındadır. Finalden <strong>en az ${MINIMUM_FINAL_NOTU_VARSAYILAN}</strong> almalısınız. Bu durumda, hedeflediğiniz ${hedefHarfNotu} notuna ulaşmanız, Ham Başarı Notunuzun Mutlak Değerlendirme'de bu nota denk gelmesine bağlı olacaktır.`;
+                    sonucMetni = `En az ${MINIMUM_FINAL_NOTU_VARSAYILAN} <small>(Hesaplanan: ${gerekenFinalNotuYuvarla.toFixed(2)})</small>`;
                 } else {
-                    anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için finalden <strong>en az ${gerekenFinalNotuYuvarla.toFixed(2)}</strong> almanız gerekmektedir.`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotu.toFixed(2)}) ulaşmak için finalden <strong>en az ${gerekenFinalNotuYuvarla.toFixed(2)}</strong> almanız gerekmektedir.`;
                     sonucMetni = gerekenFinalNotuYuvarla.toFixed(2);
                 }
-            } else {
+            } else { // Bağıl Sistem
                 sistemTuru = "Bağıl Sistem";
-                if (sinifStandartSapma === 0) {
-                    hataGoster(gerekliNotSonucAlani, "Hata: Sınıf Ortalaması 80'den düşük ise Standart Sapma 0 olamaz. Bağıl hesaplama yapılamaz."); return;
-                }
-                const minimumTskor = getHedefNotIcinMinTskor(hedefHarfNotu, sinifOrtalamasi);
-                if (minimumTskor === null) {
-                    hataGoster(gerekliNotSonucAlani, `Hata: Hedeflenen "${hedefHarfNotu}" notu için T-skor aralığı bulunamadı (Sınıf Ort: ${sinifOrtalamasi.toFixed(2)}).`);
+                const minimumTskor = getHedefNotIcinMinTskor(hedefHarfNotu, sinifOrtalamasiVal);
+                if (minimumTskor === null) { // getHedefNotIcinMinTskor, uygun aralık bulamazsa null döner
+                    gerekliNotSonucAlani.innerHTML = `<p class="error-message">Hata: Hedeflenen "${hedefHarfNotu}" notu için T-skor aralığı bulunamadı (Sınıf Ort: ${sinifOrtalamasiVal.toFixed(2)}).</p>`;
                     return;
                 }
-                let hedefHamBasariNotuBagil = ((minimumTskor - 50) / 10) * sinifStandartSapma + sinifOrtalamasi;
+                let hedefHamBasariNotuBagil = ((minimumTskor - 50) / 10) * sinifStandartSapmaVal + sinifOrtalamasiVal;
                 let gerekenFinalNotu = (hedefHamBasariNotuBagil - araSinavHBNKatkisi) / 0.50;
                 gerekenFinalNotu = Math.max(0, gerekenFinalNotu);
                 const gerekenFinalNotuYuvarla = Math.ceil(gerekenFinalNotu * 100) / 100;
-                hesaplamaDetaylari = `Hedeflenen <strong>${hedefHarfNotu}</strong> notu (Bağıl Değerlendirme) için;<br>`;
-                hesaplamaDetaylari += `- Gerekli min. T-Skoru: ${minimumTskor.toFixed(2)} (Sınıf Ort: ${sinifOrtalamasi.toFixed(2)}, Std Sapma: ${sinifStandartSapma.toFixed(2)})<br>`;
-                hesaplamaDetaylari += `- Bu T-skoruna ulaşmak için gereken minimum Ham Başarı Notu (Bağıl): <strong>${hedefHamBasariNotuBagil.toFixed(2)}</strong><br>`;
+
+                hesaplamaDetaylariReq = `Hedeflenen <strong>${hedefHarfNotu}</strong> notu (Bağıl Değerlendirme) için;<br>`;
+                hesaplamaDetaylariReq += `- Gerekli min. T-Skoru: ${minimumTskor.toFixed(2)} (Sınıf Ort: ${sinifOrtalamasiVal.toFixed(2)}, Std Sapma: ${sinifStandartSapmaVal.toFixed(2)})<br>`;
+                hesaplamaDetaylariReq += `- Bu T-skoruna ulaşmak için gereken minimum Ham Başarı Notu (Bağıl): <strong>${hedefHamBasariNotuBagil.toFixed(2)}</strong><br>`;
                 const mutlakNotKarsiligiHBN = getMutlakDegerlendirmeNotu(hedefHamBasariNotuBagil);
-                hesaplamaDetaylari += `<small style='color:#555;'>(Bu HBN (${hedefHamBasariNotuBagil.toFixed(2)}) Mutlak Sistemde yaklaşık ${mutlakNotKarsiligiHBN} notuna denk gelir.)</small>`;
+                hesaplamaDetaylariReq += `<small style='color:#555;'>(Bu HBN (${hedefHamBasariNotuBagil.toFixed(2)}) Mutlak Sistemde yaklaşık ${mutlakNotKarsiligiHBN} notuna denk gelir. Notunuz, bağıl ve mutlak karşılaştırmasında yüksek olan olacaktır.)</small>`;
+
                 if (gerekenFinalNotuYuvarla > 100) {
-                    anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}) <strong>100'den yüksek</strong>. Bu hedefe ulaşmak imkansız.`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}) <strong>100'den yüksek</strong>. Bu hedefe ulaşmak imkansız.`;
                     sonucMetni = "İmkansız (>100)";
                 } else if (gerekenFinalNotuYuvarla < MINIMUM_FINAL_NOTU_VARSAYILAN) {
-                    anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için teorik olarak gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}), minimum final (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altındadır. Finalden <strong>en az ${MINIMUM_FINAL_NOTU_VARSAYILAN}</strong> almanız gerekmektedir. Bu durumda hedeflediğiniz ${hedefHarfNotu} notuna ulaşamayabilirsiniz.`;
-                    sonucMetni = `En az ${MINIMUM_FINAL_NOTU_VARSAYILAN} <small>(Hesap: ${gerekenFinalNotuYuvarla.toFixed(2)})</small>`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için teorik olarak gereken final notu (${gerekenFinalNotuYuvarla.toFixed(2)}), minimum final (${MINIMUM_FINAL_NOTU_VARSAYILAN}) sınırının altındadır. Finalden <strong>en az ${MINIMUM_FINAL_NOTU_VARSAYILAN}</strong> almanız gerekmektedir. Bu durumda hedeflediğiniz ${hedefHarfNotu} notuna ulaşamayabilirsiniz veya Ham Başarı Notunuzun Mutlak Değerlendirme karşılığı daha yüksekse o geçerli olabilir.`;
+                    sonucMetni = `En az ${MINIMUM_FINAL_NOTU_VARSAYILAN} <small>(Hesaplanan: ${gerekenFinalNotuYuvarla.toFixed(2)})</small>`;
                 } else {
-                    anaMesaj = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için finalden <strong>en az ${gerekenFinalNotuYuvarla.toFixed(2)}</strong> almanız gerekmektedir.`;
+                    anaMesajReq = `Bu Ham Başarı Notuna (${hedefHamBasariNotuBagil.toFixed(2)}) ulaşmak için finalden <strong>en az ${gerekenFinalNotuYuvarla.toFixed(2)}</strong> almanız gerekmektedir.`;
                     sonucMetni = gerekenFinalNotuYuvarla.toFixed(2);
                 }
             }
-            let sonucMesaji = `Gereken Final Notu (${sistemTuru}): <strong style="font-size: 1.2em;">${sonucMetni}</strong><br><hr class="input-separator">`;
-            sonucMesaji += `<p>${anaMesaj}</p>`;
-            sonucMesaji += `<details style="margin-top: 10px; font-size: 0.9em; color: #555;"><summary>Hesaplama Detayları</summary><p style="margin-top: 5px;">${hesaplamaDetaylari}</p></details>`;
-            gerekliNotSonucAlani.innerHTML = sonucMesaji;
+            let finalSonucHTML = `Gereken Final Notu (${sistemTuru}): <strong style="font-size: 1.2em;">${sonucMetni}</strong><hr class="input-separator">`;
+            finalSonucHTML += `<p>${anaMesajReq}</p>`;
+            finalSonucHTML += `<details style="margin-top: 10px; font-size: 0.9em; color: #555;"><summary>Hesaplama Detayları</summary><p style="margin-top: 5px;">${hesaplamaDetaylariReq}</p></details>`;
+            gerekliNotSonucAlani.innerHTML = finalSonucHTML;
         });
     }
 
+
+    // --- Geçme Senaryoları Formu İşlemleri ---
     if (senaryoFormu) {
+        const scenarioMidtermAvgInput = document.getElementById('scenario-midterm-avg');
+        const vizeNotuSenaryoInput = document.getElementById('vize-notu-senaryo');
+        const vizeAgirlikSenaryoInput = document.getElementById('vize-agirlik-senaryo');
+        const odevNotuSenaryoInput = document.getElementById('odev-notu-senaryo');
+        const odevAgirlikSenaryoInput = document.getElementById('odev-agirlik-senaryo');
+        // Hedeflenen harf notu radio butonlarından alınacak, select değil.
+
+        const inputsToValidateSenaryo = [
+            { el: scenarioMidtermAvgInput, name: 'Ara Sınav Ortalaması', min: 0, max: 100, isTekOrtalamaOnly: true },
+            { el: vizeNotuSenaryoInput, name: 'Vize Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: vizeAgirlikSenaryoInput, name: 'Vize Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true },
+            { el: odevNotuSenaryoInput, name: 'Ödev/Proje Notu', min: 0, max: 100, isDetayliOnly: true },
+            { el: odevAgirlikSenaryoInput, name: 'Ödev/Proje Ağırlığı', min: 0, max: 50, isDetayliOnly: true, isWeight: true }
+        ];
+
+        inputsToValidateSenaryo.forEach(item => {
+            if (item.el) {
+                item.el.addEventListener('blur', () => {
+                    const secilenYontem = senaryoFormu.querySelector('input[name="hesaplamaYontemiSenaryo"]:checked').value;
+                    const isTekOrtalamaActive = secilenYontem === 'tek';
+
+                    if ((item.isTekOrtalamaOnly && !isTekOrtalamaActive) || (item.isDetayliOnly && isTekOrtalamaActive)) {
+                        clearFieldError(item.el); return;
+                    }
+                    let isValid = validateNumberField(item.el, item.name, item.min, item.max);
+                    if (isValid && item.isWeight && !isTekOrtalamaActive) {
+                        validateDetailedWeights(vizeAgirlikSenaryoInput, odevAgirlikSenaryoInput, 'Senaryo');
+                    }
+                });
+            }
+        });
+
         senaryoFormu.addEventListener('submit', (event) => {
             event.preventDefault();
             senaryoTabloAlani.innerHTML = "<p>Senaryolar Hesaplanıyor...</p>";
-            let araSinavHBNKatkisi = 0;
-            let gecerliGiris = true;
+            let formGecerli = true;
             const secilenYontem = senaryoFormu.querySelector('input[name="hesaplamaYontemiSenaryo"]:checked').value;
 
             if (secilenYontem === 'tek') {
-                const araSinavOrtalamasiInput = document.getElementById('scenario-midterm-avg');
-                const araSinavOrtalamasi = parseFloat(araSinavOrtalamasiInput.value);
-                araSinavOrtalamasiInput.required = true;
-                if (isNaN(araSinavOrtalamasi) || araSinavOrtalamasi < 0 || araSinavOrtalamasi > 100) {
-                    hataGoster(senaryoTabloAlani, "Hata: Geçerli bir ara sınav ortalaması girin (0-100)."); gecerliGiris = false;
-                } else {
-                    araSinavHBNKatkisi = araSinavOrtalamasi * 0.50;
-                }
-                document.getElementById('vize-notu-senaryo').required = false; document.getElementById('vize-agirlik-senaryo').required = false;
-                document.getElementById('odev-notu-senaryo').required = false; document.getElementById('odev-agirlik-senaryo').required = false;
+                if (!validateNumberField(scenarioMidtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
             } else {
-                document.getElementById('scenario-midterm-avg').required = false;
-                const vizeNotu = parseFloat(document.getElementById('vize-notu-senaryo').value);
-                const vizeAgirlik = parseFloat(document.getElementById('vize-agirlik-senaryo').value);
-                const odevNotu = parseFloat(document.getElementById('odev-notu-senaryo').value);
-                const odevAgirlik = parseFloat(document.getElementById('odev-agirlik-senaryo').value);
-                document.getElementById('vize-notu-senaryo').required = true; document.getElementById('vize-agirlik-senaryo').required = true;
-                document.getElementById('odev-notu-senaryo').required = true; document.getElementById('odev-agirlik-senaryo').required = true;
-                if (isNaN(vizeNotu) || isNaN(vizeAgirlik) || isNaN(odevNotu) || isNaN(odevAgirlik) ||
-                    vizeNotu < 0 || vizeNotu > 100 || odevNotu < 0 || odevNotu > 100 ||
-                    vizeAgirlik < 0 || vizeAgirlik > 50 || odevAgirlik < 0 || odevAgirlik > 50) {
-                    hataGoster(senaryoTabloAlani, "Hata: Lütfen detaylı giriş alanlarını (notlar 0-100, ağırlıklar 0-50) doğru şekilde doldurun."); gecerliGiris = false;
-                } else if (Math.abs(vizeAgirlik + odevAgirlik - 50) > 0.01) {
-                    hataGoster(senaryoTabloAlani, "Hata: Detaylı girişteki ağırlıkların (vize+ödev) HBN'ye toplam katkısı %50 olmalıdır."); gecerliGiris = false;
-                } else {
-                    araSinavHBNKatkisi = (vizeNotu * vizeAgirlik / 100) + (odevNotu * odevAgirlik / 100);
+                if (!validateNumberField(vizeNotuSenaryoInput, 'Vize Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(vizeAgirlikSenaryoInput, 'Vize Ağırlığı', 0, 50)) formGecerli = false;
+                if (!validateNumberField(odevNotuSenaryoInput, 'Ödev/Proje Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(odevAgirlikSenaryoInput, 'Ödev/Proje Ağırlığı', 0, 50)) formGecerli = false;
+                if (formGecerli) {
+                    if (!validateDetailedWeights(vizeAgirlikSenaryoInput, odevAgirlikSenaryoInput, 'Senaryo')) formGecerli = false;
                 }
             }
-            if (!gecerliGiris) return;
+            // Hedef harf notu radio butonları için özel bir validasyona gerek yok, biri hep seçili olacak.
 
-            const hedefHarfNotu = senaryoFormu.querySelector('input[name="scenarioTargetGrade"]:checked').value;
+            if (!formGecerli) {
+                senaryoTabloAlani.innerHTML = `<p class="error-message">Lütfen ara sınav bilgilerinizi doğru girin.</p>`;
+                 const firstInvalidInput = senaryoFormu.querySelector('input.invalid-input');
+                if (firstInvalidInput) firstInvalidInput.focus();
+                return;
+            }
+
+            const araSinavHBNKatkisi = calculateMidtermContribution('Senaryo', senaryoFormu);
+            const hedefHarfNotuRadio = senaryoFormu.querySelector('input[name="scenarioTargetGrade"]:checked');
+            if (!hedefHarfNotuRadio) { // Bu durum olmamalı ama kontrol edelim.
+                 senaryoTabloAlani.innerHTML = `<p class="error-message">Lütfen hedef harf notunu seçin.</p>`;
+                 return;
+            }
+            const hedefHarfNotu = hedefHarfNotuRadio.value;
+
             const senaryoOrtalamalar = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
             const senaryoStdSapmalar = [8, 10, 12, 15, 18, 20, 22, 25];
 
-            let tabloHTML = `<table>`;
-            // CAPTION KALDIRILDI
-
-            tabloHTML += `<thead><tr>`;
+            let tabloHTML = `<table><thead><tr>`;
             tabloHTML += `<th scope="col" style="text-align:center; min-width:140px; vertical-align: middle;">
-                                <div style='font-weight:bold; font-size:0.9em; padding-bottom:2px;'>Sınıf Ortalaması (→)</div>
-                                <hr style='margin:0; border-style: solid; border-width: 0 0 1px 0; border-color: var(--input-focus-border);'>
-                                <div style='font-weight:bold; font-size:0.9em; padding-top:2px;'>Std. Sapma (↓)</div>
-                           </th>`;
-            senaryoOrtalamalar.forEach(ort => {
-                tabloHTML += `<th scope="col" title="Bu sütun, Sınıf Ortalamasının ${ort} olduğu senaryoyu gösterir">${ort}</th>`;
-            });
-            tabloHTML += `<th scope="col" title="Sınıf Ortalaması 80 ve üzeri olduğunda Mutlak Değerlendirme Sistemi geçerlidir. Bu sütun bu durumu gösterir.">&ge;80 <br><small style='font-weight:normal'>(Mutlak)</small></th>`;
+                                 <div style='font-weight:bold; font-size:0.9em; padding-bottom:2px;'>Sınıf Ort. (→)</div>
+                                 <hr style='margin:0; border-style: solid; border-width: 0 0 1px 0; border-color: var(--input-focus-border);'>
+                                 <div style='font-weight:bold; font-size:0.9em; padding-top:2px;'>Std. Sapma (↓)</div>
+                             </th>`;
+            senaryoOrtalamalar.forEach(ort => { tabloHTML += `<th scope="col" title="Sınıf Ortalaması: ${ort}">${ort}</th>`; });
+            tabloHTML += `<th scope="col" title="Sınıf Ort. ≥ 80 (Mutlak Değerlendirme)">&ge;80 <br><small style='font-weight:normal'>(Mutlak)</small></th>`;
             tabloHTML += `</tr></thead><tbody>`;
 
             let ornekOrtalama = null, ornekStdSapma = null, ornekGerekenNot = null;
             let ilkUygunOrnekBulundu = false;
 
             senaryoStdSapmalar.forEach(stdSapma => {
-                tabloHTML += `<tr><th scope="row" title="Bu satır, Standart Sapmanın ${stdSapma} olduğu senaryoyu gösterir">${stdSapma}</th>`;
+                tabloHTML += `<tr><th scope="row" title="Standart Sapma: ${stdSapma}">${stdSapma}</th>`;
                 senaryoOrtalamalar.forEach(ortalama => {
                     let gerekenFinalNotu = "-"; let cellClass = "impossible";
-                    if (ortalama < 80) {
-                         if (stdSapma === 0) {
-                            gerekenFinalNotu = "-"; 
-                            cellClass = "impossible";
-                        } else {
-                            const minimumTskor = getHedefNotIcinMinTskor(hedefHarfNotu, ortalama);
-                            if (minimumTskor !== null) {
-                                let hedefHamBasariNotuNihai = ((minimumTskor - 50) / 10) * stdSapma + ortalama;
-                                let hesaplananFinal = (hedefHamBasariNotuNihai - araSinavHBNKatkisi) / 0.50;
-                                hesaplananFinal = Math.max(0, hesaplananFinal);
-                                if (hesaplananFinal > 100) { gerekenFinalNotu = "100+"; cellClass = "impossible"; }
-                                else if (hesaplananFinal < MINIMUM_FINAL_NOTU_VARSAYILAN) { gerekenFinalNotu = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClass = "min-final"; }
-                                else { gerekenFinalNotu = Math.ceil(hesaplananFinal).toString(); cellClass = ""; }
-
-                                if (!ilkUygunOrnekBulundu && cellClass === "") {
-                                    ornekOrtalama = ortalama;
-                                    ornekStdSapma = stdSapma;
-                                    ornekGerekenNot = gerekenFinalNotu;
-                                    ilkUygunOrnekBulundu = true;
-                                }
-                            } else { 
-                                 gerekenFinalNotu = "-"; cellClass = "impossible";
-                            }
-                        }
+                    if (ortalama < 80 && stdSapma === 0) { // Bağıl hesaplama için geçersiz durum
+                         gerekenFinalNotu = "-"; cellClass = "impossible";
                     } else {
-                        gerekenFinalNotu = "-"; cellClass = "impossible";
+                        const minimumTskor = getHedefNotIcinMinTskor(hedefHarfNotu, ortalama);
+                        if (minimumTskor !== null && stdSapma > 0) { // stdSapma > 0 olmalı bağıl için
+                            let hedefHamBasariNotuNihai = ((minimumTskor - 50) / 10) * stdSapma + ortalama;
+                            let hesaplananFinal = (hedefHamBasariNotuNihai - araSinavHBNKatkisi) / 0.50;
+                            hesaplananFinal = Math.max(0, hesaplananFinal);
+                            const yuvarlanmisFinal = Math.ceil(hesaplananFinal * 100) / 100;
+
+
+                            if (yuvarlanmisFinal > 100) { gerekenFinalNotu = "100+"; cellClass = "impossible"; }
+                            else if (yuvarlanmisFinal < MINIMUM_FINAL_NOTU_VARSAYILAN) { gerekenFinalNotu = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClass = "min-final"; }
+                            else { gerekenFinalNotu = Math.ceil(yuvarlanmisFinal).toString(); cellClass = ""; } // Tam sayıya yukarı yuvarla
+
+                            if (!ilkUygunOrnekBulundu && cellClass === "") {
+                                ornekOrtalama = ortalama; ornekStdSapma = stdSapma; ornekGerekenNot = gerekenFinalNotu;
+                                ilkUygunOrnekBulundu = true;
+                            }
+                        } else {
+                             gerekenFinalNotu = "-"; cellClass = "impossible"; // T-skor bulunamadı veya stdSapma 0
+                        }
                     }
                     tabloHTML += `<td class="${cellClass}">${gerekenFinalNotu}</td>`;
                 });
@@ -445,71 +764,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     const hedefHBNSenaryoMutlak = mutlakAralikSenaryo[0];
                     let hesaplananFinalMutlak = (hedefHBNSenaryoMutlak - araSinavHBNKatkisi) / 0.50;
                     hesaplananFinalMutlak = Math.max(0, hesaplananFinalMutlak);
-                    if (hesaplananFinalMutlak > 100) { gerekenFinalMutlak = "100+"; }
-                    else if (hesaplananFinalMutlak < MINIMUM_FINAL_NOTU_VARSAYILAN) { gerekenFinalMutlak = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClassMutlak = "min-final"; }
-                    else { gerekenFinalMutlak = Math.ceil(hesaplananFinalMutlak).toString(); cellClassMutlak = ""; }
+                    const yuvarlanmisFinalMutlak = Math.ceil(hesaplananFinalMutlak*100)/100;
+
+                    if (yuvarlanmisFinalMutlak > 100) { gerekenFinalMutlak = "100+"; }
+                    else if (yuvarlanmisFinalMutlak < MINIMUM_FINAL_NOTU_VARSAYILAN) { gerekenFinalMutlak = `Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}`; cellClassMutlak = "min-final"; }
+                    else { gerekenFinalMutlak = Math.ceil(yuvarlanmisFinalMutlak).toString(); cellClassMutlak = ""; }
                 }
                 tabloHTML += `<td class="${cellClassMutlak}" title="Sınıf Ort. ≥ 80 (Mutlak Sistem). Std. Sapma bu durumda anlamsızdır.">${gerekenFinalMutlak}</td>`;
                 tabloHTML += `</tr>`;
             });
             tabloHTML += `</tbody></table>`;
-
-            // --- KULLANICININ SEÇTİĞİ "ALTERNATİF C" METNİ ---
-            let aciklamaHTML = `<div class="scenario-explanation" style="margin-top: 20px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
-            aciklamaHTML += `<p style="margin-bottom: 8px;">🎯 <strong>"${hedefHarfNotu}" İçin Finalde Kaç Alman Gerek? (Senaryo Tablosu)</strong></p>`;
-            aciklamaHTML += `<p style="margin-bottom: 8px;">Bu tablo, bu sekmede verdiğin ara sınav bilgilerine dayanarak, çeşitli "Sınıf Ortalaması" ve "Standart Sapma" ihtimallerine göre finalde alman gereken en düşük notu görmene yardımcı olur.</p>`;
-            aciklamaHTML += `<p style="margin-bottom: 8px;">Tabloyu şöyle kullanabilirsin:<br>Soldan bir "Standart Sapma" değeri, üstten de bir "Sınıf Ortalaması" değeri seç. İkisinin kesiştiği yerdeki sayı, "${hedefHarfNotu}" için o durumda alman gereken final notunu gösterir.</p>`;
-
-            if (ornekGerekenNot !== null && ornekOrtalama !== null && ornekStdSapma !== null) {
-                aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Mesela, sınıf ortalaması <strong>${ornekOrtalama}</strong>, standart sapma <strong>${ornekStdSapma}</strong> ise, "${hedefHarfNotu}" için alman gereken final notu yaklaşık <strong>${ornekGerekenNot}</strong> olur.</em></p>`;
-            } else {
-                 aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Örnek bir senaryo için tabloya göz atın; örneğin, belirli bir standart sapma satırı ile sınıf ortalaması sütununun kesişimine bakarak gereken final notunu görebilirsiniz.</em></p>`;
-            }
-            aciklamaHTML += `</div>`;
-
-            aciklamaHTML += `<div class="scenario-notes" style="margin-top: 15px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
-            aciklamaHTML += `<p style="font-weight:bold; margin-bottom:8px;">⚠️ DİKKAT! BU BİLGİLER HAYAT KURTARIR:</p>`;
-            aciklamaHTML += `<ul style="margin:0; padding-left:0; list-style-type: none;">`;
-
-            aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
-                                📌 <strong>"SINIF ORTALAMASI" DEDİĞİMİZ ŞEY (ÇAN ORTALAMASI) NEDİR? AMAN DİKKAT!</strong><br>
-                                Bu tablodaki "Sınıf Ortalaması" değerleri (ve diğer hesaplamalarda kullandığın "Sınıf Ortalaması") öğrencilerin tek tek hesaplanan Ham Başarı Notlarının (HBN) ortalamasıdır. Yani her öğrencinin vize, ödev, final gibi notlarının ağırlıklarıyla oluşan kendi kişisel başarı puanının ortalamasıdır.<br>
-                                <strong>SAKIN ŞU HATAYA DÜŞME:</strong> Vize sınavının sınıfça ortalamasıyla Final sınavının sınıfça ortalamasını toplayıp ikiye bölerek "Çan Ortalaması"nı bulamazsın! Gerçek "Çan Ortalaması" böyle hesaplanmaz. Çünkü finale girmeyenler, devamsızlar, HBN'si çok düşük olanlar gibi bağıl değerlendirmeye dahil edilmeyen kişiler bu ortalamanın dışında tutulur. Bu yüzden, senin tahmininle gerçek "Çan Ortalaması" arasında fark olabilir. Bu fark, senin harf notunu doğrudan etkiler!
-                            </li>`;
-
-            aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
-                                🛡️ <strong>BU BİR TAHMİN ARACI, RESMİ SONUÇ DEĞİL! HER ZAMAN İŞİNİ SAĞLAMA AL!</strong><br>
-                                Bu hesaplayıcı sana yol göstermek için var. Ama unutma, tablodaki "Sınıf Ortalaması" veya "Standart Sapma" senin dersindeki gerçek değerlerden biraz farklı olabilir. Üniversitenin sistemindeki küsurat hesapları da sonucu milimetrik değiştirebilir.<br>
-                                <strong>ALTIN KURAL:</strong> Tabloda çıkan nota güvenirken, her zaman finalden birkaç puan daha fazlasını almaya çalış ki sonra üzülmeyesin!
-                            </li>`;
-
-            aciklamaHTML += `<li style="margin-bottom: 5px; padding-left:1.5em; text-indent:-1.5em;">
-                                ➡️ <strong>TABLODAKİ DİĞER İŞARETLER NE ANLAMA GELİYOR?</strong>
-                                <ul style="padding-left: 1.8em; margin-top: 5px; list-style-type: none;">
-                                    <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}":</strong> Finalden en az bu notu almak zorundasın, hesaplama daha düşüğünü gösterse bile!</li>
-                                    <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Ort. &ge;80 (Mutlak)":</strong> Eğer sınıfın genel ortalaması 80 veya üstüyse, işler değişir ve Mutlak Sistem devreye girer. Bu sütun sana o durumu gösterir. (Standart sapma burada önemsizdir).</li>
-                                    <li style="padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"100+":</strong> O durumda finalden 100'den fazla alman gerekiyor demek, yani o hedef biraz zor görünüyor!</li>
-                                </ul>
-                            </li>`;
-            aciklamaHTML += `</ul></div>`;
-            // --- KULLANICININ SEÇTİĞİ "ALTERNATİF C" METNİ SONU ---
+            // Açıklama HTML'i orijinaldeki gibi kalabilir, buraya eklemiyorum, sadece tabloyu güncelledim.
+            // Orijinal açıklamaHTML'i buraya yapıştırabilirsiniz.
+            // ... (orijinal aciklamaHTML kodunuz) ...
+             let aciklamaHTML = `<div class="scenario-explanation" style="margin-top: 20px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
+             aciklamaHTML += `<p style="margin-bottom: 8px;">🎯 <strong>"${hedefHarfNotu}" İçin Finalde Kaç Alman Gerek? (Senaryo Tablosu)</strong></p>`;
+             aciklamaHTML += `<p style="margin-bottom: 8px;">Bu tablo, bu sekmede verdiğin ara sınav bilgilerine dayanarak, çeşitli "Sınıf Ortalaması" ve "Standart Sapma" ihtimallerine göre finalde alman gereken en düşük notu görmene yardımcı olur.</p>`;
+             aciklamaHTML += `<p style="margin-bottom: 8px;">Tabloyu şöyle kullanabilirsin:<br>Soldan bir "Standart Sapma" değeri, üstten de bir "Sınıf Ortalaması" değeri seç. İkisinin kesiştiği yerdeki sayı, "${hedefHarfNotu}" için o durumda alman gereken final notunu gösterir.</p>`;
+             if (ornekGerekenNot !== null && ornekOrtalama !== null && ornekStdSapma !== null) {
+                 aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Mesela, sınıf ortalaması <strong>${ornekOrtalama}</strong>, standart sapma <strong>${ornekStdSapma}</strong> ise, "${hedefHarfNotu}" için alman gereken final notu yaklaşık <strong>${ornekGerekenNot}</strong> olur.</em></p>`;
+             } else {
+                 aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Örnek bir senaryo için tabloya göz atın. Ara sınav notlarınız ve hedeflediğiniz harf notuna göre ulaşılabilir bir senaryo bulunmuyorsa, tabloda uygun bir örnek gösterilemeyebilir.</em></p>`;
+             }
+             aciklamaHTML += `</div>`;
+             aciklamaHTML += `<div class="scenario-notes" style="margin-top: 15px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
+             aciklamaHTML += `<p style="font-weight:bold; margin-bottom:8px;">⚠️ DİKKAT! BU BİLGİLER HAYAT KURTARIR:</p>`;
+             aciklamaHTML += `<ul style="margin:0; padding-left:0; list-style-type: none;">`;
+             aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
+                                     📌 <strong>"SINIF ORTALAMASI" DEDİĞİMİZ ŞEY (ÇAN ORTALAMASI) NEDİR? AMAN DİKKAT!</strong><br>
+                                     Bu tablodaki "Sınıf Ortalaması" değerleri (ve diğer hesaplamalarda kullandığın "Sınıf Ortalaması") öğrencilerin tek tek hesaplanan Ham Başarı Notlarının (HBN) ortalamasıdır. Yani her öğrencinin vize, ödev, final gibi notlarının ağırlıklarıyla oluşan kendi kişisel başarı puanının ortalamasıdır.<br>
+                                     <strong>SAKIN ŞU HATAYA DÜŞME:</strong> Vize sınavının sınıfça ortalamasıyla Final sınavının sınıfça ortalamasını toplayıp ikiye bölerek "Çan Ortalaması"nı bulamazsın! Gerçek "Çan Ortalaması" böyle hesaplanmaz. Çünkü finale girmeyenler, devamsızlar, HBN'si çok düşük olanlar gibi bağıl değerlendirmeye dahil edilmeyen kişiler bu ortalamanın dışında tutulur. Bu yüzden, senin tahmininle gerçek "Çan Ortalaması" arasında fark olabilir. Bu fark, senin harf notunu doğrudan etkiler!
+                                 </li>`;
+             aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
+                                     🛡️ <strong>BU BİR TAHMİN ARACI, RESMİ SONUÇ DEĞİL! HER ZAMAN İŞİNİ SAĞLAMA AL!</strong><br>
+                                     Bu hesaplayıcı sana yol göstermek için var. Ama unutma, tablodaki "Sınıf Ortalaması" veya "Standart Sapma" senin dersindeki gerçek değerlerden biraz farklı olabilir. Üniversitenin sistemindeki küsurat hesapları da sonucu milimetrik değiştirebilir.<br>
+                                     <strong>ALTIN KURAL:</strong> Tabloda çıkan nota güvenirken, her zaman finalden birkaç puan daha fazlasını almaya çalış ki sonra üzülmeyesin!
+                                 </li>`;
+             aciklamaHTML += `<li style="margin-bottom: 5px; padding-left:1.5em; text-indent:-1.5em;">
+                                     ➡️ <strong>TABLODAKİ DİĞER İŞARETLER NE ANLAMA GELİYOR?</strong>
+                                     <ul style="padding-left: 1.8em; margin-top: 5px; list-style-type: none;">
+                                         <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}":</strong> Finalden en az bu notu almak zorundasın, hesaplama daha düşüğünü gösterse bile!</li>
+                                         <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Ort. &ge;80 (Mutlak)":</strong> Eğer sınıfın genel ortalaması 80 veya üstüyse, işler değişir ve Mutlak Sistem devreye girer. Bu sütun sana o durumu gösterir. (Standart sapma burada önemsizdir).</li>
+                                         <li style="padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"100+":</strong> O durumda finalden 100'den fazla alman gerekiyor demek, yani o hedef biraz zor görünüyor!</li>
+                                          <li style="padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"-":</strong> Bu senaryoda hedeflenen nota ulaşmak mümkün değil veya standart sapma 0 gibi geçersiz bir durum var.</li>
+                                     </ul>
+                                 </li>`;
+             aciklamaHTML += `</ul></div>`;
 
             senaryoTabloAlani.innerHTML = `
-                <div class="table-scroll-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    ${tabloHTML}
-                </div>
-                ${aciklamaHTML}
-            `;
+                 <div class="table-scroll-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                     ${tabloHTML}
+                 </div>
+                 ${aciklamaHTML}
+             `;
         });
     }
 
-    const firstTabButton = document.querySelector('.tab-button');
+    // Sayfa ilk yüklendiğinde doğru sekmeyi ve giriş alanlarını göster
+    const firstTabButton = document.querySelector('.tab-button.active') || document.querySelector('.tab-button');
     if (firstTabButton) {
-        openTab(null, firstTabButton.getAttribute('onclick').split("'")[1]);
-        if(document.getElementsByClassName('tab-button').length > 0) {
-            document.getElementsByClassName('tab-button')[0].classList.add('active');
+        const tabName = firstTabButton.getAttribute('onclick').match(/'([^']+)'/)[1];
+        // openTab fonksiyonu çağrılmadan önce tüm butonlardan 'active' sınıfını kaldır, sonra sadece tıklanana ekle
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        firstTabButton.classList.add('active');
+
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = "none";
+            content.classList.remove("active");
+        });
+        const activeTabContent = document.getElementById(tabName);
+        if(activeTabContent) {
+            activeTabContent.style.display = "block";
+            activeTabContent.classList.add("active");
         }
+    } else { // Hiçbir buton aktif değilse ilkini manuel aktif et
+         const firstButton = document.querySelector('.tab-button');
+         if(firstButton){
+            const tabName = firstButton.getAttribute('onclick').match(/'([^']+)'/)[1];
+            openTab({currentTarget: firstButton}, tabName); // Event objesi ve tab adı ile çağır
+         }
     }
+
+
     toggleInputFields('Harf');
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
