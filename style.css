@@ -23,11 +23,11 @@
     /* Harf Notu Renkleri */
     --grade-aa-bg: #28a745; --grade-aa-text: #ffffff; /* Yeşil */
     --grade-ba-bg: #5cb85c; --grade-ba-text: #ffffff; /* Açık Yeşil */
-    --grade-bb-bg: #82ca9c; --grade-bb-text: #212529; /* Daha Açık Yeşil (Koyu Metin) */
+    --grade-bb-bg: #82ca9c; --grade-bb-text: #ffffff; /* Daha Açık Yeşil (Koyu Metin) */
     --grade-cb-bg: #007bff; --grade-cb-text: #ffffff; /* Mavi */
     --grade-cc-bg: #17a2b8; --grade-cc-text: #ffffff; /* Camgöbeği */
     --grade-dc-bg: #fd7e14; --grade-dc-text: #ffffff; /* Turuncu */
-    --grade-dd-bg: #ffc107; --grade-dd-text: #212529; /* Sarı (Koyu Metin) */
+    --grade-dd-bg: #ffc107; --grade-dd-text: #ffffff; /* Sarı (Koyu Metin) */
     --grade-fd-bg: #dc3545; --grade-fd-text: #ffffff; /* Kırmızı */
     --grade-ff-bg: #a21427; --grade-ff-text: #ffffff; /* Koyu Kırmızı */
 }
