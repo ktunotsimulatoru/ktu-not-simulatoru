@@ -1,3 +1,72 @@
+// === KOYU MOD YÖNETİMİ ===
+(function() {
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
+    
+    // Sistem tercihini kontrol et
+    function getPreferredTheme() {
+        const savedTheme = localStorage.getItem('ktu-theme');
+        
+        // Eğer kullanıcı daha önce seçim yaptıysa onu kullan
+        if (savedTheme) {
+            return savedTheme;
+        }
+        
+        // Yoksa cihaz tercihine bak
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark';
+        }
+        
+        return 'light';
+    }
+    
+    // İlk yükleme
+    const preferredTheme = getPreferredTheme();
+    setTheme(preferredTheme);
+    
+    // Sistem teması değişirse dinle (kullanıcı manuel seçim yapmadıysa)
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            // Sadece kullanıcı daha önce manuel seçim yapmadıysa
+            if (!localStorage.getItem('ktu-theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+    
+    // Toggle butonuna tıklama
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+    }
+    
+    function setTheme(theme) {
+        htmlElement.setAttribute('data-theme', theme);
+        localStorage.setItem('ktu-theme', theme);
+        updateToggleIcon(theme);
+    }
+    
+    function updateToggleIcon(theme) {
+        if (themeToggle) {
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            themeToggle.setAttribute('title', 
+                theme === 'dark' ? 'Açık Moda Geç (Alt+T)' : 'Koyu Moda Geç (Alt+T)'
+            );
+        }
+    }
+    
+    // Klavye desteği
+    document.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key.toLowerCase() === 't') {
+            e.preventDefault();
+            if (themeToggle) themeToggle.click();
+        }
+    });
+})();
+
 // --- Sabitler ve Veri Yapıları (Global Kapsamda) ---
 const MUTLAK_DEGERLENDIRME_ARALIKLARI = { "AA": [90, 100], "BA": [80, 89.99], "BB": [75, 79.99], "CB": [70, 74.99], "CC": [60, 69.99], "DC": [50, 59.99], "DD": [40, 49.99], "FD": [30, 39.99], "FF": [0, 29.99], };
 const HARF_NOTU_KATSAYILARI = { "AA": 4.0, "BA": 3.5, "BB": 3.0, "CB": 2.5, "CC": 2.0, "DC": 1.5, "DD": 1.0, "FD": 0.5, "FF": 0.0 };
