@@ -1,4 +1,4 @@
-// === KOYU MOD YÖNETİMİ ===// === KOYU MOD YÖNETİMİ ===
+// === KOYU MOD YÖNETİMİ ===
 (function() {
     const themeToggle = document.getElementById('themeToggle');
     const htmlElement = document.documentElement;
@@ -909,5 +909,4 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
 
-});
 });
