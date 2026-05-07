@@ -312,6 +312,33 @@ function calculateMidtermContribution(formTypeSuffix, formElement) {
 
 
 // --- Karanlık Mod Yönetimi ---
+function duyuruToggle() {
+    const detay = document.getElementById('duyuruDetay');
+    const btn = document.getElementById('duyuruOzetBtn');
+    const tikla = document.querySelector('.duyuru-tikla');
+    if (!detay) return;
+    const acik = detay.classList.toggle('acik');
+    if (btn) btn.setAttribute('aria-expanded', acik);
+    if (tikla) tikla.textContent = acik ? 'Gizle ▲' : 'Detaylar için tıklayın ▼';
+}
+
+function duyuruKapat() {
+    const wrapper = document.getElementById('duyuruWrapper');
+    if (wrapper) {
+        wrapper.style.transition = 'opacity 0.25s ease';
+        wrapper.style.opacity = '0';
+        setTimeout(() => { wrapper.style.display = 'none'; }, 260);
+        sessionStorage.setItem('duyuruKapatildi', '1');
+    }
+}
+
+function duyuruDurumKontrol() {
+    if (sessionStorage.getItem('duyuruKapatildi') === '1') {
+        const wrapper = document.getElementById('duyuruWrapper');
+        if (wrapper) wrapper.style.display = 'none';
+    }
+}
+
 function initTheme() {
     const saved = localStorage.getItem('ktu-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -341,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const themeBtn = document.getElementById('themeToggleBtn');
     if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    duyuruDurumKontrol();
 
     const harfNotuFormu = document.getElementById('grade-calculator-form');
     const gerekliNotFormu = document.getElementById('required-grade-form');
@@ -504,6 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sonucMesaji += `<br><strong>Not:</strong> ${harfNotu} notu başarısız anlamına gelir.`;
             }
             harfNotuSonucAlani.innerHTML = sonucMesaji;
+            dersiLinkGoster('ders-link-harf');
         });
     }
 
@@ -664,6 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
             finalSonucHTML += `<p>${anaMesajReq}</p>`;
             finalSonucHTML += `<details style="margin-top: 10px; font-size: 0.9em; color: #555;"><summary>Hesaplama Detayları</summary><p style="margin-top: 5px;">${hesaplamaDetaylariReq}</p></details>`;
             gerekliNotSonucAlani.innerHTML = finalSonucHTML;
+            dersiLinkGoster('ders-link-gerekli');
         });
     }
 
@@ -1000,4 +1030,531 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Supabase başlat
+    fakulteleriYukle();
+    yilSecenekleriniDoldur();
+    const veriEkleFormu = document.getElementById('veri-ekle-form');
+    if (veriEkleFormu) veriEkleFormu.addEventListener('submit', veriEkleSubmit);
+
+});
+
+// ============================================================
+// SUPABASE ENTEGRASYONU — Ders Verileri Sekmesi
+// ============================================================
+const SUPABASE_URL = 'https://tsfscfgwbmiouptsljyi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7VUXgTfS6iYY3NU0IVwYpA_FRI0t7MI';
+let supabaseClient = null;
+
+function getSupabase() {
+    if (!supabaseClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+    return supabaseClient;
+}
+
+// Ders kodu regex: 2-4 büyük harf + 3-4 rakam
+const DERS_KODU_REGEX = /^[A-ZÇĞİÖŞÜ]{2,4}\d{3,4}$/;
+
+// Başlık formatı: Her kelimenin ilk harfi büyük
+function baslikFormatla(str) {
+    return str.trim().replace(/\s+/g, ' ')
+        .split(' ')
+        .map(k => k.charAt(0).toLocaleUpperCase('tr-TR') + k.slice(1).toLocaleLowerCase('tr-TR'))
+        .join(' ');
+}
+
+// Yıl seçeneklerini doldur
+function yilSecenekleriniDoldur() {
+    const select = document.getElementById('ekle-yil');
+    if (!select) return;
+    const simdikiYil = new Date().getFullYear();
+    for (let y = simdikiYil; y >= 2015; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = `${y}-${y + 1}`;
+        select.appendChild(opt);
+    }
+}
+
+// === PAYLAŞIM SEKMESİ — YENİ MİMARİ ===
+// Ortak seçim state'i
+let paylasimState = { fakulteId: null, bolumId: null, dersId: null, dersAdi: '', bolumAdi: '', fakulteAdi: '' };
+
+// Fakülteleri yükle — ortak select'e
+async function fakulteleriYukle() {
+    const { data, error } = await getSupabase().from('fakulteler').select('id, ad').order('ad');
+    if (error || !data) return;
+    const sel = document.getElementById('paylasim-fakulte');
+    if (!sel) return;
+    data.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.textContent = f.ad;
+        sel.appendChild(opt);
+    });
+}
+
+async function paylasimBolumYukle() {
+    const sel = document.getElementById('paylasim-fakulte');
+    const fakulteId = sel.value;
+    const fakulteAdi = sel.options[sel.selectedIndex]?.text || '';
+    paylasimState.fakulteId = fakulteId;
+    paylasimState.fakulteAdi = fakulteAdi;
+    paylasimState.bolumId = null;
+    paylasimState.dersId = null;
+
+    const bolumSel = document.getElementById('paylasim-bolum');
+    const dersSel = document.getElementById('paylasim-ders');
+    bolumSel.innerHTML = '<option value="">-- Bölüm Seçin --</option>';
+    dersSel.innerHTML = '<option value="">-- Önce Bölüm Seçin --</option>';
+    bolumSel.disabled = !fakulteId;
+    dersSel.disabled = true;
+    document.getElementById('yeni-ders-alani').style.display = 'none';
+    paylasimSecimGuncelle(null);
+
+    if (!fakulteId) return;
+    const { data } = await getSupabase().from('bolumler').select('id, ad').eq('fakulte_id', fakulteId).order('ad');
+    if (!data) return;
+    data.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.ad;
+        bolumSel.appendChild(opt);
+    });
+}
+
+async function paylasimDersYukle() {
+    const sel = document.getElementById('paylasim-bolum');
+    const bolumId = sel.value;
+    const bolumAdi = sel.options[sel.selectedIndex]?.text || '';
+    paylasimState.bolumId = bolumId;
+    paylasimState.bolumAdi = bolumAdi;
+    paylasimState.dersId = null;
+
+    const dersSel = document.getElementById('paylasim-ders');
+    dersSel.innerHTML = '<option value="">-- Ders Seçin --</option>';
+    dersSel.disabled = !bolumId;
+    document.getElementById('yeni-ders-alani').style.display = 'none';
+    paylasimSecimGuncelle(null);
+
+    if (!bolumId) return;
+    const { data } = await getSupabase().from('dersler').select('id, ders_adi, ders_kodu')
+        .eq('bolum_id', bolumId).eq('onaylandi', true).order('ders_adi');
+    if (!data) return;
+    data.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.ders_kodu ? `${d.ders_kodu} — ${d.ders_adi}` : d.ders_adi;
+        dersSel.appendChild(opt);
+    });
+    // "Dersim listede yok" seçeneği
+    const yeniOpt = document.createElement('option');
+    yeniOpt.value = 'yeni';
+    yeniOpt.textContent = '➕ Dersim listede yok, önermek istiyorum';
+    dersSel.appendChild(yeniOpt);
+}
+
+function paylasimDersSecildi() {
+    const sel = document.getElementById('paylasim-ders');
+    const dersId = sel.value;
+    const dersAdi = sel.options[sel.selectedIndex]?.text || '';
+
+    if (dersId === 'yeni') {
+        paylasimState.dersId = 'yeni';
+        paylasimState.dersAdi = '';
+        document.getElementById('yeni-ders-alani').style.display = 'block';
+        paylasimSecimGuncelle(null);
+    } else if (dersId) {
+        paylasimState.dersId = dersId;
+        paylasimState.dersAdi = dersAdi;
+        document.getElementById('yeni-ders-alani').style.display = 'none';
+        paylasimSecimGuncelle({ id: dersId, ad: dersAdi });
+        // Görüntüle sekmesindeyse otomatik listele
+        const goruntuleAktif = document.getElementById('veri-goruntule').classList.contains('active');
+        if (goruntuleAktif) veriListele();
+    } else {
+        paylasimState.dersId = null;
+        paylasimState.dersAdi = '';
+        document.getElementById('yeni-ders-alani').style.display = 'none';
+        paylasimSecimGuncelle(null);
+    }
+}
+
+// Seçili ders banner'ını güncelle
+function paylasimSecimGuncelle(ders) {
+    // Görüntüle sekmesi başlığı
+    const gorAlan = document.getElementById('veri-goruntule');
+    const ekleAlan = document.getElementById('veri-ekle');
+    let mevcutBannerGor = gorAlan.querySelector('.secili-ders-banner');
+    let mevcutBannerEkle = ekleAlan.querySelector('.secili-ders-banner');
+
+    if (ders) {
+        const bannerHTML = `<div class="secili-ders-banner">
+            <div>
+                <div class="secili-ders-banner-ad">📚 ${ders.ad}</div>
+                <div class="secili-ders-banner-alt">${paylasimState.bolumAdi} · ${paylasimState.fakulteAdi}</div>
+            </div>
+            <button class="secili-ders-degistir" onclick="dersSecimSifirla()">Dersi Değiştir</button>
+        </div>`;
+
+        if (!mevcutBannerGor) {
+            gorAlan.insertAdjacentHTML('afterbegin', bannerHTML);
+        } else {
+            mevcutBannerGor.outerHTML = bannerHTML;
+        }
+        if (!mevcutBannerEkle) {
+            ekleAlan.insertAdjacentHTML('afterbegin', bannerHTML);
+        } else {
+            mevcutBannerEkle.outerHTML = bannerHTML;
+        }
+    } else {
+        if (mevcutBannerGor) mevcutBannerGor.remove();
+        if (mevcutBannerEkle) mevcutBannerEkle.remove();
+    }
+}
+
+function dersSecimSifirla() {
+    document.getElementById('paylasim-ders').value = '';
+    paylasimState.dersId = null;
+    paylasimState.dersAdi = '';
+    paylasimSecimGuncelle(null);
+    document.getElementById('veri-listesi').innerHTML = '<p class="veri-bos">Yukarıdan fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>';
+}
+
+// Veri listele
+async function veriListele() {
+    const dersId = paylasimState.dersId;
+    const alan = document.getElementById('veri-listesi');
+
+    if (!dersId || dersId === 'yeni') {
+        alan.innerHTML = '<p class="veri-bos">Lütfen bir ders seçin.</p>';
+        return;
+    }
+
+    alan.innerHTML = '<p class="veri-yukle">Yükleniyor...</p>';
+    const { data, error } = await getSupabase()
+        .from('ders_verileri')
+        .select('veri_turu, ortalama, std_sapma, ogrenci_sayisi, can_turu, vize_ort, final_ort, but_ort, donem, yil')
+        .eq('ders_id', dersId)
+        .order('yil', { ascending: false })
+        .order('donem');
+
+    if (error || !data || data.length === 0) {
+        alan.innerHTML = '<p class="veri-bos">Bu ders için henüz veri paylaşılmamış. "Veri Ekle" sekmesinden ilk sen paylaş!</p>';
+        return;
+    }
+
+    const canVerileri = data.filter(v => v.veri_turu === 'can' || (!v.veri_turu && v.ortalama != null));
+    const sinavVerileri = data.filter(v => v.veri_turu === 'sinav');
+    let html = '<div class="veri-kart-wrapper">';
+
+    if (canVerileri.length > 0) {
+        html += `<div class="veri-bolum-baslik">📊 Çan Verileri</div>`;
+        canVerileri.forEach(v => {
+            const canEtiketi = v.can_turu === 'but' ? 'Bütünleme Çanı' : 'Final Çanı';
+            html += `<div class="veri-kart">
+                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil + 1} ${v.donem} — ${canEtiketi}</div>
+                <div class="veri-kart-detay">
+                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
+                    ${v.std_sapma != null ? `<span>Std. Sapma: <strong>${v.std_sapma.toFixed(2)}</strong></span>` : ''}
+                    ${v.ogrenci_sayisi != null ? `<span>Öğrenci: <strong>${v.ogrenci_sayisi}</strong></span>` : ''}
+                </div>
+            </div>`;
+        });
+    }
+    if (sinavVerileri.length > 0) {
+        html += `<div class="veri-bolum-baslik" style="margin-top:12px;">📝 Sınav Ortalamaları</div>`;
+        sinavVerileri.forEach(v => {
+            html += `<div class="veri-kart">
+                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil + 1} ${v.donem}</div>
+                <div class="veri-kart-detay">
+                    ${v.vize_ort != null ? `<span>Vize: <strong>${v.vize_ort.toFixed(2)}</strong></span>` : ''}
+                    ${v.final_ort != null ? `<span>Final: <strong>${v.final_ort.toFixed(2)}</strong></span>` : ''}
+                    ${v.but_ort != null ? `<span>Büt: <strong>${v.but_ort.toFixed(2)}</strong></span>` : ''}
+                </div>
+            </div>`;
+        });
+    }
+    html += '</div>';
+    alan.innerHTML = html;
+}
+
+// Veri türü değişince alanları göster/gizle
+function veriTuruDegisti() {
+    const tur = document.querySelector('input[name="veriTuru"]:checked').value;
+    document.getElementById('alan-sinav').style.display = tur === 'sinav' ? 'block' : 'none';
+    document.getElementById('alan-can').style.display = tur === 'can' ? 'block' : 'none';
+}
+
+// Veri ekle formu submit
+async function veriEkleSubmit(e) {
+    e.preventDefault();
+    const sonucAlani = document.getElementById('veri-ekle-sonuc');
+    sonucAlani.style.display = 'block';
+    sonucAlani.innerHTML = '<p>Gönderiliyor...</p>';
+
+    let dersId = paylasimState.dersId;
+    const bolumId = paylasimState.bolumId;
+    const donem = document.getElementById('ekle-donem').value;
+    const yil = parseInt(document.getElementById('ekle-yil').value);
+    const veriTuru = document.querySelector('input[name="veriTuru"]:checked').value;
+
+    if (!bolumId || !dersId) { sonucAlani.innerHTML = '<p class="error-message">Lütfen yukarıdan fakülte, bölüm ve ders seçin.</p>'; return; }
+    if (!donem) { sonucAlani.innerHTML = '<p class="error-message">Lütfen dönem seçin.</p>'; return; }
+    if (!yil) { sonucAlani.innerHTML = '<p class="error-message">Lütfen yıl seçin.</p>'; return; }
+
+    let insertData = { donem, yil, veri_turu: veriTuru };
+
+    if (veriTuru === 'sinav') {
+        const vizeOrt = document.getElementById('ekle-vize-ort').value;
+        const finalOrt = document.getElementById('ekle-final-ort').value;
+        const butOrt = document.getElementById('ekle-but-ort').value;
+        if (!vizeOrt && !finalOrt && !butOrt) { sonucAlani.innerHTML = '<p class="error-message">En az bir sınav ortalaması girmelisin.</p>'; return; }
+        if (vizeOrt) { const v = parseFloat(vizeOrt); if (isNaN(v) || v < 0 || v > 100) { sonucAlani.innerHTML = '<p class="error-message">Vize ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.vize_ort = v; }
+        if (finalOrt) { const f = parseFloat(finalOrt); if (isNaN(f) || f < 0 || f > 100) { sonucAlani.innerHTML = '<p class="error-message">Final ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.final_ort = f; }
+        if (butOrt) { const b = parseFloat(butOrt); if (isNaN(b) || b < 0 || b > 100) { sonucAlani.innerHTML = '<p class="error-message">Bütünleme ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.but_ort = b; }
+    } else {
+        const ortalama = document.getElementById('ekle-ortalama').value;
+        const std = document.getElementById('ekle-std').value;
+        const ogrenciSayisi = document.getElementById('ekle-ogrenci-sayisi').value;
+        const canTuru = document.querySelector('input[name="canTuru"]:checked').value;
+        if (!ortalama && !std) { sonucAlani.innerHTML = '<p class="error-message">En az ortalama veya standart sapma girmelisin.</p>'; return; }
+        if (ortalama) { const o = parseFloat(ortalama); if (isNaN(o) || o < 0 || o > 100) { sonucAlani.innerHTML = '<p class="error-message">Ortalama 0-100 arasında olmalıdır.</p>'; return; } insertData.ortalama = o; }
+        if (std) { const s = parseFloat(std); if (isNaN(s) || s < 0 || s > 50) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma 0-50 arasında olmalıdır.</p>'; return; } insertData.std_sapma = s; }
+        if (ogrenciSayisi) { const n = parseInt(ogrenciSayisi); if (isNaN(n) || n < 1) { sonucAlani.innerHTML = '<p class="error-message">Öğrenci sayısı en az 1 olmalıdır.</p>'; return; } insertData.ogrenci_sayisi = n; }
+        insertData.can_turu = canTuru;
+    }
+
+    // Yeni ders eklenecekse
+    if (dersId === 'yeni') {
+        let dersAdi = document.getElementById('yeni-ders-adi').value.trim();
+        let dersKodu = document.getElementById('yeni-ders-kodu').value.trim().toLocaleUpperCase('tr-TR');
+
+        if (!dersAdi || dersAdi.length < 5) { sonucAlani.innerHTML = '<p class="error-message">Ders adı en az 5 karakter olmalıdır.</p>'; return; }
+        if (dersKodu && !DERS_KODU_REGEX.test(dersKodu)) { sonucAlani.innerHTML = '<p class="error-message">Ders kodu formatı hatalı. Örnek: BLM301, MAT201</p>'; return; }
+
+        dersAdi = baslikFormatla(dersAdi);
+        document.getElementById('yeni-ders-adi').value = dersAdi;
+
+        const { data: mevcutOnay } = await getSupabase()
+            .from('dersler').select('id, onaylandi')
+            .eq('bolum_id', bolumId).ilike('ders_adi', dersAdi).maybeSingle();
+
+        if (mevcutOnay) {
+            if (!mevcutOnay.onaylandi) { sonucAlani.innerHTML = '<p class="error-message">Bu ders zaten onay bekliyor. Onaylandıktan sonra veri ekleyebilirsin.</p>'; return; }
+            dersId = mevcutOnay.id;
+        } else {
+            const { data: yeniDers, error: dersHata } = await getSupabase()
+                .from('dersler')
+                .insert({ bolum_id: bolumId, ders_adi: dersAdi, ders_kodu: dersKodu || null, onaylandi: false })
+                .select('id').single();
+            if (dersHata || !yeniDers) { sonucAlani.innerHTML = '<p class="error-message">Ders eklenirken hata oluştu. Lütfen tekrar deneyin.</p>'; return; }
+            dersId = yeniDers.id;
+            sonucAlani.innerHTML = `<p>✅ <strong>"${dersAdi}"</strong> dersi onay için gönderildi. Verini de kaydettik, ders onaylandıktan sonra görünecek.</p>`;
+        }
+    }
+
+    insertData.ders_id = dersId;
+    const { error: veriHata } = await getSupabase().from('ders_verileri').insert(insertData);
+    if (veriHata) { sonucAlani.innerHTML = '<p class="error-message">Veri kaydedilirken hata oluştu: ' + veriHata.message + '</p>'; return; }
+
+    if (paylasimState.dersId !== 'yeni') {
+        sonucAlani.innerHTML = '<p>✅ Veriniz başarıyla kaydedildi. Teşekkürler! 🎉</p>';
+    }
+
+    // Sadece veri alanlarını sıfırla, ders seçimi kalsın
+    document.getElementById('veri-ekle-form').reset();
+    document.getElementById('alan-sinav').style.display = 'block';
+    document.getElementById('alan-can').style.display = 'none';
+}
+
+// Sekme geçişi
+function switchVeriTab(tab) {
+    document.querySelectorAll('.veri-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.veri-tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.veri-tab-btn[onclick="switchVeriTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`veri-${tab}`).classList.add('active');
+    // Görüntüle sekmesine geçince ve ders seçiliyse otomatik listele
+    if (tab === 'goruntule' && paylasimState.dersId && paylasimState.dersId !== 'yeni') {
+        veriListele();
+    }
+}
+
+// Diğer sekmelerden ders verisi sayfasına git
+function dersiGoruntule(dersAdi, bolumAdi, fakulteAdi) {
+    openTab(null, 'veriPaylasim');
+    document.querySelectorAll('.tab-button').forEach(b => {
+        b.classList.remove('active');
+        if (b.getAttribute('onclick')?.includes('veriPaylasim')) b.classList.add('active');
+    });
+    switchVeriTab('goruntule');
+}
+
+// Hesaplama sonucu altına ders verisi bağlantısı ekle
+function dersiLinkGoster(containerId, dersAdiBilgisi) {
+    const alan = document.getElementById(containerId);
+    if (!alan) return;
+    alan.innerHTML = `<button class="ders-verisi-link-btn" onclick="openTab(null,'veriPaylasim'); document.querySelectorAll('.tab-button').forEach(b=>{b.classList.remove('active'); if(b.getAttribute('onclick')?.includes('veriPaylasim')) b.classList.add('active');}); switchVeriTab('goruntule');">
+        📊 Bu Dersin Paylaşılan Verilerini Gör
+    </button>`;
+}
+
+
+// =============================================
+// DERS VERİSİ MODAL
+// =============================================
+let modalFakulteleriYuklendi = false;
+let aktifModalForm = null; // 'harf' veya 'gerekli'
+
+async function modalAc(formTipi) {
+    aktifModalForm = formTipi;
+    const modal = document.getElementById('dersVeriModal');
+    modal.classList.add('aktif');
+    document.body.style.overflow = 'hidden';
+
+    // Fakülteleri bir kez yükle
+    if (!modalFakulteleriYuklendi) {
+        await modalFakulteleriYukle();
+        modalFakulteleriYuklendi = true;
+    }
+
+    // Önceki seçimi sıfırla
+    document.getElementById('modal-veri-alani').innerHTML = '<p class="veri-bos">Fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>';
+}
+
+function modalKapat(event) {
+    if (event && event.target !== document.getElementById('dersVeriModal')) return;
+    document.getElementById('dersVeriModal').classList.remove('aktif');
+    document.body.style.overflow = '';
+}
+
+async function modalFakulteleriYukle() {
+    const { data } = await getSupabase().from('fakulteler').select('id, ad').order('ad');
+    if (!data) return;
+    const sel = document.getElementById('modal-fakulte');
+    data.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.textContent = f.ad;
+        sel.appendChild(opt);
+    });
+}
+
+async function modalBolumYukle() {
+    const fakulteId = document.getElementById('modal-fakulte').value;
+    const bolumSel = document.getElementById('modal-bolum');
+    const dersSel = document.getElementById('modal-ders');
+    bolumSel.innerHTML = '<option value="">-- Bölüm Seçin --</option>';
+    dersSel.innerHTML = '<option value="">-- Önce Bölüm Seçin --</option>';
+    bolumSel.disabled = !fakulteId;
+    dersSel.disabled = true;
+    document.getElementById('modal-veri-alani').innerHTML = '<p class="veri-bos">Bölüm ve ders seçin.</p>';
+    if (!fakulteId) return;
+    const { data } = await getSupabase().from('bolumler').select('id, ad').eq('fakulte_id', fakulteId).order('ad');
+    if (!data) return;
+    data.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.ad;
+        bolumSel.appendChild(opt);
+    });
+}
+
+async function modalDersYukle() {
+    const bolumId = document.getElementById('modal-bolum').value;
+    const dersSel = document.getElementById('modal-ders');
+    dersSel.innerHTML = '<option value="">-- Ders Seçin --</option>';
+    dersSel.disabled = !bolumId;
+    document.getElementById('modal-veri-alani').innerHTML = '<p class="veri-bos">Ders seçin.</p>';
+    if (!bolumId) return;
+    const { data } = await getSupabase().from('dersler').select('id, ders_adi, ders_kodu')
+        .eq('bolum_id', bolumId).eq('onaylandi', true).order('ders_adi');
+    if (!data) return;
+    data.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.ders_kodu ? `${d.ders_kodu} — ${d.ders_adi}` : d.ders_adi;
+        dersSel.appendChild(opt);
+    });
+}
+
+async function modalVeriListele() {
+    const dersId = document.getElementById('modal-ders').value;
+    const alan = document.getElementById('modal-veri-alani');
+    if (!dersId) { alan.innerHTML = '<p class="veri-bos">Ders seçin.</p>'; return; }
+
+    alan.innerHTML = '<p class="veri-yukle">Yükleniyor...</p>';
+    const { data, error } = await getSupabase()
+        .from('ders_verileri')
+        .select('veri_turu, ortalama, std_sapma, ogrenci_sayisi, can_turu, vize_ort, final_ort, but_ort, donem, yil')
+        .eq('ders_id', dersId)
+        .order('yil', { ascending: false })
+        .order('donem');
+
+    if (error || !data || data.length === 0) {
+        alan.innerHTML = '<p class="veri-bos">Bu ders için henüz veri paylaşılmamış.</p>';
+        return;
+    }
+
+    const canVerileri = data.filter(v => v.veri_turu === 'can' || (!v.veri_turu && v.ortalama != null));
+    const sinavVerileri = data.filter(v => v.veri_turu === 'sinav');
+    let html = '<div class="veri-kart-wrapper">';
+
+    if (canVerileri.length > 0) {
+        html += `<div class="veri-bolum-baslik">📊 Çan Verileri</div>`;
+        canVerileri.forEach(v => {
+            const canEtiketi = v.can_turu === 'but' ? 'Bütünleme Çanı' : 'Final Çanı';
+            // Forma doldur butonu — sadece can verisinde ve gerekli alanlar varsa
+            const doldurmaBilgi = (v.ortalama != null && v.std_sapma != null)
+                ? `<button class="veri-doldur-btn" onclick="modalVeriyiDoldur(${v.ortalama}, ${v.std_sapma})">↙ Forma Doldur</button>`
+                : '';
+            html += `<div class="veri-kart">
+                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil+1} ${v.donem} — ${canEtiketi}</div>
+                <div class="veri-kart-detay">
+                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
+                    ${v.std_sapma != null ? `<span>Std. Sapma: <strong>${v.std_sapma.toFixed(2)}</strong></span>` : ''}
+                    ${v.ogrenci_sayisi != null ? `<span>Öğrenci: <strong>${v.ogrenci_sayisi}</strong></span>` : ''}
+                </div>
+                ${doldurmaBilgi}
+            </div>`;
+        });
+    }
+
+    if (sinavVerileri.length > 0) {
+        html += `<div class="veri-bolum-baslik" style="margin-top:10px;">📝 Sınav Ortalamaları</div>`;
+        sinavVerileri.forEach(v => {
+            html += `<div class="veri-kart">
+                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil+1} ${v.donem}</div>
+                <div class="veri-kart-detay">
+                    ${v.vize_ort != null ? `<span>Vize: <strong>${v.vize_ort.toFixed(2)}</strong></span>` : ''}
+                    ${v.final_ort != null ? `<span>Final: <strong>${v.final_ort.toFixed(2)}</strong></span>` : ''}
+                    ${v.but_ort != null ? `<span>Büt: <strong>${v.but_ort.toFixed(2)}</strong></span>` : ''}
+                </div>
+            </div>`;
+        });
+    }
+
+    html += '</div>';
+    alan.innerHTML = html;
+}
+
+function modalVeriyiDoldur(ort, std) {
+    if (aktifModalForm === 'harf') {
+        document.getElementById('class-avg').value = ort;
+        document.getElementById('class-stddev').value = std;
+    } else if (aktifModalForm === 'gerekli') {
+        document.getElementById('req-class-avg').value = ort;
+        document.getElementById('req-class-stddev').value = std;
+    }
+    // Modalı kapat
+    document.getElementById('dersVeriModal').classList.remove('aktif');
+    document.body.style.overflow = '';
+}
+
+// ESC ile modal kapat
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.getElementById('dersVeriModal')?.classList.remove('aktif');
+        document.body.style.overflow = '';
+    }
 });

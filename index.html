@@ -14,6 +14,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="language" content="Turkish">
@@ -29,16 +30,41 @@
 <body>
 
     <header class="site-header">
-        <div class="header-text">
-            <h1>KTÜ Not Simülatörü</h1>
-            <p>Bağıl Değerlendirme Sistemi Not Hesaplama Aracı</p>
+        <div class="header-inner">
+            <div class="header-text">
+                <h1>KTÜ Not Simülatörü</h1>
+                <p>Bağıl Değerlendirme Sistemi Not Hesaplama Aracı</p>
+            </div>
+            <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir">
+                <span class="icon-moon">🌙</span>
+                <span class="icon-sun">☀️</span>
+                <span class="toggle-label">Karanlık</span>
+            </button>
         </div>
-        <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir">
-            <span class="icon-moon">🌙</span>
-            <span class="icon-sun">☀️</span>
-            <span class="toggle-label">Karanlık</span>
-        </button>
     </header>
+
+    <!-- Duyuru Bandı -->
+    <div class="duyuru-wrapper" id="duyuruWrapper">
+        <div class="duyuru-bandi" id="duyuruBandi">
+            <!-- Tıklanabilir özet satırı -->
+            <div class="duyuru-ozet" onclick="duyuruToggle()" role="button" tabindex="0" aria-expanded="false" id="duyuruOzetBtn">
+                <span class="duyuru-etiket">📢 Önemli Duyuru</span>
+                <span class="duyuru-ozet-metin"><strong>2026-2027 eğitim öğretim yılından itibaren</strong> not hesaplama sisteminde değişiklikler yapılacaktır. <span class="duyuru-tikla">Detaylar için tıklayın ▼</span></span>
+                <button class="duyuru-kapat" onclick="event.stopPropagation(); duyuruKapat();" aria-label="Duyuruyu kapat">✕</button>
+            </div>
+            <!-- Açılır detay -->
+            <div class="duyuru-detay" id="duyuruDetay">
+                <div class="duyuru-detay-icerik">
+                    <p class="duyuru-alt-metin">Yaz ayından itibaren bu değişiklikler sitemize uygulanmaya çalışılacaktır. <a href="https://ktu.edu.tr/oidb/duyuru/onlisans-ve-lisans-programlarinda-basari-notunun-degerlendirilmesine-dair-usul-ve-esaslarda-degisiklik" target="_blank" rel="noopener" class="duyuru-link">Resmi duyuruya git →</a></p>
+                    <div class="duyuru-degisiklik-kutu">
+                        <div class="duyuru-degisiklik-baslik">⚠️ En Önemli Değişiklik</div>
+                        <p>Bir dersteki HBN'u 100 üzerinden <strong>30'un altında</strong> olan öğrenciler o ders için başarısız sayılır ve <strong>FF</strong> harfli notu verilir.</p>
+                        <div class="duyuru-ornek">📌 <em>Örnek: Vizeden 14, Finalden 45 → HBN = (14×0.5)+(45×0.5) = <strong>29.5</strong> → 30'un altında → <strong>FF</strong></em></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main>
         <div class="tab-buttons">
@@ -46,6 +72,7 @@
             <button class="tab-button" onclick="openTab(event, 'gerekliNot')">Gerekli Final Notu</button>
             <button class="tab-button" onclick="openTab(event, 'gecmeSenaryo')">Geçme Senaryoları</button>
             <button class="tab-button" onclick="openTab(event, 'notMatrisi')">Not Matrisi</button>
+            <button class="tab-button" onclick="openTab(event, 'veriPaylasim')">Ders Verileri</button>
         </div>
 
         <div id="harfNotu" class="tab-content active">
@@ -108,6 +135,7 @@
                     <label for="class-stddev">Standart Sapma:</label>
                     <input type="number" id="class-stddev" name="class_stddev" min="0" step="0.01" required>
                 </div>
+                <button type="button" class="ders-veri-modal-btn" onclick="modalAc('harf')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
                 <p class="info-text">
                     <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
                 </p>
@@ -187,6 +215,7 @@
                      <label for="req-class-stddev">Standart Sapma:</label>
                      <input type="number" id="req-class-stddev" name="req_class_stddev" min="0" step="0.01" required>
                  </div>
+                 <button type="button" class="ders-veri-modal-btn" onclick="modalAc('gerekli')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
                   <p class="info-text">
                       <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
                   </p>
@@ -325,7 +354,202 @@
             </form>
             <div id="matris-table-output"></div>
         </div>
+        <div id="veriPaylasim" class="tab-content">
+            <h2>Ders Verileri</h2>
+            <p class="tab-description">
+                Dersinin ortalama ve standart sapmasını paylaş, diğerlerinin verilerini gör.
+            </p>
+
+            <!-- Ortak fakülte/bölüm/ders seçimi — iki sekme bunu paylaşır -->
+            <div class="veri-secim-alani">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paylasim-fakulte">Fakülte:</label>
+                        <select id="paylasim-fakulte" onchange="paylasimBolumYukle()">
+                            <option value="">-- Fakülte Seçin --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paylasim-bolum">Bölüm:</label>
+                        <select id="paylasim-bolum" onchange="paylasimDersYukle()" disabled>
+                            <option value="">-- Önce Fakülte Seçin --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paylasim-ders">Ders:</label>
+                        <select id="paylasim-ders" onchange="paylasimDersSecildi()" disabled>
+                            <option value="">-- Önce Bölüm Seçin --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yeni ders öner alanı -->
+            <div id="yeni-ders-alani" style="display:none;">
+                <div class="yeni-ders-kutu">
+                    <p class="yeni-ders-baslik">📝 Yeni Ders Öner</p>
+                    <p class="info-text" style="margin-bottom:1rem;">Ders listede yok. Bilgileri gir, onaylandıktan sonra listeye eklenecek ve verilerin de kaydedilecek.</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="yeni-ders-adi">Ders Adı: <span class="zorunlu">*</span></label>
+                            <input type="text" id="yeni-ders-adi" placeholder="Örn: Veri Yapıları ve Algoritmalar">
+                            <small>Her kelimenin ilk harfi büyük olmalı (min. 5 karakter)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="yeni-ders-kodu">Ders Kodu: <span style="color:var(--small-text); font-weight:400;">(opsiyonel)</span></label>
+                            <input type="text" id="yeni-ders-kodu" placeholder="Örn: BLM301" maxlength="10">
+                            <small>2-4 harf + 3-4 rakam formatında</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekme içi geçiş -->
+            <div class="veri-tabs">
+                <button class="veri-tab-btn active" onclick="switchVeriTab('goruntule')">📋 Verileri Gör</button>
+                <button class="veri-tab-btn" onclick="switchVeriTab('ekle')">➕ Veri Ekle</button>
+            </div>
+
+            <!-- Verileri Görüntüle -->
+            <div id="veri-goruntule" class="veri-tab-content active">
+                <div id="veri-listesi">
+                    <p class="veri-bos">Yukarıdan fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>
+                </div>
+            </div>
+
+            <!-- Veri Ekle -->
+            <div id="veri-ekle" class="veri-tab-content">
+                <form id="veri-ekle-form" novalidate>
+
+                    <!-- Veri türü seçimi -->
+                    <div class="form-group calculation-method">
+                        <label>Hangi veriyi paylaşmak istiyorsun?</label>
+                        <div>
+                            <input type="radio" id="veriTuruSinav" name="veriTuru" value="sinav" checked onchange="veriTuruDegisti()">
+                            <label for="veriTuruSinav">Sınav Ortalamaları (Vize / Final / Büt)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="veriTuruCan" name="veriTuru" value="can" onchange="veriTuruDegisti()">
+                            <label for="veriTuruCan">Çan Verisi (Ham Başarı Ortalaması + Standart Sapma)</label>
+                        </div>
+                    </div>
+
+                    <!-- Sınav Ortalamaları alanı -->
+                    <div id="alan-sinav">
+                        <p class="info-text">
+                            ⚠️ <strong>Bu alana sadece ham sınav ortalamalarını gir.</strong> Çan (bağıl değerlendirme) ortalaması buraya girilmemelidir. Elindeki verileri gir, hepsini doldurmak zorunda değilsin.
+                        </p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ekle-vize-ort">Vize Sınav Ortalaması:</label>
+                                <input type="number" id="ekle-vize-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
+                            </div>
+                            <div class="form-group">
+                                <label for="ekle-final-ort">Final Sınav Ortalaması:</label>
+                                <input type="number" id="ekle-final-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
+                            </div>
+                            <div class="form-group">
+                                <label for="ekle-but-ort">Bütünleme Sınav Ortalaması:</label>
+                                <input type="number" id="ekle-but-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Çan Verisi alanı -->
+                    <div id="alan-can" style="display:none;">
+                        <div class="form-group calculation-method" style="margin-bottom:1rem;">
+                            <label>Hangi sınav için çan verisi?</label>
+                            <div>
+                                <input type="radio" id="canTuruFinal" name="canTuru" value="final" checked>
+                                <label for="canTuruFinal">Final</label>
+                            </div>
+                            <div>
+                                <input type="radio" id="canTuruBut" name="canTuru" value="but">
+                                <label for="canTuruBut">Bütünleme</label>
+                            </div>
+                        </div>
+                        <p class="info-text">
+                            ⚠️ <strong>Dikkat:</strong> <em>Final çan ortalaması ≠ Final sınav ortalaması.</em> Çan ortalamasına sadece bağıl değerlendirmeye katılan öğrenciler dahildir — devamsızlar, finale girmeyenler ve HBN'si 15 ve altında olanlar bu ortalamaya <strong>dahil edilmez.</strong>
+                            <br><br>
+                            <strong>📌 Örnek:</strong> Sınıfta 80 öğrenci var, 5'i devamsız, 3'ü finale girmedi, 2'sinin HBN ≤ 15. Çan ortalaması kalan <strong>70 öğrencinin</strong> HBN ortalamasıdır.
+                        </p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ekle-ortalama">Ham Başarı Ortalaması (Çan):</label>
+                                <input type="number" id="ekle-ortalama" min="0" max="100" step="0.01" placeholder="0 – 100">
+                            </div>
+                            <div class="form-group">
+                                <label for="ekle-std">Standart Sapma:</label>
+                                <input type="number" id="ekle-std" min="0" max="50" step="0.01" placeholder="0 – 50">
+                            </div>
+                            <div class="form-group">
+                                <label for="ekle-ogrenci-sayisi">Öğrenci Sayısı (Çana Katılan):</label>
+                                <input type="number" id="ekle-ogrenci-sayisi" min="1" step="1" placeholder="Örn: 70">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="input-separator">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ekle-donem">Dönem: <span class="zorunlu">*</span></label>
+                            <select id="ekle-donem" required>
+                                <option value="">-- Seçin --</option>
+                                <option value="Güz">Güz</option>
+                                <option value="Bahar">Bahar</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ekle-yil">Yıl: <span class="zorunlu">*</span></label>
+                            <select id="ekle-yil" required></select>
+                        </div>
+                    </div>
+                    <p class="info-text">
+                        <strong>Not:</strong> Girdiğin veriler herkese açık şekilde paylaşılacaktır. Lütfen gerçek ve doğru verileri gir.
+                    </p>
+                    <button type="submit">Veriyi Gönder</button>
+                </form>
+                <div id="veri-ekle-sonuc" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
     </main>
+
+    <!-- Ders Verisi Modal -->
+    <div class="modal-overlay" id="dersVeriModal" onclick="modalKapat(event)">
+        <div class="modal-kutu">
+            <div class="modal-baslik">
+                <span>📊 Ders Verilerini Gör</span>
+                <button class="modal-kapat-btn" onclick="modalKapat(null)">✕</button>
+            </div>
+            <div class="modal-icerik">
+                <!-- Seçim alanı -->
+                <div class="modal-secim">
+                    <div class="form-group">
+                        <label for="modal-fakulte">Fakülte:</label>
+                        <select id="modal-fakulte" onchange="modalBolumYukle()">
+                            <option value="">-- Fakülte Seçin --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-bolum">Bölüm:</label>
+                        <select id="modal-bolum" onchange="modalDersYukle()" disabled>
+                            <option value="">-- Önce Fakülte Seçin --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-ders">Ders:</label>
+                        <select id="modal-ders" onchange="modalVeriListele()" disabled>
+                            <option value="">-- Önce Bölüm Seçin --</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Veri listesi -->
+                <div id="modal-veri-alani">
+                    <p class="veri-bos">Fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer>
          <p>Bu araç KTÜ Senatosu tarafından belirlenen usul ve esaslara dayanmaktadır. Hesaplamalar bilgilendirme amaçlıdır.</p>
