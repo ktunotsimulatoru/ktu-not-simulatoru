@@ -1348,7 +1348,11 @@ async function veriEkleSubmit(e) {
                 .from('dersler')
                 .insert({ bolum_id: bolumId, ders_adi: dersAdi, ders_kodu: dersKodu || null, onaylandi: false })
                 .select('id').single();
-            if (dersHata || !yeniDers) { sonucAlani.innerHTML = '<p class="error-message">Ders eklenirken hata oluştu. Lütfen tekrar deneyin.</p>'; return; }
+            if (dersHata || !yeniDers) {
+                console.error('Ders insert hatası:', dersHata);
+                sonucAlani.innerHTML = `<p class="error-message">Ders eklenirken hata oluştu: ${dersHata?.message || 'Bilinmeyen hata'} (kod: ${dersHata?.code || '-'})</p>`;
+                return;
+            }
             dersId = yeniDers.id;
             sonucAlani.innerHTML = `<p>✅ <strong>"${dersAdi}"</strong> dersi onay için gönderildi. Verini de kaydettik, ders onaylandıktan sonra görünecek.</p>`;
         }
