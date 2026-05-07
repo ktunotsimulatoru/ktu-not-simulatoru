@@ -293,7 +293,7 @@ function calculateMidtermContribution(formTypeSuffix, formElement) {
     const formSuffixLower = formTypeSuffix.toLowerCase();
 
     if (method === 'tek') {
-        const avgInputId = formTypeSuffix === 'Harf' ? 'midterm-avg' : (formTypeSuffix === 'Gerekli' ? 'req-midterm-avg' : 'scenario-midterm-avg');
+        const avgInputId = formTypeSuffix === 'Harf' ? 'midterm-avg' : (formTypeSuffix === 'Gerekli' ? 'req-midterm-avg' : (formTypeSuffix === 'Matris' ? 'matris-midterm-avg' : 'scenario-midterm-avg'));
         const avgInput = document.getElementById(avgInputId);
         const avgGrade = parseFloat(avgInput.value);
         if (isNaN(avgGrade)) return NaN;
@@ -311,8 +311,36 @@ function calculateMidtermContribution(formTypeSuffix, formElement) {
 }
 
 
+// --- Karanlık Mod Yönetimi ---
+function initTheme() {
+    const saved = localStorage.getItem('ktu-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = saved || (prefersDark ? 'dark' : 'light');
+    applyTheme(theme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        const label = btn.querySelector('.toggle-label');
+        if (label) label.textContent = theme === 'dark' ? 'Aydınlık' : 'Karanlık';
+    }
+    localStorage.setItem('ktu-theme', theme);
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+initTheme();
+
 // --- DOM Yüklendiğinde Çalışacak Kodlar ---
 document.addEventListener('DOMContentLoaded', () => {
+
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
 
     const harfNotuFormu = document.getElementById('grade-calculator-form');
     const gerekliNotFormu = document.getElementById('required-grade-form');
@@ -839,5 +867,137 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleInputFields('Harf');
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
+    toggleInputFields('Matris');
+
+    // --- Not Matrisi Formu ---
+    const matrisFormu = document.getElementById('matris-form');
+    const matrisTabloAlani = document.getElementById('matris-table-output');
+
+    if (matrisFormu && matrisTabloAlani) {
+        const matrisMidtermAvgInput = document.getElementById('matris-midterm-avg');
+        const vizeNotuMatrisInput = document.getElementById('vize-notu-matris');
+        const vizeAgirlikMatrisInput = document.getElementById('vize-agirlik-matris');
+        const odevNotuMatrisInput = document.getElementById('odev-notu-matris');
+        const odevAgirlikMatrisInput = document.getElementById('odev-agirlik-matris');
+        const matrisStdDevInput = document.getElementById('matris-stddev');
+
+        matrisFormu.addEventListener('submit', (event) => {
+            event.preventDefault();
+            matrisTabloAlani.innerHTML = '<p>Matris oluşturuluyor...</p>';
+            let formGecerli = true;
+            const secilenYontem = matrisFormu.querySelector('input[name="hesaplamaYontemiMatris"]:checked').value;
+
+            if (secilenYontem === 'tek') {
+                if (!validateNumberField(matrisMidtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
+            } else {
+                if (!validateNumberField(vizeNotuMatrisInput, 'Vize Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(vizeAgirlikMatrisInput, 'Vize Ağırlığı', 0, 50)) formGecerli = false;
+                if (!validateNumberField(odevNotuMatrisInput, 'Ödev/Proje Notu', 0, 100)) formGecerli = false;
+                if (!validateNumberField(odevAgirlikMatrisInput, 'Ödev/Proje Ağırlığı', 0, 50)) formGecerli = false;
+                if (formGecerli) {
+                    if (!validateDetailedWeights(vizeAgirlikMatrisInput, odevAgirlikMatrisInput, 'Matris')) formGecerli = false;
+                }
+            }
+            if (!validateNumberField(matrisStdDevInput, 'Standart Sapma', 0.01, null)) formGecerli = false;
+
+            if (!formGecerli) {
+                matrisTabloAlani.innerHTML = '<p class="error-message">Lütfen formdaki işaretli hataları düzeltin.</p>';
+                const firstInvalid = matrisFormu.querySelector('input.invalid-input');
+                if (firstInvalid) firstInvalid.focus();
+                return;
+            }
+
+            const araSinavKatkisi = calculateMidtermContribution('Matris', matrisFormu);
+            const stdSapma = parseFloat(matrisStdDevInput.value);
+
+            // Final: 0'dan 100'e 5'er adım
+            const finalAdimlar = [];
+            for (let f = 0; f <= 100; f += 5) finalAdimlar.push(f);
+
+            // Ham başarı ortalaması: 5'ten 80'e 5'er adım (80 üstü mutlak)
+            const ortalamaAdimlar = [];
+            for (let o = 5; o <= 75; o += 5) ortalamaAdimlar.push(o);
+
+            // Harf notu renk haritası
+            const gradeColors = {
+                AA: 'var(--grade-aa-bg)', BA: 'var(--grade-ba-bg)', BB: 'var(--grade-bb-bg)',
+                CB: 'var(--grade-cb-bg)', CC: 'var(--grade-cc-bg)', DC: 'var(--grade-dc-bg)',
+                DD: 'var(--grade-dd-bg)', FD: 'var(--grade-fd-bg)', FF: 'var(--grade-ff-bg)'
+            };
+            const gradeTextColors = {
+                AA: 'var(--grade-aa-text)', BA: 'var(--grade-ba-text)', BB: 'var(--grade-bb-text)',
+                CB: 'var(--grade-cb-text)', CC: 'var(--grade-cc-text)', DC: 'var(--grade-dc-text)',
+                DD: 'var(--grade-dd-text)', FD: 'var(--grade-fd-text)', FF: 'var(--grade-ff-text)'
+            };
+
+            const satirSayisi = finalAdimlar.filter(f => f >= 45).length;
+
+            let tabloHTML = '<table><thead>';
+            // 1. satır: boş köşe + "Ham Başarı Ortalaması" başlığı
+            tabloHTML += '<tr>';
+            tabloHTML += `<th rowspan="3" style="vertical-align:middle; text-align:center;">Final<br>Notu</th>`;
+            tabloHTML += `<th colspan="${ortalamaAdimlar.length + 1}" style="text-align:center; border-bottom: 1px solid var(--input-focus-border);">Ham Başarı Ortalaması</th>`;
+            tabloHTML += '</tr>';
+            // 2. satır: ortalama değerleri
+            tabloHTML += '<tr>';
+            ortalamaAdimlar.forEach(o => { tabloHTML += `<th>${o}</th>`; });
+            tabloHTML += '<th>≥80<br><small style="font-weight:normal">(Mutlak)</small></th>';
+            tabloHTML += '</tr>';
+            // 3. satır: FF bilgilendirme bandı
+            tabloHTML += '<tr>';
+            tabloHTML += `<td colspan="${ortalamaAdimlar.length + 1}" class="grade-FF" style="text-align:center; font-size:0.82em; font-weight:500; padding:6px; border:1px solid var(--result-border);">⚠️ Final notu 45'in altında olan durumlarda harf notu KTÜ Yönetmeliği Madde 7 gereği doğrudan <strong>FF</strong>'dir.</td>`;
+            tabloHTML += '</tr>';
+            tabloHTML += '</thead><tbody>';
+
+            // Sadece final >= 45 olan satırları göster
+            finalAdimlar.filter(f => f >= 45).forEach(final => {
+                tabloHTML += `<tr><td class="row-label">${final}</td>`;
+
+                ortalamaAdimlar.forEach(ort => {
+                    const hbn = araSinavKatkisi + (final * 0.5);
+                    let harfNotu;
+
+                    if (hbn <= 15) {
+                        harfNotu = 'FF';
+                    } else if (ort >= 80) {
+                        harfNotu = getMutlakDegerlendirmeNotu(hbn);
+                    } else {
+                        const tSkoruHam = ((hbn - ort) / stdSapma) * 10 + 50;
+                        const tSkoru = Math.round(tSkoruHam);
+                        const bagilNot = getBagilDegerlendirmeNotuTskor(tSkoru, ort);
+                        const mutlakNot = getMutlakDegerlendirmeNotu(hbn);
+                        harfNotu = bagilNot ? karsilastirHarfNotlari(bagilNot, mutlakNot) : mutlakNot;
+                    }
+
+                    const hbnGoster = (araSinavKatkisi + final * 0.5).toFixed(1);
+                    tabloHTML += `<td class="grade-${harfNotu}" title="HBN: ${hbnGoster}">${harfNotu}</td>`;
+                });
+
+                // Mutlak sistem sütunu (ort ≥ 80)
+                const hbn80 = araSinavKatkisi + (final * 0.5);
+                let harfMutlak = hbn80 > 15 ? getMutlakDegerlendirmeNotu(hbn80) : 'FF';
+                tabloHTML += `<td class="grade-${harfMutlak}" title="HBN: ${hbn80.toFixed(1)}">${harfMutlak}</td>`;
+                tabloHTML += '</tr>';
+            });
+
+            tabloHTML += '</tbody></table>';
+
+            // Legend
+            const gradeNames = { AA:'AA (4.0)', BA:'BA (3.5)', BB:'BB (3.0)', CB:'CB (2.5)', CC:'CC (2.0)', DC:'DC (1.5)', DD:'DD (1.0)', FD:'FD (0.5)', FF:'FF (0.0)' };
+            let legendHTML = '<div class="matris-legend">';
+            Object.keys(gradeNames).forEach(g => {
+                legendHTML += `<div class="matris-legend-item"><div class="matris-legend-box" style="background-color:${gradeColors[g]};"></div><span>${gradeNames[g]}</span></div>`;
+            });
+            legendHTML += '</div>';
+
+            // Bilgi notu
+            const bilgiHTML = `<p class="info-text" style="margin-top:12px; font-size:0.82em;">
+                <strong>Not:</strong> Final &lt; 45 olan tüm hücreler KTÜ Yönetmeliği Madde 7 gereği otomatik FF'dir. 
+                Hücre üzerine gelince Ham Başarı Notu (HBN) görüntülenir. σ = ${stdSapma}
+            </p>`;
+
+            matrisTabloAlani.innerHTML = tabloHTML + legendHTML + bilgiHTML;
+        });
+    }
 
 });

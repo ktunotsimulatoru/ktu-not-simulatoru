@@ -21,15 +21,35 @@
     --table-header-bg: rgba(241, 247, 252, 0.95);
 
     /* Harf Notu Renkleri */
-    --grade-aa-bg: #28a745; --grade-aa-text: #ffffff; /* Yeşil */
-    --grade-ba-bg: #5cb85c; --grade-ba-text: #ffffff; /* Açık Yeşil */
-    --grade-bb-bg: #82ca9c; --grade-bb-text: #ffffff; /* Daha Açık Yeşil (Koyu Metin) */
-    --grade-cb-bg: #007bff; --grade-cb-text: #ffffff; /* Mavi */
-    --grade-cc-bg: #17a2b8; --grade-cc-text: #ffffff; /* Camgöbeği */
-    --grade-dc-bg: #fd7e14; --grade-dc-text: #ffffff; /* Turuncu */
-    --grade-dd-bg: #ffc107; --grade-dd-text: #ffffff; /* Sarı (Koyu Metin) */
-    --grade-fd-bg: #dc3545; --grade-fd-text: #ffffff; /* Kırmızı */
-    --grade-ff-bg: #a21427; --grade-ff-text: #ffffff; /* Koyu Kırmızı */
+    --grade-aa-bg: #28a745; --grade-aa-text: #ffffff;
+    --grade-ba-bg: #5cb85c; --grade-ba-text: #ffffff;
+    --grade-bb-bg: #82ca9c; --grade-bb-text: #ffffff;
+    --grade-cb-bg: #007bff; --grade-cb-text: #ffffff;
+    --grade-cc-bg: #17a2b8; --grade-cc-text: #ffffff;
+    --grade-dc-bg: #fd7e14; --grade-dc-text: #ffffff;
+    --grade-dd-bg: #ffc107; --grade-dd-text: #ffffff;
+    --grade-fd-bg: #dc3545; --grade-fd-text: #ffffff;
+    --grade-ff-bg: #a21427; --grade-ff-text: #ffffff;
+}
+
+/* --- Karanlık Mod Değişkenleri --- */
+[data-theme="dark"] {
+    --bg-color: #0d1117; --text-color: #c9d1d9;
+    --header-bg: rgba(22, 27, 34, 0.92); --header-text: #58a6ff;
+    --header-subtext: #8b949e; --header-border: #30363d; --main-bg: #161b22;
+    --tab-bg: #0d1117; --tab-border: #30363d; --tab-text: #8b949e;
+    --tab-hover-bg: #21262d; --tab-active-text: #58a6ff; --tab-active-border: #58a6ff;
+    --content-title: #58a6ff; --label-color: #c9d1d9; --input-bg: #0d1117;
+    --input-border: #30363d; --input-focus-border: #58a6ff;
+    --input-focus-shadow: rgba(88, 166, 255, 0.25); --input-text: #c9d1d9;
+    --small-text: #8b949e; --button-bg: #1f6feb; --button-text: #ffffff;
+    --button-hover-bg: #388bfd; --result-bg: #0d1117; --result-border: #1f6feb;
+    --result-strong: #58a6ff; --details-summary: #79c0ff; --details-border: #1f6feb;
+    --error-text: #ffa198; --error-bg: #3d1c1f; --error-border: #6e2b31;
+    --footer-bg: #0d1117; --footer-text: #8b949e; --footer-border: #30363d;
+    --shadow-color: rgba(0, 0, 0, 0.4); --radio-check-color: #58a6ff;
+    --impossible-color: #ff7b72; --min-final-color: #ffa657;
+    --table-header-bg: rgba(22, 27, 34, 0.95);
 }
 
 /* --- Genel Stiller --- */
@@ -53,6 +73,93 @@ body {
     position: relative;
     z-index: 10;
 }
+
+/* Karanlık Mod Toggle Butonu */
+.theme-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: var(--tab-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-family: 'Poppins', sans-serif;
+    color: var(--tab-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+    z-index: 20;
+}
+.theme-toggle-btn:hover {
+    background-color: var(--tab-hover-bg);
+    color: var(--tab-active-text);
+    border-color: var(--tab-active-border);
+}
+.theme-toggle-btn .icon-sun { display: none; }
+.theme-toggle-btn .icon-moon { display: inline; }
+[data-theme="dark"] .theme-toggle-btn .icon-sun { display: inline; }
+[data-theme="dark"] .theme-toggle-btn .icon-moon { display: none; }
+
+/* Senaryo Matrisi Tablo Stilleri */
+#matris-table-output {
+    width: 100%;
+    display: block;
+    margin-top: 1.5rem;
+    border: 1px solid var(--result-border);
+    border-radius: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#matris-table-output table {
+    width: 100%;
+    min-width: 500px;
+    border-collapse: collapse;
+    font-size: 0.82em;
+}
+#matris-table-output th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+    color: var(--content-title);
+    border: 1px solid var(--result-border);
+    padding: 7px 5px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    font-size: 0.9em;
+}
+#matris-table-output td {
+    border: 1px solid var(--result-border);
+    padding: 5px 4px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.88em;
+    min-width: 34px;
+}
+#matris-table-output td.row-label {
+    background-color: var(--table-header-bg);
+    color: var(--tab-text);
+    font-weight: 600;
+    font-size: 0.85em;
+    text-align: right;
+    padding: 5px 8px;
+}
+#matris-table-output td.grade-AA { background-color: var(--grade-aa-bg); color: var(--grade-aa-text); }
+#matris-table-output td.grade-BA { background-color: var(--grade-ba-bg); color: var(--grade-ba-text); }
+#matris-table-output td.grade-BB { background-color: var(--grade-bb-bg); color: var(--grade-bb-text); }
+#matris-table-output td.grade-CB { background-color: var(--grade-cb-bg); color: var(--grade-cb-text); }
+#matris-table-output td.grade-CC { background-color: var(--grade-cc-bg); color: var(--grade-cc-text); }
+#matris-table-output td.grade-DC { background-color: var(--grade-dc-bg); color: var(--grade-dc-text); }
+#matris-table-output td.grade-DD { background-color: var(--grade-dd-bg); color: var(--grade-dd-text); }
+#matris-table-output td.grade-FD { background-color: var(--grade-fd-bg); color: var(--grade-fd-text); }
+#matris-table-output td.grade-FF { background-color: var(--grade-ff-bg); color: var(--grade-ff-text); }
+.matris-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding: 0 5px; }
+.matris-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8em; color: var(--text-color); }
+.matris-legend-box { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
 .header-text h1 {
     margin: 0 0 5px 0;
     font-size: 2.2em;
@@ -81,7 +188,7 @@ main {
 
 /* Sekme Butonları */
 .tab-buttons { overflow: hidden; background-color: var(--tab-bg); border-bottom: 1px solid var(--tab-border); }
-.tab-button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 18px; transition: background-color 0.3s, color 0.3s, border-bottom 0.3s; font-size: 1em; color: var(--tab-text); border-bottom: 3px solid transparent; font-weight: 600; width: calc(100% / 3); text-align: center; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+.tab-button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 10px; transition: background-color 0.3s, color 0.3s, border-bottom 0.3s; font-size: 0.9em; color: var(--tab-text); border-bottom: 3px solid transparent; font-weight: 600; width: calc(100% / 4); text-align: center; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 .tab-button:hover { background-color: var(--tab-hover-bg); color: var(--tab-active-text); }
 .tab-button.active { font-weight: 700; color: var(--tab-active-text); border-bottom: 3px solid var(--tab-active-border); }
 
