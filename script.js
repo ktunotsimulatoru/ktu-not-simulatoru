@@ -1529,6 +1529,7 @@ async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu) {
         if (harfNotu) insertData.harf_notu = harfNotu;
         if (vizeNotu !== null) insertData.vize_notu = Math.round(vizeNotu);
         if (finalNotu !== null) insertData.final_notu = Math.round(finalNotu);
+        insertData.is_mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         await getSupabase().from('hesaplama_loglari').insert(insertData);
     } catch (e) { /* sessizce geç */ }
 }
