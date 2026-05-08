@@ -40,7 +40,7 @@ function clearFieldError(inputElement) {
 
 function validateRequiredField(inputElement, fieldName) {
     if (!inputElement) return true;
-    const value = inputElement.value; // select için .trim() gereksiz
+    const value = inputElement.value;
     if (!value) {
         showFieldError(inputElement, `${fieldName} alanı boş bırakılamaz.`);
         return false;
@@ -125,10 +125,6 @@ function getMutlakDegerlendirmeNotu(hamBasariNotu) {
     return "FF";
 }
 
-// =================================================================================
-// DEĞİŞİKLİK: Bu fonksiyon artık kendisine zaten yuvarlanmış (tam sayı) olarak 
-// gelen tSkoru'nu kullanacak şekilde güncellendi. İçerisindeki yuvarlama kaldırıldı.
-// =================================================================================
 function getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasi) {
     let hedefAralikAnahtari = null;
     const siraliOrtalamaAraliklari = Object.keys(T_SKOR_ARALIKLARI_ORTALAMAYA_GORE).sort((a, b) => parseFloat(a.split('_')[0]) - parseFloat(b.split('_')[0]));
@@ -163,11 +159,8 @@ function getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasi) {
         return null;
     }
     const notlar = T_SKOR_ARALIKLARI_ORTALAMAYA_GORE[hedefAralikAnahtari];
-    // DEĞİŞİKLİK: Aşağıdaki ondalık yuvarlama satırı kaldırıldı.
-    // const yuvarlanmisTskor = Math.round(tSkoru * 100) / 100; 
     for (const not in notlar) {
         const [minT, maxT] = notlar[not];
-        // DEĞİŞİKLİK: Karşılaştırmada doğrudan fonksiyona gelen 'tSkoru' (artık tam sayı) kullanılıyor.
         if (tSkoru >= minT && (maxT === Infinity ? true : tSkoru <= maxT)) {
             return not;
         }
@@ -487,11 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     anaMesaj = `Sınıf ortalaması (${sinifOrtalamasiVal.toFixed(2)}) 80 veya üzeri olduğu için notunuz doğrudan Mutlak Değerlendirme Sistemine (Tablo-3) göre belirlenmiştir.`;
                     hesaplamaDetaylari = `Mutlak Değerlendirme (Tablo-3) sonucu: <strong>${mutlakNotKarsiligi}</strong>.`;
                 } else {
-                    // =================================================================================
-                    // DEĞİŞİKLİK: T-Skoru yuvarlama kuralı burada uygulanıyor.
-                    // =================================================================================
                     const tSkoruHam = ((hamBasariNotu - sinifOrtalamasiVal) / sinifStandartSapmaVal) * 10 + 50;
-                    tSkoru = Math.round(tSkoruHam); // T-Skoru en yakın tam sayıya yuvarlandı.
+                    tSkoru = Math.round(tSkoruHam);
 
                     const bagilNot = getBagilDegerlendirmeNotuTskor(tSkoru, sinifOrtalamasiVal);
                     
@@ -940,46 +930,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const araSinavKatkisi = calculateMidtermContribution('Matris', matrisFormu);
             const stdSapma = parseFloat(matrisStdDevInput.value);
 
-            // Final: 0'dan 100'e 5'er adım
             const finalAdimlar = [];
             for (let f = 0; f <= 100; f += 5) finalAdimlar.push(f);
 
-            // Ham başarı ortalaması: 5'ten 80'e 5'er adım (80 üstü mutlak)
             const ortalamaAdimlar = [];
             for (let o = 5; o <= 75; o += 5) ortalamaAdimlar.push(o);
 
-            // Harf notu renk haritası
             const gradeColors = {
                 AA: 'var(--grade-aa-bg)', BA: 'var(--grade-ba-bg)', BB: 'var(--grade-bb-bg)',
                 CB: 'var(--grade-cb-bg)', CC: 'var(--grade-cc-bg)', DC: 'var(--grade-dc-bg)',
                 DD: 'var(--grade-dd-bg)', FD: 'var(--grade-fd-bg)', FF: 'var(--grade-ff-bg)'
             };
-            const gradeTextColors = {
-                AA: 'var(--grade-aa-text)', BA: 'var(--grade-ba-text)', BB: 'var(--grade-bb-text)',
-                CB: 'var(--grade-cb-text)', CC: 'var(--grade-cc-text)', DC: 'var(--grade-dc-text)',
-                DD: 'var(--grade-dd-text)', FD: 'var(--grade-fd-text)', FF: 'var(--grade-ff-text)'
-            };
-
-            const satirSayisi = finalAdimlar.filter(f => f >= 45).length;
 
             let tabloHTML = '<table><thead>';
-            // 1. satır: boş köşe + "Ham Başarı Ortalaması" başlığı
             tabloHTML += '<tr>';
             tabloHTML += `<th rowspan="3" style="vertical-align:middle; text-align:center;">Final<br>Notu</th>`;
             tabloHTML += `<th colspan="${ortalamaAdimlar.length + 1}" style="text-align:center; border-bottom: 1px solid var(--input-focus-border);">Ham Başarı Ortalaması</th>`;
             tabloHTML += '</tr>';
-            // 2. satır: ortalama değerleri
             tabloHTML += '<tr>';
             ortalamaAdimlar.forEach(o => { tabloHTML += `<th>${o}</th>`; });
             tabloHTML += '<th>≥80<br><small style="font-weight:normal">(Mutlak)</small></th>';
             tabloHTML += '</tr>';
-            // 3. satır: FF bilgilendirme bandı
             tabloHTML += '<tr>';
             tabloHTML += `<td colspan="${ortalamaAdimlar.length + 1}" class="grade-FF" style="text-align:center; font-size:0.82em; font-weight:500; padding:6px; border:1px solid var(--result-border);">⚠️ Final notu 45'in altında olan durumlarda harf notu KTÜ Yönetmeliği Madde 7 gereği doğrudan <strong>FF</strong>'dir.</td>`;
             tabloHTML += '</tr>';
             tabloHTML += '</thead><tbody>';
 
-            // Sadece final >= 45 olan satırları göster
             finalAdimlar.filter(f => f >= 45).forEach(final => {
                 tabloHTML += `<tr><td class="row-label">${final}</td>`;
 
@@ -1003,7 +979,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     tabloHTML += `<td class="grade-${harfNotu}" title="HBN: ${hbnGoster}">${harfNotu}</td>`;
                 });
 
-                // Mutlak sistem sütunu (ort ≥ 80)
                 const hbn80 = araSinavKatkisi + (final * 0.5);
                 let harfMutlak = hbn80 > 15 ? getMutlakDegerlendirmeNotu(hbn80) : 'FF';
                 tabloHTML += `<td class="grade-${harfMutlak}" title="HBN: ${hbn80.toFixed(1)}">${harfMutlak}</td>`;
@@ -1012,7 +987,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tabloHTML += '</tbody></table>';
 
-            // Legend
             const gradeNames = { AA:'AA (4.0)', BA:'BA (3.5)', BB:'BB (3.0)', CB:'CB (2.5)', CC:'CC (2.0)', DC:'DC (1.5)', DD:'DD (1.0)', FD:'FD (0.5)', FF:'FF (0.0)' };
             let legendHTML = '<div class="matris-legend">';
             Object.keys(gradeNames).forEach(g => {
@@ -1020,7 +994,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             legendHTML += '</div>';
 
-            // Bilgi notu
             const bilgiHTML = `<p class="info-text" style="margin-top:12px; font-size:0.82em;">
                 <strong>Not:</strong> Final &lt; 45 olan tüm hücreler KTÜ Yönetmeliği Madde 7 gereği otomatik FF'dir. 
                 Hücre üzerine gelince Ham Başarı Notu (HBN) görüntülenir. σ = ${stdSapma}
@@ -1052,10 +1025,8 @@ function getSupabase() {
     return supabaseClient;
 }
 
-// Ders kodu regex: 2-4 büyük harf + 3-4 rakam
 const DERS_KODU_REGEX = /^[A-ZÇĞİÖŞÜ]{2,4}\d{3,4}$/;
 
-// Başlık formatı: Her kelimenin ilk harfi büyük
 function baslikFormatla(str) {
     return str.trim().replace(/\s+/g, ' ')
         .split(' ')
@@ -1063,7 +1034,6 @@ function baslikFormatla(str) {
         .join(' ');
 }
 
-// Yıl seçeneklerini doldur
 function yilSecenekleriniDoldur() {
     const select = document.getElementById('ekle-yil');
     if (!select) return;
@@ -1076,11 +1046,9 @@ function yilSecenekleriniDoldur() {
     }
 }
 
-// === PAYLAŞIM SEKMESİ — YENİ MİMARİ ===
-// Ortak seçim state'i
+// === PAYLAŞIM SEKMESİ ===
 let paylasimState = { fakulteId: null, bolumId: null, dersId: null, dersAdi: '', bolumAdi: '', fakulteAdi: '' };
 
-// Fakülteleri yükle — ortak select'e
 async function fakulteleriYukle() {
     const { data, error } = await getSupabase().from('fakulteler').select('id, ad').order('ad');
     if (error || !data) return;
@@ -1147,7 +1115,6 @@ async function paylasimDersYukle() {
         opt.textContent = d.ders_kodu ? `${d.ders_kodu} — ${d.ders_adi}` : d.ders_adi;
         dersSel.appendChild(opt);
     });
-    // "Dersim listede yok" seçeneği
     const yeniOpt = document.createElement('option');
     yeniOpt.value = 'yeni';
     yeniOpt.textContent = '➕ Dersim listede yok, önermek istiyorum';
@@ -1169,7 +1136,6 @@ function paylasimDersSecildi() {
         paylasimState.dersAdi = dersAdi;
         document.getElementById('yeni-ders-alani').style.display = 'none';
         paylasimSecimGuncelle({ id: dersId, ad: dersAdi });
-        // Görüntüle sekmesindeyse otomatik listele
         const goruntuleAktif = document.getElementById('veri-goruntule').classList.contains('active');
         if (goruntuleAktif) veriListele();
     } else {
@@ -1180,9 +1146,7 @@ function paylasimDersSecildi() {
     }
 }
 
-// Seçili ders banner'ını güncelle
 function paylasimSecimGuncelle(ders) {
-    // Görüntüle sekmesi başlığı
     const gorAlan = document.getElementById('veri-goruntule');
     const ekleAlan = document.getElementById('veri-ekle');
     let mevcutBannerGor = gorAlan.querySelector('.secili-ders-banner');
@@ -1221,7 +1185,6 @@ function dersSecimSifirla() {
     document.getElementById('veri-listesi').innerHTML = '<p class="veri-bos">Yukarıdan fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>';
 }
 
-// Veri listele
 async function veriListele() {
     const dersId = paylasimState.dersId;
     const alan = document.getElementById('veri-listesi');
@@ -1244,46 +1207,28 @@ async function veriListele() {
         return;
     }
 
+    // Sadece çan verilerini göster
     const canVerileri = data.filter(v => v.veri_turu === 'can' || (!v.veri_turu && v.ortalama != null));
-    const sinavVerileri = data.filter(v => v.veri_turu === 'sinav');
     let html = '<div class="veri-kart-wrapper">';
 
     if (canVerileri.length > 0) {
-        html += `<div class="veri-bolum-baslik">📊 Çan Verileri</div>`;
         canVerileri.forEach(v => {
             const canEtiketi = v.can_turu === 'but' ? 'Bütünleme Çanı' : 'Final Çanı';
             html += `<div class="veri-kart">
                 <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil + 1} ${v.donem} — ${canEtiketi}</div>
                 <div class="veri-kart-detay">
-                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
                     ${v.std_sapma != null ? `<span>Std. Sapma: <strong>${v.std_sapma.toFixed(2)}</strong></span>` : ''}
+                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
                     ${v.ogrenci_sayisi != null ? `<span>Öğrenci: <strong>${v.ogrenci_sayisi}</strong></span>` : ''}
                 </div>
             </div>`;
         });
+    } else {
+        html += '<p class="veri-bos">Bu ders için henüz çan verisi paylaşılmamış. "Veri Ekle" sekmesinden ilk sen paylaş!</p>';
     }
-    if (sinavVerileri.length > 0) {
-        html += `<div class="veri-bolum-baslik" style="margin-top:12px;">📝 Sınav Ortalamaları</div>`;
-        sinavVerileri.forEach(v => {
-            html += `<div class="veri-kart">
-                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil + 1} ${v.donem}</div>
-                <div class="veri-kart-detay">
-                    ${v.vize_ort != null ? `<span>Vize: <strong>${v.vize_ort.toFixed(2)}</strong></span>` : ''}
-                    ${v.final_ort != null ? `<span>Final: <strong>${v.final_ort.toFixed(2)}</strong></span>` : ''}
-                    ${v.but_ort != null ? `<span>Büt: <strong>${v.but_ort.toFixed(2)}</strong></span>` : ''}
-                </div>
-            </div>`;
-        });
-    }
+
     html += '</div>';
     alan.innerHTML = html;
-}
-
-// Veri türü değişince alanları göster/gizle
-function veriTuruDegisti() {
-    const tur = document.querySelector('input[name="veriTuru"]:checked').value;
-    document.getElementById('alan-sinav').style.display = tur === 'sinav' ? 'block' : 'none';
-    document.getElementById('alan-can').style.display = tur === 'can' ? 'block' : 'none';
 }
 
 // Veri ekle formu submit
@@ -1297,32 +1242,38 @@ async function veriEkleSubmit(e) {
     const bolumId = paylasimState.bolumId;
     const donem = document.getElementById('ekle-donem').value;
     const yil = parseInt(document.getElementById('ekle-yil').value);
-    const veriTuru = document.querySelector('input[name="veriTuru"]:checked').value;
 
     if (!bolumId || !dersId) { sonucAlani.innerHTML = '<p class="error-message">Lütfen yukarıdan fakülte, bölüm ve ders seçin.</p>'; return; }
     if (!donem) { sonucAlani.innerHTML = '<p class="error-message">Lütfen dönem seçin.</p>'; return; }
     if (!yil) { sonucAlani.innerHTML = '<p class="error-message">Lütfen yıl seçin.</p>'; return; }
 
-    let insertData = { donem, yil, veri_turu: veriTuru };
+    // Sadece çan verisi — sıra: std → ortalama → öğrenci sayısı
+    const std = document.getElementById('ekle-std').value;
+    const ortalama = document.getElementById('ekle-ortalama').value;
+    const ogrenciSayisi = document.getElementById('ekle-ogrenci-sayisi').value;
+    const canTuru = document.querySelector('input[name="canTuru"]:checked').value;
 
-    if (veriTuru === 'sinav') {
-        const vizeOrt = document.getElementById('ekle-vize-ort').value;
-        const finalOrt = document.getElementById('ekle-final-ort').value;
-        const butOrt = document.getElementById('ekle-but-ort').value;
-        if (!vizeOrt && !finalOrt && !butOrt) { sonucAlani.innerHTML = '<p class="error-message">En az bir sınav ortalaması girmelisin.</p>'; return; }
-        if (vizeOrt) { const v = parseFloat(vizeOrt); if (isNaN(v) || v < 0 || v > 100) { sonucAlani.innerHTML = '<p class="error-message">Vize ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.vize_ort = v; }
-        if (finalOrt) { const f = parseFloat(finalOrt); if (isNaN(f) || f < 0 || f > 100) { sonucAlani.innerHTML = '<p class="error-message">Final ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.final_ort = f; }
-        if (butOrt) { const b = parseFloat(butOrt); if (isNaN(b) || b < 0 || b > 100) { sonucAlani.innerHTML = '<p class="error-message">Bütünleme ortalaması 0-100 arasında olmalıdır.</p>'; return; } insertData.but_ort = b; }
-    } else {
-        const ortalama = document.getElementById('ekle-ortalama').value;
-        const std = document.getElementById('ekle-std').value;
-        const ogrenciSayisi = document.getElementById('ekle-ogrenci-sayisi').value;
-        const canTuru = document.querySelector('input[name="canTuru"]:checked').value;
-        if (!ortalama && !std) { sonucAlani.innerHTML = '<p class="error-message">En az ortalama veya standart sapma girmelisin.</p>'; return; }
-        if (ortalama) { const o = parseFloat(ortalama); if (isNaN(o) || o < 0 || o > 100) { sonucAlani.innerHTML = '<p class="error-message">Ortalama 0-100 arasında olmalıdır.</p>'; return; } insertData.ortalama = o; }
-        if (std) { const s = parseFloat(std); if (isNaN(s) || s < 0 || s > 50) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma 0-50 arasında olmalıdır.</p>'; return; } insertData.std_sapma = s; }
-        if (ogrenciSayisi) { const n = parseInt(ogrenciSayisi); if (isNaN(n) || n < 1) { sonucAlani.innerHTML = '<p class="error-message">Öğrenci sayısı en az 1 olmalıdır.</p>'; return; } insertData.ogrenci_sayisi = n; }
-        insertData.can_turu = canTuru;
+    if (!std || !ortalama) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma ve ham başarı ortalaması zorunludur.</p>'; return; }
+
+    const stdVal = parseFloat(std);
+    const ortVal = parseFloat(ortalama);
+
+    if (isNaN(stdVal) || stdVal < 0 || stdVal > 50) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma 0-50 arasında olmalıdır.</p>'; return; }
+    if (isNaN(ortVal) || ortVal < 0 || ortVal > 100) { sonucAlani.innerHTML = '<p class="error-message">Ortalama 0-100 arasında olmalıdır.</p>'; return; }
+
+    let insertData = {
+        donem,
+        yil,
+        veri_turu: 'can',
+        std_sapma: stdVal,
+        ortalama: ortVal,
+        can_turu: canTuru
+    };
+
+    if (ogrenciSayisi) {
+        const n = parseInt(ogrenciSayisi);
+        if (isNaN(n) || n < 1) { sonucAlani.innerHTML = '<p class="error-message">Öğrenci sayısı en az 1 olmalıdır.</p>'; return; }
+        insertData.ogrenci_sayisi = n;
     }
 
     // Yeni ders eklenecekse
@@ -1366,10 +1317,16 @@ async function veriEkleSubmit(e) {
         sonucAlani.innerHTML = '<p>✅ Veriniz başarıyla kaydedildi. Teşekkürler! 🎉</p>';
     }
 
-    // Sadece veri alanlarını sıfırla, ders seçimi kalsın
+    // Formu sıfırla ve ders seçimini temizle
     document.getElementById('veri-ekle-form').reset();
-    document.getElementById('alan-sinav').style.display = 'block';
-    document.getElementById('alan-can').style.display = 'none';
+
+    // Ders seçimini tamamen sıfırla
+    paylasimState.dersId = null;
+    paylasimState.dersAdi = '';
+    document.getElementById('paylasim-ders').value = '';
+    document.getElementById('yeni-ders-alani').style.display = 'none';
+    paylasimSecimGuncelle(null);
+    document.getElementById('veri-listesi').innerHTML = '<p class="veri-bos">Yukarıdan fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>';
 }
 
 // Sekme geçişi
@@ -1378,13 +1335,11 @@ function switchVeriTab(tab) {
     document.querySelectorAll('.veri-tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector(`.veri-tab-btn[onclick="switchVeriTab('${tab}')"]`).classList.add('active');
     document.getElementById(`veri-${tab}`).classList.add('active');
-    // Görüntüle sekmesine geçince ve ders seçiliyse otomatik listele
     if (tab === 'goruntule' && paylasimState.dersId && paylasimState.dersId !== 'yeni') {
         veriListele();
     }
 }
 
-// Diğer sekmelerden ders verisi sayfasına git
 function dersiGoruntule(dersAdi, bolumAdi, fakulteAdi) {
     openTab(null, 'veriPaylasim');
     document.querySelectorAll('.tab-button').forEach(b => {
@@ -1394,7 +1349,6 @@ function dersiGoruntule(dersAdi, bolumAdi, fakulteAdi) {
     switchVeriTab('goruntule');
 }
 
-// Hesaplama sonucu altına ders verisi bağlantısı ekle
 function dersiLinkGoster(containerId, dersAdiBilgisi) {
     const alan = document.getElementById(containerId);
     if (!alan) return;
@@ -1408,7 +1362,7 @@ function dersiLinkGoster(containerId, dersAdiBilgisi) {
 // DERS VERİSİ MODAL
 // =============================================
 let modalFakulteleriYuklendi = false;
-let aktifModalForm = null; // 'harf' veya 'gerekli'
+let aktifModalForm = null;
 
 async function modalAc(formTipi) {
     aktifModalForm = formTipi;
@@ -1416,13 +1370,11 @@ async function modalAc(formTipi) {
     modal.classList.add('aktif');
     document.body.style.overflow = 'hidden';
 
-    // Fakülteleri bir kez yükle
     if (!modalFakulteleriYuklendi) {
         await modalFakulteleriYukle();
         modalFakulteleriYuklendi = true;
     }
 
-    // Önceki seçimi sıfırla
     document.getElementById('modal-veri-alani').innerHTML = '<p class="veri-bos">Fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>';
 }
 
@@ -1490,7 +1442,7 @@ async function modalVeriListele() {
     alan.innerHTML = '<p class="veri-yukle">Yükleniyor...</p>';
     const { data, error } = await getSupabase()
         .from('ders_verileri')
-        .select('veri_turu, ortalama, std_sapma, ogrenci_sayisi, can_turu, vize_ort, final_ort, but_ort, donem, yil')
+        .select('veri_turu, ortalama, std_sapma, ogrenci_sayisi, can_turu, donem, yil')
         .eq('ders_id', dersId)
         .order('yil', { ascending: false })
         .order('donem');
@@ -1500,42 +1452,28 @@ async function modalVeriListele() {
         return;
     }
 
+    // Sadece çan verilerini göster
     const canVerileri = data.filter(v => v.veri_turu === 'can' || (!v.veri_turu && v.ortalama != null));
-    const sinavVerileri = data.filter(v => v.veri_turu === 'sinav');
     let html = '<div class="veri-kart-wrapper">';
 
     if (canVerileri.length > 0) {
-        html += `<div class="veri-bolum-baslik">📊 Çan Verileri</div>`;
         canVerileri.forEach(v => {
             const canEtiketi = v.can_turu === 'but' ? 'Bütünleme Çanı' : 'Final Çanı';
-            // Forma doldur butonu — sadece can verisinde ve gerekli alanlar varsa
             const doldurmaBilgi = (v.ortalama != null && v.std_sapma != null)
                 ? `<button class="veri-doldur-btn" onclick="modalVeriyiDoldur(${v.ortalama}, ${v.std_sapma})">↙ Forma Doldur</button>`
                 : '';
             html += `<div class="veri-kart">
                 <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil+1} ${v.donem} — ${canEtiketi}</div>
                 <div class="veri-kart-detay">
-                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
                     ${v.std_sapma != null ? `<span>Std. Sapma: <strong>${v.std_sapma.toFixed(2)}</strong></span>` : ''}
+                    ${v.ortalama != null ? `<span>HBN Ort: <strong>${v.ortalama.toFixed(2)}</strong></span>` : ''}
                     ${v.ogrenci_sayisi != null ? `<span>Öğrenci: <strong>${v.ogrenci_sayisi}</strong></span>` : ''}
                 </div>
                 ${doldurmaBilgi}
             </div>`;
         });
-    }
-
-    if (sinavVerileri.length > 0) {
-        html += `<div class="veri-bolum-baslik" style="margin-top:10px;">📝 Sınav Ortalamaları</div>`;
-        sinavVerileri.forEach(v => {
-            html += `<div class="veri-kart">
-                <div class="veri-kart-baslik">📅 ${v.yil}-${v.yil+1} ${v.donem}</div>
-                <div class="veri-kart-detay">
-                    ${v.vize_ort != null ? `<span>Vize: <strong>${v.vize_ort.toFixed(2)}</strong></span>` : ''}
-                    ${v.final_ort != null ? `<span>Final: <strong>${v.final_ort.toFixed(2)}</strong></span>` : ''}
-                    ${v.but_ort != null ? `<span>Büt: <strong>${v.but_ort.toFixed(2)}</strong></span>` : ''}
-                </div>
-            </div>`;
-        });
+    } else {
+        html += '<p class="veri-bos">Bu ders için henüz çan verisi paylaşılmamış.</p>';
     }
 
     html += '</div>';
@@ -1550,7 +1488,6 @@ function modalVeriyiDoldur(ort, std) {
         document.getElementById('req-class-avg').value = ort;
         document.getElementById('req-class-stddev').value = std;
     }
-    // Modalı kapat
     document.getElementById('dersVeriModal').classList.remove('aktif');
     document.body.style.overflow = '';
 }
