@@ -357,10 +357,10 @@
         <div id="veriPaylasim" class="tab-content">
             <h2>Ders Verileri</h2>
             <p class="tab-description">
-                Dersinin ortalama ve standart sapmasını paylaş, diğerlerinin verilerini gör.
+                Dersinin çan ortalaması ve standart sapmasını paylaş, diğerlerinin verilerini gör.
             </p>
 
-            <!-- Ortak fakülte/bölüm/ders seçimi — iki sekme bunu paylaşır -->
+            <!-- Ortak fakülte/bölüm/ders seçimi -->
             <div class="veri-secim-alani">
                 <div class="form-row">
                     <div class="form-group">
@@ -421,71 +421,38 @@
             <div id="veri-ekle" class="veri-tab-content">
                 <form id="veri-ekle-form" novalidate>
 
-                    <!-- Veri türü seçimi -->
-                    <div class="form-group calculation-method">
-                        <label>Hangi veriyi paylaşmak istiyorsun?</label>
+                    <!-- Çan Verisi alanı — tek seçenek -->
+                    <div class="form-group calculation-method" style="margin-bottom:1rem;">
+                        <label>Hangi sınav için çan verisi?</label>
                         <div>
-                            <input type="radio" id="veriTuruSinav" name="veriTuru" value="sinav" checked onchange="veriTuruDegisti()">
-                            <label for="veriTuruSinav">Sınav Ortalamaları (Vize / Final / Büt)</label>
+                            <input type="radio" id="canTuruFinal" name="canTuru" value="final" checked>
+                            <label for="canTuruFinal">Final</label>
                         </div>
                         <div>
-                            <input type="radio" id="veriTuruCan" name="veriTuru" value="can" onchange="veriTuruDegisti()">
-                            <label for="veriTuruCan">Çan Verisi (Ham Başarı Ortalaması + Standart Sapma)</label>
+                            <input type="radio" id="canTuruBut" name="canTuru" value="but">
+                            <label for="canTuruBut">Bütünleme</label>
                         </div>
                     </div>
 
-                    <!-- Sınav Ortalamaları alanı -->
-                    <div id="alan-sinav">
-                        <p class="info-text">
-                            ⚠️ <strong>Bu alana sadece ham sınav ortalamalarını gir.</strong> Çan (bağıl değerlendirme) ortalaması buraya girilmemelidir. Elindeki verileri gir, hepsini doldurmak zorunda değilsin.
-                        </p>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="ekle-vize-ort">Vize Sınav Ortalaması:</label>
-                                <input type="number" id="ekle-vize-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
-                            </div>
-                            <div class="form-group">
-                                <label for="ekle-final-ort">Final Sınav Ortalaması:</label>
-                                <input type="number" id="ekle-final-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
-                            </div>
-                            <div class="form-group">
-                                <label for="ekle-but-ort">Bütünleme Sınav Ortalaması:</label>
-                                <input type="number" id="ekle-but-ort" min="0" max="100" step="0.01" placeholder="0 – 100">
-                            </div>
-                        </div>
-                    </div>
+                    <p class="info-text">
+                        ⚠️ <strong>Dikkat:</strong> <em>Final çan ortalaması ≠ Final sınav ortalaması.</em> Çan ortalamasına sadece bağıl değerlendirmeye katılan öğrenciler dahildir — devamsızlar, finale girmeyenler ve HBN'si 15 ve altında olanlar bu ortalamaya <strong>dahil edilmez.</strong>
+                        <br><br>
+                        <strong>📌 Örnek:</strong> Sınıfta 80 öğrenci var, 5'i devamsız, 3'ü finale girmedi, 2'sinin HBN ≤ 15. Çan ortalaması kalan <strong>70 öğrencinin</strong> HBN ortalamasıdır.
+                    </p>
 
-                    <!-- Çan Verisi alanı -->
-                    <div id="alan-can" style="display:none;">
-                        <div class="form-group calculation-method" style="margin-bottom:1rem;">
-                            <label>Hangi sınav için çan verisi?</label>
-                            <div>
-                                <input type="radio" id="canTuruFinal" name="canTuru" value="final" checked>
-                                <label for="canTuruFinal">Final</label>
-                            </div>
-                            <div>
-                                <input type="radio" id="canTuruBut" name="canTuru" value="but">
-                                <label for="canTuruBut">Bütünleme</label>
-                            </div>
+                    <!-- Sıra: Standart Sapma → Ham Başarı Ortalaması → Öğrenci Sayısı -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ekle-std">Standart Sapma: <span class="zorunlu">*</span></label>
+                            <input type="number" id="ekle-std" min="0" max="50" step="0.01" placeholder="0 – 50">
                         </div>
-                        <p class="info-text">
-                            ⚠️ <strong>Dikkat:</strong> <em>Final çan ortalaması ≠ Final sınav ortalaması.</em> Çan ortalamasına sadece bağıl değerlendirmeye katılan öğrenciler dahildir — devamsızlar, finale girmeyenler ve HBN'si 15 ve altında olanlar bu ortalamaya <strong>dahil edilmez.</strong>
-                            <br><br>
-                            <strong>📌 Örnek:</strong> Sınıfta 80 öğrenci var, 5'i devamsız, 3'ü finale girmedi, 2'sinin HBN ≤ 15. Çan ortalaması kalan <strong>70 öğrencinin</strong> HBN ortalamasıdır.
-                        </p>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="ekle-ortalama">Ham Başarı Ortalaması (Çan):</label>
-                                <input type="number" id="ekle-ortalama" min="0" max="100" step="0.01" placeholder="0 – 100">
-                            </div>
-                            <div class="form-group">
-                                <label for="ekle-std">Standart Sapma:</label>
-                                <input type="number" id="ekle-std" min="0" max="50" step="0.01" placeholder="0 – 50">
-                            </div>
-                            <div class="form-group">
-                                <label for="ekle-ogrenci-sayisi">Öğrenci Sayısı (Çana Katılan):</label>
-                                <input type="number" id="ekle-ogrenci-sayisi" min="1" step="1" placeholder="Örn: 70">
-                            </div>
+                        <div class="form-group">
+                            <label for="ekle-ortalama">Ham Başarı Ortalaması (Çan): <span class="zorunlu">*</span></label>
+                            <input type="number" id="ekle-ortalama" min="0" max="100" step="0.01" placeholder="0 – 100">
+                        </div>
+                        <div class="form-group">
+                            <label for="ekle-ogrenci-sayisi">Öğrenci Sayısı (Çana Katılan):</label>
+                            <input type="number" id="ekle-ogrenci-sayisi" min="1" step="1" placeholder="Örn: 70">
                         </div>
                     </div>
 
@@ -563,5 +530,3 @@
 </body>
 
 </html>
-
-
