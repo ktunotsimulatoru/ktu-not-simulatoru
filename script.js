@@ -332,6 +332,68 @@ function duyuruDurumKontrol() {
     }
 }
 
+function dinamikDuyuruKapat(id) {
+    const el = document.getElementById('dinamik-duyuru-' + id);
+    if (!el) return;
+    el.style.transition = 'opacity 0.25s ease';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
+    // Kapatılan duyuruyu sessionStorage'a kaydet
+    const kapatilanlar = JSON.parse(sessionStorage.getItem('kapatilanDuyurular') || '[]');
+    kapatilanlar.push(id);
+    sessionStorage.setItem('kapatilanDuyurular', JSON.stringify(kapatilanlar));
+}
+
+function dinamikDuyuruToggle(id) {
+    const detay = document.getElementById('dinamik-detay-' + id);
+    const tikla = document.getElementById('dinamik-tikla-' + id);
+    if (!detay) return;
+    const acik = detay.classList.toggle('acik');
+    if (tikla) tikla.textContent = acik ? 'Gizle ▲' : 'Detaylar için tıklayın ▼';
+}
+
+async function dinamikDuyurulariYukle() {
+    try {
+        const { data, error } = await getSupabase()
+            .from('duyurular')
+            .select('*')
+            .eq('aktif', true)
+            .order('olusturulma_tarihi', { ascending: false });
+
+        if (error || !data || data.length === 0) return;
+
+        const kapatilanlar = JSON.parse(sessionStorage.getItem('kapatilanDuyurular') || '[]');
+        const gosterilecekler = data.filter(d => !kapatilanlar.includes(d.id));
+        if (gosterilecekler.length === 0) return;
+
+        const wrapper = document.getElementById('dinamik-duyurular-wrapper');
+        if (!wrapper) return;
+
+        wrapper.innerHTML = gosterilecekler.map(d => `
+            <div class="duyuru-wrapper" id="dinamik-duyuru-${d.id}">
+                <div class="duyuru-bandi">
+                    <div class="duyuru-ozet" onclick="dinamikDuyuruToggle('${d.id}')" role="button" tabindex="0">
+                        <span class="duyuru-etiket">📢 Duyuru</span>
+                        <span class="duyuru-ozet-metin">
+                            <strong>${d.baslik}</strong>
+                            <span class="duyuru-tikla" id="dinamik-tikla-${d.id}">Detaylar için tıklayın ▼</span>
+                        </span>
+                        <button class="duyuru-kapat" onclick="event.stopPropagation(); dinamikDuyuruKapat('${d.id}');" aria-label="Duyuruyu kapat">✕</button>
+                    </div>
+                    <div class="duyuru-detay" id="dinamik-detay-${d.id}">
+                        <div class="duyuru-detay-icerik">
+                            <p class="duyuru-alt-metin">${d.icerik}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        // Sessizce geç
+    }
+}
+
 function initTheme() {
     const saved = localStorage.getItem('ktu-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -362,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeBtn = document.getElementById('themeToggleBtn');
     if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
     duyuruDurumKontrol();
+    dinamikDuyurulariYukle();
 
     const harfNotuFormu = document.getElementById('grade-calculator-form');
     const gerekliNotFormu = document.getElementById('required-grade-form');
