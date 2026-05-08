@@ -1537,24 +1537,29 @@ async function istatistikleriYukle() {
     try {
         const sb = getSupabase();
 
-        // 1. Tüm kayıtları çek
+        // Tüm kayıtları çek
         const { data: tumData } = await sb
             .from('hesaplama_loglari')
             .select('sekme, harf_notu, vize_notu, final_notu');
 
         if (!tumData) return;
 
-        // Sekme sayıları
         const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, matris: 0 };
         const harfSayac = {};
-        const vizeSayac = {};
-        const finalSayac = {};
+        const vizeSayac = {};   // sadece harf sekmesinden
+        const finalSayac = {};  // sadece harf sekmesinden
+        let final45Sayisi = 0;  // harf sekmesinde final=45 girilenlerin sayısı
 
         tumData.forEach(r => {
             if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
             if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
-            if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
-            if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
+
+            // Vize ve final notları sadece harf sekmesinden say
+            if (r.sekme === 'harf') {
+                if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
+                if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
+                if (r.final_notu === 45) final45Sayisi++;
+            }
         });
 
         const genelToplam = tumData.length;
@@ -1567,14 +1572,14 @@ async function istatistikleriYukle() {
         const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
         const topFinal = Object.entries(finalSayac).sort((a, b) => b[1] - a[1])[0];
 
-        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac);
+        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Sayisi);
 
     } catch (e) {
         console.error('İstatistik yükleme hatası:', e);
     }
 }
 
-function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, harfSayac) {
+function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, harfSayac, final45Sayisi) {
     const el = document.getElementById('footer-istatistikler');
     if (!el) return;
 
@@ -1582,7 +1587,6 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
         ? `<span class="stat-harf-badge stat-badge-${not.toLowerCase()}">${not}</span>`
         : '<span style="color:var(--small-text)">—</span>';
 
-    // Pasta grafik için veriler
     const HARF_SIRALAMA = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
     const HARF_RENKLER = {
         AA: '#28a745', BA: '#5cb85c', BB: '#82ca9c',
@@ -1615,7 +1619,7 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                 </div>
             </div>
             <div class="stat-blok">
-                <div class="stat-blok-baslik">📝 En Çok Girilen Notlar</div>
+                <div class="stat-blok-baslik">📝 En Çok Girilen Notlar <span class="stat-kucuk-not">(Harf Notu Hesaplama)</span></div>
                 <div class="stat-not-satirlar">
                     <div class="stat-not-satir">
                         <span class="stat-not-etiket">Vize</span>
@@ -1625,6 +1629,13 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                         <span class="stat-not-etiket">Final</span>
                         <span class="stat-not-deger">${topFinal ? topFinal[0] : '—'}</span>
                     </div>
+                </div>
+            </div>
+            <div class="stat-blok">
+                <div class="stat-blok-baslik">😅 "Finalden 45 Alırsam Ne Gelir?"</div>
+                <div class="stat-buyuk">${final45Sayisi.toLocaleString('tr-TR')}</div>
+                <div class="stat-alt-satirlar">
+                    <span>kez hesaplandı</span>
                 </div>
             </div>
         </div>
@@ -1649,10 +1660,12 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
             </div>
         </div>` : ''}
 
+        <div class="stat-gizlilik">
+            🔒 Bu istatistikler tamamen anonimdir. Kişisel hiçbir veri (isim, öğrenci numarası, IP adresi vb.) toplanmamaktadır.
+        </div>
         <div class="stat-kaynak-notu">📅 09.05.2026 tarihinden itibaren</div>
     `;
 
-    // Chart.js pasta grafiği çiz
     if (grafikEtiketler.length > 0) {
         setTimeout(() => {
             const canvas = document.getElementById('harfDagilimChart');
