@@ -14,279 +14,118 @@
             --border: #30363d; --text: #c9d1d9; --muted: #8b949e;
             --accent: #58a6ff; --accent-hover: #388bfd;
             --green: #3fb950; --red: #f85149; --orange: #d29922;
-            --radius: 8px;
+            --purple: #bc8cff; --radius: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-        /* ── GİRİŞ EKRANI ── */
-        #giris-ekrani {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .giris-kutu {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 40px;
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }
+        #giris-ekrani { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .giris-kutu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
         .giris-kutu h1 { font-size: 1.3em; color: var(--accent); margin-bottom: 6px; }
         .giris-kutu p { font-size: 0.85em; color: var(--muted); margin-bottom: 24px; }
-        .giris-input {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1em;
-            margin-bottom: 12px;
-        }
+        .giris-input { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 1em; margin-bottom: 12px; }
         .giris-input:focus { outline: none; border-color: var(--accent); }
-        .giris-btn {
-            width: 100%;
-            padding: 10px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+        .giris-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 1em; font-weight: 600; cursor: pointer; }
         .giris-btn:hover { background: var(--accent-hover); }
         .giris-hata { color: var(--red); font-size: 0.85em; margin-top: 10px; }
 
-        /* ── ANA PANEL ── */
         #admin-panel { display: none; }
-
-        .admin-header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .admin-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .admin-header h1 { font-size: 1.1em; color: var(--accent); }
-        .cikis-btn {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.85em;
-            transition: all 0.2s;
-        }
+        .cikis-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85em; transition: all 0.2s; }
         .cikis-btn:hover { color: var(--red); border-color: var(--red); }
 
-        .admin-nav {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 0;
-            overflow-x: auto;
-        }
-        .nav-btn {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            color: var(--muted);
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.88em;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
+        .admin-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
+        .nav-btn { position: relative; padding: 12px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 0.88em; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .nav-btn:hover { color: var(--text); }
         .nav-btn.aktif { color: var(--accent); border-bottom-color: var(--accent); }
+        .nav-badge { position: absolute; top: 8px; right: 6px; background: var(--red); color: #fff; border-radius: 10px; font-size: 0.65em; padding: 1px 6px; font-weight: 700; }
 
-        .admin-icerik {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 24px 20px;
-        }
-
+        .admin-icerik { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
         .panel-bolum { display: none; }
         .panel-bolum.aktif { display: block; }
+        .bolum-baslik { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; color: var(--text); }
 
-        /* ── KARTLAR ── */
-        .stat-karti-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .stat-karti {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-        }
-        .stat-karti-baslik { font-size: 0.75em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .stat-karti-deger { font-size: 2em; font-weight: 700; color: var(--accent); line-height: 1; }
+        .stat-karti-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-karti { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+        .stat-karti-baslik { font-size: 0.73em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-karti-deger { font-size: 1.9em; font-weight: 700; color: var(--accent); line-height: 1; }
         .stat-karti-alt { font-size: 0.78em; color: var(--muted); margin-top: 4px; }
 
-        /* ── TABLO ── */
-        .admin-tablo-wrapper {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .admin-tablo-baslik {
-            padding: 14px 18px;
-            font-weight: 700;
-            font-size: 0.95em;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .admin-tablo-wrapper table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85em;
-        }
-        .admin-tablo-wrapper th {
-            background: var(--surface2);
-            padding: 10px 14px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--muted);
-            font-size: 0.82em;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 1px solid var(--border);
-        }
-        .admin-tablo-wrapper td {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
-        .admin-tablo-wrapper tr:last-child td { border-bottom: none; }
-        .admin-tablo-wrapper tr:hover td { background: var(--surface2); }
-
-        /* ── BUTONLAR ── */
-        .btn { padding: 6px 14px; border-radius: 5px; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.82em; font-weight: 600; transition: all 0.15s; }
-        .btn-yesil { background: var(--green); color: #fff; }
-        .btn-yesil:hover { opacity: 0.85; }
-        .btn-kirmizi { background: var(--red); color: #fff; }
-        .btn-kirmizi:hover { opacity: 0.85; }
-        .btn-turuncu { background: var(--orange); color: #fff; }
-        .btn-turuncu:hover { opacity: 0.85; }
-        .btn-mavi { background: var(--accent); color: #fff; }
-        .btn-mavi:hover { background: var(--accent-hover); }
-        .btn-gri { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-        .btn-gri:hover { border-color: var(--accent); color: var(--accent); }
-
-        /* ── ROZET ── */
-        .rozet { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 700; }
-        .rozet-yesil { background: rgba(63,185,80,0.15); color: var(--green); }
-        .rozet-sari { background: rgba(210,153,34,0.15); color: var(--orange); }
-        .rozet-kirmizi { background: rgba(248,81,73,0.15); color: var(--red); }
-        .rozet-mavi { background: rgba(88,166,255,0.15); color: var(--accent); }
-
-        /* ── DUYURU FORMU ── */
-        .duyuru-form {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .duyuru-form h3 { font-size: 0.95em; margin-bottom: 14px; color: var(--accent); }
-        .form-row-admin { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-        .form-group-admin { flex: 1; min-width: 200px; }
-        .form-group-admin label { display: block; font-size: 0.8em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-        .form-group-admin input,
-        .form-group-admin textarea,
-        .form-group-admin select {
-            width: 100%;
-            padding: 8px 12px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            color: var(--text);
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9em;
-        }
-        .form-group-admin textarea { resize: vertical; min-height: 80px; }
-        .form-group-admin input:focus,
-        .form-group-admin textarea:focus,
-        .form-group-admin select:focus { outline: none; border-color: var(--accent); }
-
-        /* ── GRAFİK ── */
-        .grafik-wrapper {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .grafik-baslik { font-size: 0.9em; font-weight: 700; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
-        .grafik-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-        /* ── MOBİL/MASAÜSTÜ PASTA ── */
+        .grafik-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .grafik-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+        .grafik-baslik { font-size: 0.82em; font-weight: 700; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
         .cihaz-pasta { display: flex; align-items: center; gap: 20px; }
         .cihaz-pasta-canvas { width: 120px; height: 120px; flex-shrink: 0; }
         .cihaz-legend { display: flex; flex-direction: column; gap: 8px; }
         .cihaz-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
         .cihaz-legend-renk { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
-        /* ── YUKLE MESAJI ── */
-        .yukleniyor { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9em; }
-        .bos-mesaj { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9em; }
+        .filtre-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filtre-select, .filtre-input { padding: 7px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; }
+        .filtre-select:focus, .filtre-input:focus { outline: none; border-color: var(--accent); }
+        .filtre-etiket { font-size: 0.8em; color: var(--muted); }
 
-        /* ── BILDIRIM ── */
-        .bildirim {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 18px;
-            border-radius: 6px;
-            font-size: 0.88em;
-            font-weight: 600;
-            z-index: 9999;
-            animation: bildirimGir 0.3s ease;
-        }
+        .admin-tablo-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; overflow-x: auto; }
+        .admin-tablo-baslik { padding: 14px 18px; font-weight: 700; font-size: 0.95em; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .admin-tablo-wrapper table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 500px; }
+        .admin-tablo-wrapper th { background: var(--surface2); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .admin-tablo-wrapper td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .admin-tablo-wrapper tr:last-child td { border-bottom: none; }
+        .admin-tablo-wrapper tr:hover td { background: var(--surface2); }
+
+        .btn { padding: 6px 14px; border-radius: 5px; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.82em; font-weight: 600; transition: all 0.15s; white-space: nowrap; }
+        .btn-yesil { background: var(--green); color: #fff; } .btn-yesil:hover { opacity: 0.85; }
+        .btn-kirmizi { background: var(--red); color: #fff; } .btn-kirmizi:hover { opacity: 0.85; }
+        .btn-turuncu { background: var(--orange); color: #fff; } .btn-turuncu:hover { opacity: 0.85; }
+        .btn-mavi { background: var(--accent); color: #fff; } .btn-mavi:hover { background: var(--accent-hover); }
+        .btn-gri { background: var(--surface2); color: var(--text); border: 1px solid var(--border); } .btn-gri:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-mor { background: var(--purple); color: #fff; } .btn-mor:hover { opacity: 0.85; }
+        .btn-grup { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .rozet { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 700; }
+        .rozet-yesil { background: rgba(63,185,80,0.15); color: var(--green); }
+        .rozet-sari { background: rgba(210,153,34,0.15); color: var(--orange); }
+        .rozet-mavi { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .rozet-turuncu { background: rgba(210,153,34,0.15); color: var(--orange); }
+
+        .admin-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+        .admin-form h3 { font-size: 0.95em; margin-bottom: 14px; color: var(--accent); }
+        .form-row-admin { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .form-group-admin { flex: 1; min-width: 180px; }
+        .form-group-admin label { display: block; font-size: 0.8em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+        .form-group-admin input, .form-group-admin textarea, .form-group-admin select { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; }
+        .form-group-admin textarea { resize: vertical; min-height: 80px; }
+        .form-group-admin input:focus, .form-group-admin textarea:focus, .form-group-admin select:focus { outline: none; border-color: var(--accent); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.aktif { display: flex; }
+        .modal-kutu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 480px; padding: 24px; }
+        .modal-baslik { font-size: 1em; font-weight: 700; color: var(--accent); margin-bottom: 16px; }
+        .modal-form-grup { margin-bottom: 12px; }
+        .modal-form-grup label { display: block; font-size: 0.8em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+        .modal-form-grup input { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; }
+        .modal-form-grup input:focus { outline: none; border-color: var(--accent); }
+        .modal-btn-grup { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+        .bildirim { position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; border-radius: 6px; font-size: 0.88em; font-weight: 600; z-index: 9999; animation: bildirimGir 0.3s ease; max-width: 300px; }
         .bildirim-basari { background: var(--green); color: #fff; }
         .bildirim-hata { background: var(--red); color: #fff; }
         @keyframes bildirimGir { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .bolum-baslik { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+        .yukleniyor { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9em; }
+        .bos-mesaj { text-align: center; color: var(--muted); padding: 30px; font-size: 0.9em; }
+        .bolum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        @media (max-width: 600px) {
-            .grafik-grid { grid-template-columns: 1fr; }
-            .admin-icerik { padding: 16px 12px; }
+        @media (max-width: 700px) {
+            .grafik-grid, .bolum-grid { grid-template-columns: 1fr; }
+            .admin-icerik { padding: 14px 12px; }
             .stat-karti-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
 
-<!-- GİRİŞ EKRANI -->
 <div id="giris-ekrani">
     <div class="giris-kutu">
         <h1>🔐 Admin Paneli</h1>
@@ -297,7 +136,6 @@
     </div>
 </div>
 
-<!-- ADMIN PANEL -->
 <div id="admin-panel">
     <div class="admin-header">
         <h1>⚙️ KTÜ Not Simülatörü — Admin</h1>
@@ -305,32 +143,36 @@
     </div>
     <div class="admin-nav">
         <button class="nav-btn aktif" onclick="sekmeDegistir('istatistik', this)">📊 İstatistikler</button>
-        <button class="nav-btn" onclick="sekmeDegistir('dersler', this)">📚 Ders Onayları</button>
+        <button class="nav-btn" onclick="sekmeDegistir('dersler', this)">📚 Ders Yönetimi <span id="onay-badge" class="nav-badge" style="display:none"></span></button>
         <button class="nav-btn" onclick="sekmeDegistir('veriler', this)">🗂️ Paylaşılan Veriler</button>
         <button class="nav-btn" onclick="sekmeDegistir('duyurular', this)">📢 Duyurular</button>
+        <button class="nav-btn" onclick="sekmeDegistir('fakulteler', this)">🏫 Fakülte & Bölüm</button>
+        <button class="nav-btn" onclick="sekmeDegistir('ayarlar', this)">⚙️ Ayarlar</button>
     </div>
 
     <div class="admin-icerik">
 
         <!-- İSTATİSTİKLER -->
         <div id="bolum-istatistik" class="panel-bolum aktif">
-            <div class="bolum-baslik">📊 Genel İstatistikler</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div class="bolum-baslik" style="margin-bottom:0;">📊 Genel İstatistikler</div>
+                <div class="filtre-bar" style="margin-bottom:0;">
+                    <span class="filtre-etiket">Tarih Aralığı:</span>
+                    <select class="filtre-select" id="istat-aralik" onchange="istatistikleriYukle()">
+                        <option value="7">Son 7 Gün</option>
+                        <option value="30">Son 30 Gün</option>
+                        <option value="90">Son 90 Gün</option>
+                        <option value="0" selected>Tüm Zamanlar</option>
+                    </select>
+                    <button class="btn btn-gri" onclick="istatistikleriYukle()">↻ Yenile</button>
+                </div>
+            </div>
             <div class="stat-karti-grid" id="stat-kartlar">
                 <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
             </div>
-
             <div class="grafik-grid">
-                <!-- Sekme dağılımı -->
-                <div class="grafik-wrapper">
-                    <div class="grafik-baslik">Sekme Kullanımı</div>
-                    <canvas id="sekmeChart" height="180"></canvas>
-                </div>
-                <!-- Harf notu dağılımı -->
-                <div class="grafik-wrapper">
-                    <div class="grafik-baslik">Harf Notu Dağılımı</div>
-                    <canvas id="harfChart" height="180"></canvas>
-                </div>
-                <!-- Mobil / Masaüstü -->
+                <div class="grafik-wrapper"><div class="grafik-baslik">Sekme Kullanımı</div><canvas id="sekmeChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">Harf Notu Dağılımı</div><canvas id="harfChart" height="180"></canvas></div>
                 <div class="grafik-wrapper">
                     <div class="grafik-baslik">Cihaz Türü</div>
                     <div class="cihaz-pasta">
@@ -338,38 +180,46 @@
                         <div class="cihaz-legend" id="cihaz-legend"></div>
                     </div>
                 </div>
-                <!-- Son 7 gün -->
-                <div class="grafik-wrapper">
-                    <div class="grafik-baslik">Son 7 Gün</div>
-                    <canvas id="gunlukChart" height="180"></canvas>
-                </div>
+                <div class="grafik-wrapper"><div class="grafik-baslik" id="gunluk-baslik">Günlük Hesaplama</div><canvas id="gunlukChart" height="180"></canvas></div>
             </div>
         </div>
 
-        <!-- DERS ONAYLARI -->
+        <!-- DERS YÖNETİMİ -->
         <div id="bolum-dersler" class="panel-bolum">
-            <div class="bolum-baslik">📚 Ders Onayları</div>
+            <div class="bolum-baslik">📚 Ders Yönetimi</div>
             <div class="admin-tablo-wrapper">
                 <div class="admin-tablo-baslik">
-                    <span>Onay Bekleyen Dersler</span>
+                    <span>⏳ Onay Bekleyen Dersler</span>
                     <button class="btn btn-gri" onclick="dersleriYukle()">↻ Yenile</button>
                 </div>
-                <div id="ders-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+                <div id="ders-onay-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>✅ Onaylı Dersler</span>
+                    <div class="btn-grup">
+                        <input type="text" id="ders-arama" class="filtre-input" placeholder="Ders ara..." oninput="onayliDersleriFiltrele()" style="width:180px;">
+                        <button class="btn btn-gri" onclick="onayliDersleriYukle()">↻ Yenile</button>
+                    </div>
+                </div>
+                <div id="ders-onayli-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
             </div>
         </div>
 
         <!-- PAYLAŞILAN VERİLER -->
         <div id="bolum-veriler" class="panel-bolum">
             <div class="bolum-baslik">🗂️ Paylaşılan Çan Verileri</div>
-
-            <!-- Filtre -->
-            <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
-                <select id="filtre-fakulte" onchange="verileriYukle()" style="padding:7px 12px; background:var(--surface); border:1px solid var(--border); border-radius:5px; color:var(--text); font-family:'Poppins',sans-serif; font-size:0.85em;">
+            <div class="filtre-bar">
+                <select class="filtre-select" id="filtre-fakulte" onchange="verileriYukle()">
                     <option value="">Tüm Fakülteler</option>
+                </select>
+                <select class="filtre-select" id="filtre-can-turu" onchange="verileriYukle()">
+                    <option value="">Final & Büt</option>
+                    <option value="final">Sadece Final</option>
+                    <option value="but">Sadece Bütünleme</option>
                 </select>
                 <button class="btn btn-gri" onclick="verileriYukle()">↻ Yenile</button>
             </div>
-
             <div class="admin-tablo-wrapper">
                 <div id="veri-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
             </div>
@@ -378,40 +228,86 @@
         <!-- DUYURULAR -->
         <div id="bolum-duyurular" class="panel-bolum">
             <div class="bolum-baslik">📢 Duyuru Yönetimi</div>
-
-            <!-- Yeni duyuru formu -->
-            <div class="duyuru-form">
+            <div class="admin-form">
                 <h3>➕ Yeni Duyuru Yayınla</h3>
                 <div class="form-row-admin">
-                    <div class="form-group-admin" style="flex:2">
-                        <label>Başlık</label>
-                        <input type="text" id="duyuru-baslik" placeholder="Duyuru başlığı...">
-                    </div>
-                    <div class="form-group-admin" style="flex:0 0 140px">
-                        <label>Durum</label>
-                        <select id="duyuru-aktif">
-                            <option value="true">✅ Aktif</option>
-                            <option value="false">⏸️ Pasif</option>
-                        </select>
+                    <div class="form-group-admin" style="flex:2"><label>Başlık</label><input type="text" id="duyuru-baslik" placeholder="Duyuru başlığı..."></div>
+                    <div class="form-group-admin" style="flex:0 0 140px"><label>Durum</label>
+                        <select id="duyuru-aktif"><option value="true">✅ Aktif</option><option value="false">⏸️ Pasif</option></select>
                     </div>
                 </div>
-                <div class="form-group-admin" style="margin-bottom:12px;">
-                    <label>İçerik</label>
-                    <textarea id="duyuru-icerik" placeholder="Duyuru içeriği..."></textarea>
-                </div>
+                <div class="form-group-admin" style="margin-bottom:12px;"><label>İçerik</label><textarea id="duyuru-icerik" placeholder="Duyuru içeriği..."></textarea></div>
                 <button class="btn btn-mavi" onclick="duyuruEkle()">📢 Duyuruyu Yayınla</button>
             </div>
-
-            <!-- Duyuru listesi -->
             <div class="admin-tablo-wrapper">
-                <div class="admin-tablo-baslik">
-                    <span>Mevcut Duyurular</span>
-                    <button class="btn btn-gri" onclick="duyurulariYukle()">↻ Yenile</button>
-                </div>
+                <div class="admin-tablo-baslik"><span>Mevcut Duyurular</span><button class="btn btn-gri" onclick="duyurulariYukle()">↻ Yenile</button></div>
                 <div id="duyuru-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
             </div>
         </div>
 
+        <!-- FAKÜLTE & BÖLÜM -->
+        <div id="bolum-fakulteler" class="panel-bolum">
+            <div class="bolum-baslik">🏫 Fakülte & Bölüm Yönetimi</div>
+            <div class="bolum-grid">
+                <div>
+                    <div class="admin-form">
+                        <h3>➕ Yeni Fakülte Ekle</h3>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Fakülte Adı</label><input type="text" id="yeni-fakulte-adi" placeholder="Örn: Mühendislik Fakültesi"></div>
+                        <button class="btn btn-mavi" onclick="fakulteEkle()">Ekle</button>
+                    </div>
+                    <div class="admin-tablo-wrapper">
+                        <div class="admin-tablo-baslik"><span>Fakülteler</span><button class="btn btn-gri" onclick="fakulteleriYukle()">↻ Yenile</button></div>
+                        <div id="fakulte-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="admin-form">
+                        <h3>➕ Yeni Bölüm Ekle</h3>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Fakülte Seç</label><select id="bolum-fakulte-sec"><option value="">-- Fakülte Seçin --</option></select></div>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Bölüm Adı</label><input type="text" id="yeni-bolum-adi" placeholder="Örn: Bilgisayar Mühendisliği"></div>
+                        <button class="btn btn-mavi" onclick="bolumEkle()">Ekle</button>
+                    </div>
+                    <div class="admin-tablo-wrapper">
+                        <div class="admin-tablo-baslik">
+                            <span>Bölümler</span>
+                            <div class="btn-grup">
+                                <select class="filtre-select" id="bolum-filtre-fakulte" onchange="bolumleriYukle()" style="font-size:0.82em;"><option value="">Tüm Fakülteler</option></select>
+                                <button class="btn btn-gri" onclick="bolumleriYukle()">↻ Yenile</button>
+                            </div>
+                        </div>
+                        <div id="bolum-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AYARLAR -->
+        <div id="bolum-ayarlar" class="panel-bolum">
+            <div class="bolum-baslik">⚙️ Ayarlar</div>
+            <div class="admin-form" style="max-width:420px;">
+                <h3>🔑 Şifre Değiştir</h3>
+                <div class="form-group-admin" style="margin-bottom:12px;"><label>Mevcut Şifre</label><input type="password" id="mevcut-sifre" placeholder="Mevcut şifrenizi girin"></div>
+                <div class="form-group-admin" style="margin-bottom:12px;"><label>Yeni Şifre</label><input type="password" id="yeni-sifre" placeholder="Yeni şifre"></div>
+                <div class="form-group-admin" style="margin-bottom:16px;"><label>Yeni Şifre (Tekrar)</label><input type="password" id="yeni-sifre-tekrar" placeholder="Yeni şifre tekrar"></div>
+                <button class="btn btn-mavi" onclick="sifreDegistir()">🔑 Şifreyi Güncelle</button>
+                <div id="sifre-mesaj" style="margin-top:10px;font-size:0.85em;"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- DERS DÜZENLEME MODAL -->
+<div class="modal-overlay" id="ders-modal" onclick="if(event.target===this) modalKapat()">
+    <div class="modal-kutu">
+        <div class="modal-baslik">✏️ Ders Düzenle</div>
+        <input type="hidden" id="modal-ders-id">
+        <div class="modal-form-grup"><label>Ders Adı</label><input type="text" id="modal-ders-adi"></div>
+        <div class="modal-form-grup"><label>Ders Kodu</label><input type="text" id="modal-ders-kodu" placeholder="Örn: BLM301"></div>
+        <div class="modal-btn-grup">
+            <button class="btn btn-gri" onclick="modalKapat()">İptal</button>
+            <button class="btn btn-mavi" onclick="dersiKaydet()">💾 Kaydet</button>
+        </div>
     </div>
 </div>
 
@@ -419,23 +315,14 @@
 const SUPABASE_URL = 'https://tsfscfgwbmiouptsljyi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7VUXgTfS6iYY3NU0IVwYpA_FRI0t7MI';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let chartInstances = {};
 
 // ── GİRİŞ ──
 async function girisYap() {
     const sifre = document.getElementById('sifre-input').value.trim();
     if (!sifre) return;
-
-    const { data, error } = await sb
-        .from('admin_config')
-        .select('value')
-        .eq('key', 'admin_password')
-        .single();
-
-    if (error || !data) {
-        document.getElementById('giris-hata').textContent = 'Bağlantı hatası.';
-        return;
-    }
-
+    const { data, error } = await sb.from('admin_config').select('value').eq('key', 'admin_password').single();
+    if (error || !data) { document.getElementById('giris-hata').textContent = 'Bağlantı hatası.'; return; }
     if (data.value === sifre) {
         sessionStorage.setItem('admin_giris', '1');
         document.getElementById('giris-ekrani').style.display = 'none';
@@ -446,53 +333,57 @@ async function girisYap() {
     }
 }
 
-function cikisYap() {
-    sessionStorage.removeItem('admin_giris');
-    location.reload();
-}
+function cikisYap() { sessionStorage.removeItem('admin_giris'); location.reload(); }
 
-// Oturum kontrolü
 if (sessionStorage.getItem('admin_giris') === '1') {
     document.getElementById('giris-ekrani').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     window.addEventListener('DOMContentLoaded', panelBaslat);
 }
 
-// ── SEKME ──
+async function panelBaslat() {
+    await istatistikleriYukle();
+    onayBekleyenSayisiGoster();
+}
+
 function sekmeDegistir(bolum, btn) {
     document.querySelectorAll('.panel-bolum').forEach(b => b.classList.remove('aktif'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('aktif'));
     document.getElementById('bolum-' + bolum).classList.add('aktif');
     btn.classList.add('aktif');
-
     if (bolum === 'dersler') dersleriYukle();
-    else if (bolum === 'veriler') { verileriYukle(); filtreFiltrele(); }
+    else if (bolum === 'veriler') { veriFiltreFakulteDoldur(); }
     else if (bolum === 'duyurular') duyurulariYukle();
+    else if (bolum === 'fakulteler') { fakulteleriYukle(); bolumleriYukle(); fakulteSelectDoldur(); }
+    else if (bolum === 'istatistik') istatistikleriYukle();
 }
 
-// ── PANEL BAŞLAT ──
-async function panelBaslat() {
-    await istatistikleriYukle();
+async function onayBekleyenSayisiGoster() {
+    const { count } = await sb.from('dersler').select('id', { count: 'exact', head: true }).eq('onaylandi', false);
+    const badge = document.getElementById('onay-badge');
+    if (count && count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
 }
 
 // ── İSTATİSTİKLER ──
 async function istatistikleriYukle() {
-    const { data } = await sb
-        .from('hesaplama_loglari')
-        .select('sekme, harf_notu, vize_notu, final_notu, is_mobile, olusturulma_tarihi');
-
+    const aralik = parseInt(document.getElementById('istat-aralik').value);
+    let query = sb.from('hesaplama_loglari').select('sekme, harf_notu, vize_notu, final_notu, is_mobile, olusturulma_tarihi');
+    if (aralik > 0) {
+        const sinir = new Date(); sinir.setDate(sinir.getDate() - aralik);
+        query = query.gte('olusturulma_tarihi', sinir.toISOString());
+    }
+    const { data } = await query;
     if (!data) return;
 
     const toplam = data.length;
     const sekmeler = { harf: 0, gerekli: 0, senaryo: 0, matris: 0 };
     const harfSayac = {};
-    let mobilSayisi = 0, masaustuSayisi = 0;
-    let final45 = 0;
+    let mobilSayisi = 0, masaustuSayisi = 0, final45 = 0;
     const vizeler = [], finaller = [];
-
-    // Son 7 gün
     const gunSayac = {};
-    for (let i = 6; i >= 0; i--) {
+    const gunSayisi = aralik > 0 ? aralik : 30;
+    for (let i = gunSayisi - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
         gunSayac[d.toISOString().slice(0, 10)] = 0;
     }
@@ -516,286 +407,340 @@ async function istatistikleriYukle() {
     const ffOran = toplam ? ((ffSayisi/toplam)*100).toFixed(1) : 0;
     const aaOran = toplam ? ((aaSayisi/toplam)*100).toFixed(1) : 0;
 
-    // Kartlar
     document.getElementById('stat-kartlar').innerHTML = `
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">Toplam Hesaplama</div>
-            <div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div>
-        </div>
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">FF Oranı</div>
-            <div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div>
-            <div class="stat-karti-alt">${ffSayisi} hesaplama</div>
-        </div>
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">AA Oranı</div>
-            <div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div>
-            <div class="stat-karti-alt">${aaSayisi} hesaplama</div>
-        </div>
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">Ort. Vize Notu</div>
-            <div class="stat-karti-deger">${ortVize}</div>
-            <div class="stat-karti-alt">Harf sekmesi</div>
-        </div>
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">Ort. Final Notu</div>
-            <div class="stat-karti-deger">${ortFinal}</div>
-            <div class="stat-karti-alt">Harf sekmesi</div>
-        </div>
-        <div class="stat-karti">
-            <div class="stat-karti-baslik">"Final=45" Sayısı</div>
-            <div class="stat-karti-deger" style="color:var(--orange)">${final45}</div>
-            <div class="stat-karti-alt">Umut hesaplaması 😅</div>
-        </div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Toplam Hesaplama</div><div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">FF Oranı</div><div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div><div class="stat-karti-alt">${ffSayisi} hesaplama</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">AA Oranı</div><div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div><div class="stat-karti-alt">${aaSayisi} hesaplama</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Vize</div><div class="stat-karti-deger">${ortVize}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Final</div><div class="stat-karti-deger">${ortFinal}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">"Final=45" 😅</div><div class="stat-karti-deger" style="color:var(--orange)">${final45}</div><div class="stat-karti-alt">Umut hesaplaması</div></div>
     `;
 
-    // Sekme grafiği
-    new Chart(document.getElementById('sekmeChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Harf Notu', 'Gerekli Final', 'Senaryo', 'Matris'],
-            datasets: [{ data: [sekmeler.harf, sekmeler.gerekli, sekmeler.senaryo, sekmeler.matris],
-                backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }]
-        },
-        options: { plugins: { legend: { display: false } }, scales: {
-            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-            y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
-        }}
+    ['sekmeChart','harfChart','cihazChart','gunlukChart'].forEach(id => {
+        if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
     });
 
-    // Harf notu grafiği
+    chartInstances['sekmeChart'] = new Chart(document.getElementById('sekmeChart'), {
+        type: 'bar',
+        data: { labels: ['Harf Notu','Gerekli Final','Senaryo','Matris'],
+            datasets: [{ data: [sekmeler.harf, sekmeler.gerekli, sekmeler.senaryo, sekmeler.matris],
+                backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }] },
+        options: { plugins: { legend: { display: false } }, scales: {
+            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+    });
+
     const HARF_SIR = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
     const HARF_CLR = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107',FD:'#dc3545',FF:'#a21427' };
     const harfEtiket = HARF_SIR.filter(h => harfSayac[h]);
-    new Chart(document.getElementById('harfChart'), {
+    chartInstances['harfChart'] = new Chart(document.getElementById('harfChart'), {
         type: 'doughnut',
-        data: {
-            labels: harfEtiket,
-            datasets: [{ data: harfEtiket.map(h => harfSayac[h]),
-                backgroundColor: harfEtiket.map(h => HARF_CLR[h]), borderWidth: 2, borderColor: '#161b22' }]
-        },
+        data: { labels: harfEtiket, datasets: [{ data: harfEtiket.map(h => harfSayac[h]),
+            backgroundColor: harfEtiket.map(h => HARF_CLR[h]), borderWidth: 2, borderColor: '#161b22' }] },
         options: { plugins: { legend: { position: 'right', labels: { color: '#c9d1d9', font: { family: 'Poppins' }, boxWidth: 12 } } } }
     });
 
-    // Cihaz grafiği
     const mobilBilinmiyor = toplam - mobilSayisi - masaustuSayisi;
-    new Chart(document.getElementById('cihazChart'), {
+    chartInstances['cihazChart'] = new Chart(document.getElementById('cihazChart'), {
         type: 'doughnut',
-        data: {
-            labels: ['Mobil', 'Masaüstü', 'Bilinmiyor'],
+        data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
             datasets: [{ data: [mobilSayisi, masaustuSayisi, mobilBilinmiyor],
-                backgroundColor: ['#58a6ff','#3fb950','#30363d'], borderWidth: 2, borderColor: '#161b22' }]
-        },
+                backgroundColor: ['#58a6ff','#3fb950','#30363d'], borderWidth: 2, borderColor: '#161b22' }] },
         options: { plugins: { legend: { display: false } }, cutout: '60%' }
     });
     document.getElementById('cihaz-legend').innerHTML = [
         { label: 'Mobil', sayi: mobilSayisi, renk: '#58a6ff' },
         { label: 'Masaüstü', sayi: masaustuSayisi, renk: '#3fb950' },
         { label: 'Bilinmiyor', sayi: mobilBilinmiyor, renk: '#30363d' }
-    ].map(c => `<div class="cihaz-legend-item">
-        <span class="cihaz-legend-renk" style="background:${c.renk}"></span>
-        <span>${c.label}: <strong>${c.sayi}</strong></span>
-    </div>`).join('');
+    ].map(c => `<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi}</strong></span></div>`).join('');
 
-    // Günlük grafik
-    new Chart(document.getElementById('gunlukChart'), {
+    document.getElementById('gunluk-baslik').textContent = aralik > 0 ? `Son ${aralik} Gün` : 'Son 30 Gün';
+    chartInstances['gunlukChart'] = new Chart(document.getElementById('gunlukChart'), {
         type: 'line',
-        data: {
-            labels: Object.keys(gunSayac).map(d => d.slice(5)),
+        data: { labels: Object.keys(gunSayac).map(d => d.slice(5)),
             datasets: [{ data: Object.values(gunSayac), borderColor: '#58a6ff',
-                backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.4, pointRadius: 4 }]
-        },
+                backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.4, pointRadius: 3 }] },
         options: { plugins: { legend: { display: false } }, scales: {
-            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-            y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' }, beginAtZero: true }
-        }}
+            x: { ticks: { color: '#8b949e', maxTicksLimit: 10 }, grid: { color: '#21262d' } },
+            y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' }, beginAtZero: true } } }
     });
 }
 
-// ── DERS ONAYLARI ──
+// ── DERS YÖNETİMİ ──
 async function dersleriYukle() {
-    const icerik = document.getElementById('ders-tablo-icerik');
+    onayliDersleriYukle();
+    const icerik = document.getElementById('ders-onay-icerik');
     icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
-
-    const { data } = await sb
-        .from('dersler')
-        .select('id, ders_adi, ders_kodu, onaylandi, bolum_id, bolumler(ad, fakulteler(ad))')
-        .eq('onaylandi', false)
-        .order('id', { ascending: false });
+    const { data } = await sb.from('dersler')
+        .select('id, ders_adi, ders_kodu, bolumler(ad, fakulteler(ad))')
+        .eq('onaylandi', false).order('id', { ascending: false });
 
     if (!data || data.length === 0) {
         icerik.innerHTML = '<div class="bos-mesaj">✅ Onay bekleyen ders yok.</div>';
+        document.getElementById('onay-badge').style.display = 'none';
         return;
     }
+    document.getElementById('onay-badge').textContent = data.length;
+    document.getElementById('onay-badge').style.display = 'inline';
 
-    icerik.innerHTML = `<table>
-        <thead><tr>
-            <th>Ders Adı</th><th>Kod</th><th>Bölüm</th><th>Fakülte</th><th>İşlem</th>
-        </tr></thead>
-        <tbody>
-            ${data.map(d => `<tr>
-                <td>${d.ders_adi}</td>
-                <td>${d.ders_kodu || '—'}</td>
-                <td>${d.bolumler?.ad || '—'}</td>
-                <td>${d.bolumler?.fakulteler?.ad || '—'}</td>
-                <td style="display:flex;gap:6px;">
-                    <button class="btn btn-yesil" onclick="dersiOnayla('${d.id}')">✓ Onayla</button>
-                    <button class="btn btn-kirmizi" onclick="dersiReddet('${d.id}')">✕ Reddet</button>
-                </td>
-            </tr>`).join('')}
-        </tbody>
-    </table>`;
+    icerik.innerHTML = `<table><thead><tr><th>Ders Adı</th><th>Kod</th><th>Bölüm</th><th>Fakülte</th><th>İşlem</th></tr></thead><tbody>
+        ${data.map(d => `<tr>
+            <td>${d.ders_adi}</td><td>${d.ders_kodu||'—'}</td>
+            <td>${d.bolumler?.ad||'—'}</td><td>${d.bolumler?.fakulteler?.ad||'—'}</td>
+            <td><div class="btn-grup">
+                <button class="btn btn-yesil" onclick="dersiOnayla('${d.id}')">✓ Onayla</button>
+                <button class="btn btn-kirmizi" onclick="dersiReddet('${d.id}')">✕ Reddet</button>
+            </div></td>
+        </tr>`).join('')}
+    </tbody></table>`;
+}
+
+let tumOnayliDersler = [];
+async function onayliDersleriYukle() {
+    const icerik = document.getElementById('ders-onayli-icerik');
+    icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    const { data } = await sb.from('dersler')
+        .select('id, ders_adi, ders_kodu, bolumler(ad, fakulteler(ad))')
+        .eq('onaylandi', true).order('ders_adi');
+    tumOnayliDersler = data || [];
+    onayliDersleriFiltrele();
+}
+
+function onayliDersleriFiltrele() {
+    const arama = (document.getElementById('ders-arama').value || '').toLowerCase();
+    const filtrelenmis = arama
+        ? tumOnayliDersler.filter(d => d.ders_adi.toLowerCase().includes(arama) || (d.ders_kodu||'').toLowerCase().includes(arama))
+        : tumOnayliDersler;
+    const icerik = document.getElementById('ders-onayli-icerik');
+    if (!filtrelenmis.length) { icerik.innerHTML = '<div class="bos-mesaj">Ders bulunamadı.</div>'; return; }
+    icerik.innerHTML = `<table><thead><tr><th>Ders Adı</th><th>Kod</th><th>Bölüm</th><th>Fakülte</th><th>İşlem</th></tr></thead><tbody>
+        ${filtrelenmis.map(d => `<tr>
+            <td>${d.ders_adi}</td><td>${d.ders_kodu||'—'}</td>
+            <td>${d.bolumler?.ad||'—'}</td><td>${d.bolumler?.fakulteler?.ad||'—'}</td>
+            <td><div class="btn-grup">
+                <button class="btn btn-mor" onclick="dersDuzenleModal('${d.id}','${d.ders_adi.replace(/'/g,"\\'")}','${(d.ders_kodu||'').replace(/'/g,"\\'")}')">✏️</button>
+                <button class="btn btn-kirmizi" onclick="onayliDersiSil('${d.id}')">✕</button>
+            </div></td>
+        </tr>`).join('')}
+    </tbody></table>`;
 }
 
 async function dersiOnayla(id) {
     await sb.from('dersler').update({ onaylandi: true }).eq('id', id);
-    bildirimGoster('Ders onaylandı ✓', 'basari');
-    dersleriYukle();
+    bildirimGoster('Ders onaylandı ✓', 'basari'); dersleriYukle();
 }
-
 async function dersiReddet(id) {
     if (!confirm('Bu dersi silmek istediğine emin misin?')) return;
     await sb.from('dersler').delete().eq('id', id);
-    bildirimGoster('Ders silindi.', 'hata');
-    dersleriYukle();
+    bildirimGoster('Ders silindi.', 'hata'); dersleriYukle();
+}
+async function onayliDersiSil(id) {
+    if (!confirm('Bu dersi ve tüm verilerini silmek istediğine emin misin?')) return;
+    await sb.from('ders_verileri').delete().eq('ders_id', id);
+    await sb.from('dersler').delete().eq('id', id);
+    bildirimGoster('Ders silindi.', 'hata'); onayliDersleriYukle();
+}
+function dersDuzenleModal(id, adi, kodu) {
+    document.getElementById('modal-ders-id').value = id;
+    document.getElementById('modal-ders-adi').value = adi;
+    document.getElementById('modal-ders-kodu').value = kodu;
+    document.getElementById('ders-modal').classList.add('aktif');
+}
+function modalKapat() { document.getElementById('ders-modal').classList.remove('aktif'); }
+async function dersiKaydet() {
+    const id = document.getElementById('modal-ders-id').value;
+    const adi = document.getElementById('modal-ders-adi').value.trim();
+    const kodu = document.getElementById('modal-ders-kodu').value.trim();
+    if (!adi) { bildirimGoster('Ders adı boş olamaz.', 'hata'); return; }
+    await sb.from('dersler').update({ ders_adi: adi, ders_kodu: kodu || null }).eq('id', id);
+    bildirimGoster('Ders güncellendi ✓', 'basari'); modalKapat(); onayliDersleriYukle();
 }
 
 // ── PAYLAŞILAN VERİLER ──
-async function filtreFiltrele() {
-    const { data } = await sb.from('fakulteler').select('id, ad').order('ad');
+async function veriFiltreFakulteDoldur() {
     const sel = document.getElementById('filtre-fakulte');
-    if (data) {
-        data.forEach(f => {
-            const opt = document.createElement('option');
-            opt.value = f.id; opt.textContent = f.ad;
-            sel.appendChild(opt);
-        });
+    if (sel.options.length <= 1) {
+        const { data } = await sb.from('fakulteler').select('id, ad').order('ad');
+        if (data) data.forEach(f => { const o = document.createElement('option'); o.value = f.id; o.textContent = f.ad; sel.appendChild(o); });
     }
+    verileriYukle();
 }
 
 async function verileriYukle() {
     const icerik = document.getElementById('veri-tablo-icerik');
     icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
-
     const fakulteId = document.getElementById('filtre-fakulte').value;
+    const canTuru = document.getElementById('filtre-can-turu').value;
 
-    let query = sb
-        .from('ders_verileri')
-        .select('id, ortalama, std_sapma, ogrenci_sayisi, can_turu, donem, yil, veri_turu, dersler(ders_adi, ders_kodu, bolumler(ad, fakulteler(ad, id)))')
-        .order('id', { ascending: false })
-        .limit(100);
+    const { data } = await sb.from('ders_verileri')
+        .select('id, ortalama, std_sapma, ogrenci_sayisi, can_turu, donem, yil, dersler(ders_adi, ders_kodu, bolumler(ad, fakulteler(id, ad)))')
+        .order('id', { ascending: false }).limit(200);
 
-    const { data } = await query;
+    let f = data || [];
+    if (fakulteId) f = f.filter(v => v.dersler?.bolumler?.fakulteler?.id === fakulteId);
+    if (canTuru) f = f.filter(v => v.can_turu === canTuru);
 
-    let filtrelenmis = data || [];
-    if (fakulteId) {
-        filtrelenmis = filtrelenmis.filter(v => v.dersler?.bolumler?.fakulteler?.id === fakulteId);
-    }
-
-    if (filtrelenmis.length === 0) {
-        icerik.innerHTML = '<div class="bos-mesaj">Veri bulunamadı.</div>';
-        return;
-    }
-
-    icerik.innerHTML = `<table>
-        <thead><tr>
-            <th>Ders</th><th>Bölüm</th><th>Dönem/Yıl</th><th>Tür</th><th>Ort.</th><th>Std.</th><th>Öğrenci</th><th>Sil</th>
-        </tr></thead>
-        <tbody>
-            ${filtrelenmis.map(v => `<tr>
-                <td>${v.dersler?.ders_kodu ? v.dersler.ders_kodu + ' — ' : ''}${v.dersler?.ders_adi || '—'}</td>
-                <td style="font-size:0.8em;color:var(--muted)">${v.dersler?.bolumler?.ad || '—'}</td>
-                <td>${v.yil}-${v.yil+1} ${v.donem}</td>
-                <td><span class="rozet ${v.can_turu === 'but' ? 'rozet-turuncu' : 'rozet-mavi'}">${v.can_turu === 'but' ? 'Büt' : 'Final'}</span></td>
-                <td>${v.ortalama != null ? v.ortalama.toFixed(2) : '—'}</td>
-                <td>${v.std_sapma != null ? v.std_sapma.toFixed(2) : '—'}</td>
-                <td>${v.ogrenci_sayisi != null ? v.ogrenci_sayisi : '—'}</td>
-                <td><button class="btn btn-kirmizi" onclick="veriSil('${v.id}')">✕</button></td>
-            </tr>`).join('')}
-        </tbody>
-    </table>`;
+    if (!f.length) { icerik.innerHTML = '<div class="bos-mesaj">Veri bulunamadı.</div>'; return; }
+    icerik.innerHTML = `<table><thead><tr><th>Ders</th><th>Bölüm</th><th>Dönem/Yıl</th><th>Tür</th><th>Ort.</th><th>Std.</th><th>Öğrenci</th><th>Sil</th></tr></thead><tbody>
+        ${f.map(v => `<tr>
+            <td>${v.dersler?.ders_kodu?v.dersler.ders_kodu+' — ':''}${v.dersler?.ders_adi||'—'}</td>
+            <td style="font-size:0.8em;color:var(--muted)">${v.dersler?.bolumler?.ad||'—'}</td>
+            <td>${v.yil}-${v.yil+1} ${v.donem}</td>
+            <td><span class="rozet ${v.can_turu==='but'?'rozet-turuncu':'rozet-mavi'}">${v.can_turu==='but'?'Büt':'Final'}</span></td>
+            <td>${v.ortalama!=null?v.ortalama.toFixed(2):'—'}</td>
+            <td>${v.std_sapma!=null?v.std_sapma.toFixed(2):'—'}</td>
+            <td>${v.ogrenci_sayisi!=null?v.ogrenci_sayisi:'—'}</td>
+            <td><button class="btn btn-kirmizi" onclick="veriSil('${v.id}')">✕</button></td>
+        </tr>`).join('')}
+    </tbody></table>`;
 }
 
 async function veriSil(id) {
     if (!confirm('Bu veriyi silmek istediğine emin misin?')) return;
     await sb.from('ders_verileri').delete().eq('id', id);
-    bildirimGoster('Veri silindi.', 'hata');
-    verileriYukle();
+    bildirimGoster('Veri silindi.', 'hata'); verileriYukle();
 }
 
 // ── DUYURULAR ──
 async function duyurulariYukle() {
     const icerik = document.getElementById('duyuru-tablo-icerik');
     icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
-
-    const { data } = await sb
-        .from('duyurular')
-        .select('*')
-        .order('olusturulma_tarihi', { ascending: false });
-
-    if (!data || data.length === 0) {
-        icerik.innerHTML = '<div class="bos-mesaj">Henüz duyuru yok.</div>';
-        return;
-    }
-
-    icerik.innerHTML = `<table>
-        <thead><tr>
-            <th>Başlık</th><th>İçerik</th><th>Durum</th><th>Tarih</th><th>İşlem</th>
-        </tr></thead>
-        <tbody>
-            ${data.map(d => `<tr>
-                <td><strong>${d.baslik}</strong></td>
-                <td style="font-size:0.82em;color:var(--muted);max-width:260px;">${d.icerik.slice(0, 80)}${d.icerik.length > 80 ? '...' : ''}</td>
-                <td><span class="rozet ${d.aktif ? 'rozet-yesil' : 'rozet-sari'}">${d.aktif ? '✅ Aktif' : '⏸️ Pasif'}</span></td>
-                <td style="font-size:0.8em;color:var(--muted)">${d.olusturulma_tarihi?.slice(0,10)}</td>
-                <td style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button class="btn ${d.aktif ? 'btn-turuncu' : 'btn-yesil'}" onclick="duyuruDurumDegistir('${d.id}', ${!d.aktif})">
-                        ${d.aktif ? '⏸️ Pasif Yap' : '✅ Aktif Yap'}
-                    </button>
-                    <button class="btn btn-kirmizi" onclick="duyuruSil('${d.id}')">✕ Sil</button>
-                </td>
-            </tr>`).join('')}
-        </tbody>
-    </table>`;
+    const { data } = await sb.from('duyurular').select('*').order('olusturulma_tarihi', { ascending: false });
+    if (!data || !data.length) { icerik.innerHTML = '<div class="bos-mesaj">Henüz duyuru yok.</div>'; return; }
+    icerik.innerHTML = `<table><thead><tr><th>Başlık</th><th>İçerik</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody>
+        ${data.map(d => `<tr>
+            <td><strong>${d.baslik}</strong></td>
+            <td style="font-size:0.82em;color:var(--muted);max-width:220px;">${d.icerik.slice(0,70)}${d.icerik.length>70?'...':''}</td>
+            <td><span class="rozet ${d.aktif?'rozet-yesil':'rozet-sari'}">${d.aktif?'✅ Aktif':'⏸️ Pasif'}</span></td>
+            <td style="font-size:0.8em;color:var(--muted)">${d.olusturulma_tarihi?.slice(0,10)}</td>
+            <td><div class="btn-grup">
+                <button class="btn ${d.aktif?'btn-turuncu':'btn-yesil'}" onclick="duyuruDurumDegistir('${d.id}',${!d.aktif})">${d.aktif?'⏸️':'✅'}</button>
+                <button class="btn btn-kirmizi" onclick="duyuruSil('${d.id}')">✕</button>
+            </div></td>
+        </tr>`).join('')}
+    </tbody></table>`;
 }
 
 async function duyuruEkle() {
     const baslik = document.getElementById('duyuru-baslik').value.trim();
     const icerik = document.getElementById('duyuru-icerik').value.trim();
     const aktif = document.getElementById('duyuru-aktif').value === 'true';
-
     if (!baslik || !icerik) { bildirimGoster('Başlık ve içerik zorunlu!', 'hata'); return; }
-
     const { error } = await sb.from('duyurular').insert({ baslik, icerik, aktif });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
-
     document.getElementById('duyuru-baslik').value = '';
     document.getElementById('duyuru-icerik').value = '';
-    bildirimGoster('Duyuru yayınlandı! 📢', 'basari');
-    duyurulariYukle();
+    bildirimGoster('Duyuru yayınlandı! 📢', 'basari'); duyurulariYukle();
 }
-
 async function duyuruDurumDegistir(id, aktif) {
     await sb.from('duyurular').update({ aktif }).eq('id', id);
-    bildirimGoster(aktif ? 'Duyuru aktif edildi.' : 'Duyuru pasif yapıldı.', 'basari');
-    duyurulariYukle();
+    bildirimGoster(aktif?'Duyuru aktif edildi.':'Duyuru pasif yapıldı.', 'basari'); duyurulariYukle();
 }
-
 async function duyuruSil(id) {
     if (!confirm('Bu duyuruyu silmek istediğine emin misin?')) return;
     await sb.from('duyurular').delete().eq('id', id);
-    bildirimGoster('Duyuru silindi.', 'hata');
-    duyurulariYukle();
+    bildirimGoster('Duyuru silindi.', 'hata'); duyurulariYukle();
+}
+
+// ── FAKÜLTE & BÖLÜM ──
+async function fakulteSelectDoldur() {
+    const { data } = await sb.from('fakulteler').select('id, ad').order('ad');
+    if (!data) return;
+    ['bolum-fakulte-sec','bolum-filtre-fakulte'].forEach(id => {
+        const sel = document.getElementById(id);
+        const ilk = sel.options[0];
+        sel.innerHTML = ''; sel.appendChild(ilk);
+        data.forEach(f => { const o = document.createElement('option'); o.value = f.id; o.textContent = f.ad; sel.appendChild(o); });
+    });
+}
+
+async function fakulteleriYukle() {
+    const icerik = document.getElementById('fakulte-tablo-icerik');
+    icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    const { data } = await sb.from('fakulteler').select('id, ad').order('ad');
+    if (!data || !data.length) { icerik.innerHTML = '<div class="bos-mesaj">Fakülte yok.</div>'; return; }
+    icerik.innerHTML = `<table><thead><tr><th>Fakülte Adı</th><th>Sil</th></tr></thead><tbody>
+        ${data.map(f => `<tr><td>${f.ad}</td><td><button class="btn btn-kirmizi" onclick="fakulteSil('${f.id}')">✕</button></td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function fakulteEkle() {
+    const ad = document.getElementById('yeni-fakulte-adi').value.trim();
+    if (!ad) { bildirimGoster('Fakülte adı boş olamaz.', 'hata'); return; }
+    const { error } = await sb.from('fakulteler').insert({ ad });
+    if (error) { bildirimGoster('Hata: '+error.message, 'hata'); return; }
+    document.getElementById('yeni-fakulte-adi').value = '';
+    bildirimGoster('Fakülte eklendi ✓', 'basari'); fakulteleriYukle(); fakulteSelectDoldur();
+}
+
+async function fakulteSil(id) {
+    if (!confirm('Bu fakülteyi silmek istediğine emin misin? Bağlı tüm bölümler ve dersler de silinir!')) return;
+    await sb.from('fakulteler').delete().eq('id', id);
+    bildirimGoster('Fakülte silindi.', 'hata'); fakulteleriYukle(); fakulteSelectDoldur();
+}
+
+async function bolumleriYukle() {
+    const icerik = document.getElementById('bolum-tablo-icerik');
+    icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    const filtreFakulte = document.getElementById('bolum-filtre-fakulte').value;
+    let query = sb.from('bolumler').select('id, ad, fakulteler(ad)').order('ad');
+    if (filtreFakulte) query = query.eq('fakulte_id', filtreFakulte);
+    const { data } = await query;
+    if (!data || !data.length) { icerik.innerHTML = '<div class="bos-mesaj">Bölüm yok.</div>'; return; }
+    icerik.innerHTML = `<table><thead><tr><th>Bölüm Adı</th><th>Fakülte</th><th>Sil</th></tr></thead><tbody>
+        ${data.map(b => `<tr>
+            <td>${b.ad}</td>
+            <td style="font-size:0.82em;color:var(--muted)">${b.fakulteler?.ad||'—'}</td>
+            <td><button class="btn btn-kirmizi" onclick="bolumSil('${b.id}')">✕</button></td>
+        </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function bolumEkle() {
+    const fakulteId = document.getElementById('bolum-fakulte-sec').value;
+    const ad = document.getElementById('yeni-bolum-adi').value.trim();
+    if (!fakulteId) { bildirimGoster('Fakülte seçin.', 'hata'); return; }
+    if (!ad) { bildirimGoster('Bölüm adı boş olamaz.', 'hata'); return; }
+    const { error } = await sb.from('bolumler').insert({ ad, fakulte_id: fakulteId });
+    if (error) { bildirimGoster('Hata: '+error.message, 'hata'); return; }
+    document.getElementById('yeni-bolum-adi').value = '';
+    bildirimGoster('Bölüm eklendi ✓', 'basari'); bolumleriYukle();
+}
+
+async function bolumSil(id) {
+    if (!confirm('Bu bölümü silmek istediğine emin misin?')) return;
+    await sb.from('bolumler').delete().eq('id', id);
+    bildirimGoster('Bölüm silindi.', 'hata'); bolumleriYukle();
+}
+
+// ── AYARLAR ──
+async function sifreDegistir() {
+    const mevcut = document.getElementById('mevcut-sifre').value;
+    const yeni = document.getElementById('yeni-sifre').value;
+    const yeniTekrar = document.getElementById('yeni-sifre-tekrar').value;
+    const mesajEl = document.getElementById('sifre-mesaj');
+    if (!mevcut || !yeni || !yeniTekrar) { mesajEl.style.color='var(--red)'; mesajEl.textContent='Tüm alanları doldurun.'; return; }
+    if (yeni !== yeniTekrar) { mesajEl.style.color='var(--red)'; mesajEl.textContent='Yeni şifreler eşleşmiyor.'; return; }
+    if (yeni.length < 6) { mesajEl.style.color='var(--red)'; mesajEl.textContent='Şifre en az 6 karakter olmalı.'; return; }
+    const { data } = await sb.from('admin_config').select('value').eq('key','admin_password').single();
+    if (!data || data.value !== mevcut) { mesajEl.style.color='var(--red)'; mesajEl.textContent='❌ Mevcut şifre yanlış.'; return; }
+    await sb.from('admin_config').update({ value: yeni }).eq('key','admin_password');
+    mesajEl.style.color='var(--green)'; mesajEl.textContent='✓ Şifre güncellendi!';
+    document.getElementById('mevcut-sifre').value='';
+    document.getElementById('yeni-sifre').value='';
+    document.getElementById('yeni-sifre-tekrar').value='';
 }
 
 // ── BİLDİRİM ──
 function bildirimGoster(mesaj, tur) {
     const el = document.createElement('div');
-    el.className = `bildirim bildirim-${tur === 'basari' ? 'basari' : 'hata'}`;
+    el.className = `bildirim bildirim-${tur==='basari'?'basari':'hata'}`;
     el.textContent = mesaj;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 3000);
 }
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') modalKapat(); });
 </script>
 </body>
 </html>
