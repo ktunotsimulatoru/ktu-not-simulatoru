@@ -969,3 +969,163 @@ main { margin-top: 1.5rem; }
 [data-theme="dark"] .bys-ornek-satir.bys-dogru .bys-aciklama {
     color: #56d364;
 }
+
+/* =============================================
+   İSTATİSTİKSEVER (FOOTER)
+   ============================================= */
+.footer-stat-wrapper {
+    max-width: 680px;
+    margin: 0 auto 1.2rem auto;
+    padding: 16px 20px;
+    background: var(--main-bg);
+    border: 1px solid var(--footer-border);
+    border-radius: 8px;
+    text-align: left;
+}
+.footer-stat-baslik {
+    font-weight: 700;
+    font-size: 1em;
+    color: var(--content-title);
+    margin-bottom: 14px;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+.footer-ayrac {
+    height: 1px;
+    background: var(--footer-border);
+    margin: 0 auto 1.2rem auto;
+    max-width: 680px;
+    border: none;
+}
+.stat-yukleniyor {
+    text-align: center;
+    color: var(--small-text);
+    font-size: 0.85em;
+    margin: 0;
+    padding: 8px 0;
+}
+.stat-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.stat-blok {
+    flex: 1;
+    min-width: 130px;
+    background: var(--tab-bg);
+    border: 1px solid var(--footer-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.stat-blok-baslik {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--small-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+.stat-buyuk {
+    font-size: 1.9em;
+    font-weight: 700;
+    color: var(--content-title);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.stat-alt-satirlar {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.77em;
+    color: var(--small-text);
+}
+.stat-alt-satirlar strong { color: var(--text-color); }
+.stat-harfler {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+.stat-harf-item { display: flex; align-items: center; gap: 3px; }
+.stat-sira { font-size: 0.75em; color: var(--small-text); font-weight: 600; }
+.stat-harf-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    font-size: 0.9em;
+    font-weight: 700;
+    border-radius: 5px;
+    color: #fff;
+}
+.stat-badge-aa { background-color: var(--grade-aa-bg); }
+.stat-badge-ba { background-color: var(--grade-ba-bg); }
+.stat-badge-bb { background-color: var(--grade-bb-bg); }
+.stat-badge-cb { background-color: var(--grade-cb-bg); }
+.stat-badge-cc { background-color: var(--grade-cc-bg); }
+.stat-badge-dc { background-color: var(--grade-dc-bg); }
+.stat-badge-dd { background-color: var(--grade-dd-bg); color: #333; }
+.stat-badge-fd { background-color: var(--grade-fd-bg); }
+.stat-badge-ff { background-color: var(--grade-ff-bg); }
+.stat-not-satirlar { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.stat-not-satir { display: flex; justify-content: space-between; align-items: center; }
+.stat-not-etiket { color: var(--small-text); font-size: 0.82em; }
+.stat-not-deger { font-weight: 700; font-size: 1.3em; color: var(--content-title); }
+
+/* Pasta grafik */
+.stat-grafik-wrapper {
+    background: var(--tab-bg);
+    border: 1px solid var(--footer-border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.stat-grafik-icerik {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.stat-pasta-container {
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+}
+.stat-pasta-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px 12px;
+    flex: 1;
+    min-width: 160px;
+}
+.stat-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8em;
+}
+.stat-legend-renk {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.stat-legend-etiket { font-weight: 700; color: var(--text-color); }
+.stat-legend-deger { color: var(--small-text); }
+
+.stat-kaynak-notu {
+    text-align: center;
+    font-size: 0.72em;
+    color: var(--small-text);
+    margin-top: 10px;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .footer-stat-wrapper { padding: 12px; }
+    .stat-grid { gap: 8px; }
+    .stat-blok { min-width: 110px; padding: 8px 10px; }
+    .stat-buyuk { font-size: 1.5em; }
+    .stat-pasta-container { width: 110px; height: 110px; }
+    .stat-pasta-legend { grid-template-columns: repeat(2, 1fr); }
+}

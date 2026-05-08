@@ -523,6 +523,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             harfNotuSonucAlani.innerHTML = sonucMesaji;
             dersiLinkGoster('ders-link-harf');
+            const vizeLogHarf = secilenYontem === 'tek'
+                ? parseFloat(document.getElementById('midterm-avg').value)
+                : parseFloat(document.getElementById('vize-notu-harf').value);
+            hesaplamaLogKaydet('harf', harfNotu, isNaN(vizeLogHarf) ? null : vizeLogHarf, isNaN(finalNotu) ? null : finalNotu);
         });
     }
 
@@ -684,6 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
             finalSonucHTML += `<details style="margin-top: 10px; font-size: 0.9em; color: #555;"><summary>Hesaplama Detayları</summary><p style="margin-top: 5px;">${hesaplamaDetaylariReq}</p></details>`;
             gerekliNotSonucAlani.innerHTML = finalSonucHTML;
             dersiLinkGoster('ders-link-gerekli');
+            const vizeLogGerekli = secilenYontem === 'tek'
+                ? parseFloat(document.getElementById('req-midterm-avg').value)
+                : parseFloat(document.getElementById('vize-notu-gerekli').value);
+            hesaplamaLogKaydet('gerekli', null, isNaN(vizeLogGerekli) ? null : vizeLogGerekli, null);
         });
     }
 
@@ -857,6 +865,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  </div>
                  ${aciklamaHTML}
              `;
+            const vizeLogSenaryo = secilenYontem === 'tek'
+                ? parseFloat(document.getElementById('scenario-midterm-avg').value)
+                : parseFloat(document.getElementById('vize-notu-senaryo').value);
+            hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryo) ? null : vizeLogSenaryo, null);
         });
     }
 
@@ -1000,12 +1012,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </p>`;
 
             matrisTabloAlani.innerHTML = tabloHTML + legendHTML + bilgiHTML;
+            const vizeLogMatris = secilenYontem === 'tek'
+                ? parseFloat(document.getElementById('matris-midterm-avg').value)
+                : parseFloat(document.getElementById('vize-notu-matris').value);
+            hesaplamaLogKaydet('matris', null, isNaN(vizeLogMatris) ? null : vizeLogMatris, null);
         });
     }
 
     // Supabase başlat
     fakulteleriYukle();
     yilSecenekleriniDoldur();
+    istatistikleriYukle();
     const veriEkleFormu = document.getElementById('veri-ekle-form');
     if (veriEkleFormu) veriEkleFormu.addEventListener('submit', veriEkleSubmit);
 
@@ -1501,3 +1518,177 @@ document.addEventListener('keydown', e => {
         document.body.style.overflow = '';
     }
 });
+
+// ============================================================
+// HESAPLAMA LOGLAMA & İSTATİSTİKSEVER
+// ============================================================
+
+async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu) {
+    try {
+        const insertData = { sekme };
+        if (harfNotu) insertData.harf_notu = harfNotu;
+        if (vizeNotu !== null) insertData.vize_notu = Math.round(vizeNotu);
+        if (finalNotu !== null) insertData.final_notu = Math.round(finalNotu);
+        await getSupabase().from('hesaplama_loglari').insert(insertData);
+    } catch (e) { /* sessizce geç */ }
+}
+
+async function istatistikleriYukle() {
+    try {
+        const sb = getSupabase();
+
+        // 1. Tüm kayıtları çek
+        const { data: tumData } = await sb
+            .from('hesaplama_loglari')
+            .select('sekme, harf_notu, vize_notu, final_notu');
+
+        if (!tumData) return;
+
+        // Sekme sayıları
+        const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, matris: 0 };
+        const harfSayac = {};
+        const vizeSayac = {};
+        const finalSayac = {};
+
+        tumData.forEach(r => {
+            if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
+            if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
+            if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
+            if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
+        });
+
+        const genelToplam = tumData.length;
+
+        const topHarfler = Object.entries(harfSayac)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([not]) => not);
+
+        const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
+        const topFinal = Object.entries(finalSayac).sort((a, b) => b[1] - a[1])[0];
+
+        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac);
+
+    } catch (e) {
+        console.error('İstatistik yükleme hatası:', e);
+    }
+}
+
+function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, harfSayac) {
+    const el = document.getElementById('footer-istatistikler');
+    if (!el) return;
+
+    const harfBadge = (not) => not
+        ? `<span class="stat-harf-badge stat-badge-${not.toLowerCase()}">${not}</span>`
+        : '<span style="color:var(--small-text)">—</span>';
+
+    // Pasta grafik için veriler
+    const HARF_SIRALAMA = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
+    const HARF_RENKLER = {
+        AA: '#28a745', BA: '#5cb85c', BB: '#82ca9c',
+        CB: '#007bff', CC: '#17a2b8', DC: '#fd7e14',
+        DD: '#ffc107', FD: '#dc3545', FF: '#a21427'
+    };
+
+    const grafikEtiketler = HARF_SIRALAMA.filter(h => harfSayac[h]);
+    const grafikVeriler = grafikEtiketler.map(h => harfSayac[h]);
+    const grafikRenkler = grafikEtiketler.map(h => HARF_RENKLER[h]);
+
+    el.innerHTML = `
+        <div class="stat-grid">
+            <div class="stat-blok">
+                <div class="stat-blok-baslik">🔢 Toplam Hesaplama</div>
+                <div class="stat-buyuk">${toplam.toLocaleString('tr-TR')}</div>
+                <div class="stat-alt-satirlar">
+                    <span>Harf Notu: <strong>${sekmeler.harf.toLocaleString('tr-TR')}</strong></span>
+                    <span>Gerekli Final: <strong>${sekmeler.gerekli.toLocaleString('tr-TR')}</strong></span>
+                    <span>Senaryo: <strong>${sekmeler.senaryo.toLocaleString('tr-TR')}</strong></span>
+                    <span>Matris: <strong>${sekmeler.matris.toLocaleString('tr-TR')}</strong></span>
+                </div>
+            </div>
+            <div class="stat-blok">
+                <div class="stat-blok-baslik">🏆 En Çok Çıkan Notlar</div>
+                <div class="stat-harfler">
+                    <div class="stat-harf-item"><span class="stat-sira">1.</span>${harfBadge(topHarfler[0])}</div>
+                    <div class="stat-harf-item"><span class="stat-sira">2.</span>${harfBadge(topHarfler[1])}</div>
+                    <div class="stat-harf-item"><span class="stat-sira">3.</span>${harfBadge(topHarfler[2])}</div>
+                </div>
+            </div>
+            <div class="stat-blok">
+                <div class="stat-blok-baslik">📝 En Çok Girilen Notlar</div>
+                <div class="stat-not-satirlar">
+                    <div class="stat-not-satir">
+                        <span class="stat-not-etiket">Vize</span>
+                        <span class="stat-not-deger">${topVize ? topVize[0] : '—'}</span>
+                    </div>
+                    <div class="stat-not-satir">
+                        <span class="stat-not-etiket">Final</span>
+                        <span class="stat-not-deger">${topFinal ? topFinal[0] : '—'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        ${grafikEtiketler.length > 0 ? `
+        <div class="stat-grafik-wrapper">
+            <div class="stat-blok-baslik" style="margin-bottom:12px;">🍩 Harf Notu Dağılımı</div>
+            <div class="stat-grafik-icerik">
+                <div class="stat-pasta-container">
+                    <canvas id="harfDagilimChart"></canvas>
+                </div>
+                <div class="stat-pasta-legend">
+                    ${grafikEtiketler.map((h, i) => {
+                        const yuzde = ((grafikVeriler[i] / grafikVeriler.reduce((a,b) => a+b, 0)) * 100).toFixed(1);
+                        return `<div class="stat-legend-item">
+                            <span class="stat-legend-renk" style="background:${grafikRenkler[i]}"></span>
+                            <span class="stat-legend-etiket">${h}</span>
+                            <span class="stat-legend-deger">${yuzde}%</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>` : ''}
+
+        <div class="stat-kaynak-notu">📅 09.05.2026 tarihinden itibaren</div>
+    `;
+
+    // Chart.js pasta grafiği çiz
+    if (grafikEtiketler.length > 0) {
+        setTimeout(() => {
+            const canvas = document.getElementById('harfDagilimChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: grafikEtiketler,
+                    datasets: [{
+                        data: grafikVeriler,
+                        backgroundColor: grafikRenkler,
+                        borderWidth: 2,
+                        borderColor: getComputedStyle(document.documentElement)
+                            .getPropertyValue('--main-bg').trim() || '#fff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const toplam = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const yuzde = ((ctx.parsed / toplam) * 100).toFixed(1);
+                                    return ` ${ctx.label}: ${ctx.parsed} hesaplama (${yuzde}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }, 100);
+    }
+}
