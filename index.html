@@ -434,16 +434,49 @@
                         </div>
                     </div>
 
-                    <p class="info-text">
-                        ⚠️ <strong>Dikkat:</strong> <em>Final çan ortalaması ≠ Final sınav ortalaması.</em> Çan ortalamasına sadece bağıl değerlendirmeye katılan öğrenciler dahildir — devamsızlar, finale girmeyenler ve HBN'si 15 ve altında olanlar bu ortalamaya <strong>dahil edilmez.</strong>
-                        <br><br>
-                        <strong>📌 Örnek:</strong> Sınıfta 80 öğrenci var, 5'i devamsız, 3'ü finale girmedi, 2'sinin HBN ≤ 15. Çan ortalaması kalan <strong>70 öğrencinin</strong> HBN ortalamasıdır.
-                    </p>
+                    <!-- BYS Bilgilendirme Kutusu -->
+                    <div class="bys-bilgi-kutu">
+                        <div class="bys-bilgi-baslik">📊 Verileri BYS'den Nasıl Bulursun?</div>
+
+                        <!-- Mobil uygulama -->
+                        <div class="bys-kaynak">
+                            <div class="bys-kaynak-baslik">📱 Mobil Uygulama</div>
+                            <p class="bys-bilgi-metin">Not sayfasında her sınav için iki farklı ortalama görürsün — bunları karıştırmamak çok önemli:</p>
+                            <ul class="bys-liste">
+                                <li><strong>Sınav Ortalaması</strong> — o sınava giren tüm öğrencilerin ham sınav notu ortalamasıdır. <strong>Bu çan verisi değildir,</strong> buraya girilmemelidir.</li>
+                                <li><strong>Final Ort. / Büt Ort.</strong> (sayfanın en altında) — bağıl değerlendirmeye katılan öğrencilerin Ham Başarı Notu ortalamasıdır. <strong>İşte bu, gerçek çan ortalamasıdır.</strong></li>
+                            </ul>
+                            <p class="bys-bilgi-metin" style="margin-top:8px;"><strong>Standart sapma mobil uygulamada gösterilmez.</strong> Sadece çan ortalamasını buradan alabilirsin; standart sapmayı da girebilmek için web arayüzünü kullan.</p>
+                            <div class="bys-ornek-kutu">
+                                <div class="bys-ornek-satir bys-yanlis"><span class="bys-etiket">Sınav Ort.</span><span class="bys-deger">46,42</span><span class="bys-aciklama">✗ Çan değil, girme!</span></div>
+                                <div class="bys-ornek-ayrac"></div>
+                                <div class="bys-ornek-satir bys-dogru"><span class="bys-etiket">Final Ort.</span><span class="bys-deger">48,86</span><span class="bys-aciklama">✓ Ham Başarı Ort. (Final)</span></div>
+                                <div class="bys-ornek-satir bys-dogru"><span class="bys-etiket">Büt Ort.</span><span class="bys-deger">28,62</span><span class="bys-aciklama">✓ Ham Başarı Ort. (Büt)</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Web arayüzü -->
+                        <div class="bys-kaynak" style="margin-top: 12px;">
+                            <div class="bys-kaynak-baslik">🖥️ Web Arayüzü (bys.ktu.edu.tr)</div>
+                            <p class="bys-bilgi-metin">Web arayüzünde ders not detaylarına girince standart sapma da görünür. Hem ortalama hem standart sapmayla daha doğru hesaplama yapabilirsin.</p>
+                            <div class="bys-ornek-kutu">
+                                <div class="bys-ornek-satir"><span class="bys-etiket">F. STD.</span><span class="bys-deger">15,27317870</span><span class="bys-aciklama">→ Standart Sapma (Final)</span></div>
+                                <div class="bys-ornek-satir"><span class="bys-etiket">F. ORT.</span><span class="bys-deger">39,32</span><span class="bys-aciklama">→ Ham Başarı Ort. (Final)</span></div>
+                                <div class="bys-ornek-satir"><span class="bys-etiket">F. Öğr. Say.</span><span class="bys-deger">87</span><span class="bys-aciklama">→ Çana Katılan Öğrenci</span></div>
+                                <div class="bys-ornek-ayrac"></div>
+                                <div class="bys-ornek-satir"><span class="bys-etiket">B. STD.</span><span class="bys-deger">9,40331820</span><span class="bys-aciklama">→ Standart Sapma (Büt)</span></div>
+                                <div class="bys-ornek-satir"><span class="bys-etiket">B. ORT.</span><span class="bys-deger">31,84</span><span class="bys-aciklama">→ Ham Başarı Ort. (Büt)</span></div>
+                                <div class="bys-ornek-satir"><span class="bys-etiket">B. Öğr. Say.</span><span class="bys-deger">53</span><span class="bys-aciklama">→ Çana Katılan Öğrenci</span></div>
+                            </div>
+                        </div>
+
+                        <p class="bys-bilgi-not">💡 Standart sapma girilmese de veri paylaşılabilir — sadece ortalama zorunludur.</p>
+                    </div>
 
                     <!-- Sıra: Standart Sapma → Ham Başarı Ortalaması → Öğrenci Sayısı -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="ekle-std">Standart Sapma: <span class="zorunlu">*</span></label>
+                            <label for="ekle-std">Standart Sapma:</label>
                             <input type="number" id="ekle-std" min="0" max="50" step="0.01" placeholder="0 – 50">
                         </div>
                         <div class="form-group">

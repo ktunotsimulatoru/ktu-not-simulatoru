@@ -1253,22 +1253,24 @@ async function veriEkleSubmit(e) {
     const ogrenciSayisi = document.getElementById('ekle-ogrenci-sayisi').value;
     const canTuru = document.querySelector('input[name="canTuru"]:checked').value;
 
-    if (!std || !ortalama) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma ve ham başarı ortalaması zorunludur.</p>'; return; }
+    if (!ortalama) { sonucAlani.innerHTML = '<p class="error-message">Ham başarı ortalaması (HBN) zorunludur.</p>'; return; }
 
-    const stdVal = parseFloat(std);
     const ortVal = parseFloat(ortalama);
-
-    if (isNaN(stdVal) || stdVal < 0 || stdVal > 50) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma 0-50 arasında olmalıdır.</p>'; return; }
     if (isNaN(ortVal) || ortVal < 0 || ortVal > 100) { sonucAlani.innerHTML = '<p class="error-message">Ortalama 0-100 arasında olmalıdır.</p>'; return; }
 
     let insertData = {
         donem,
         yil,
         veri_turu: 'can',
-        std_sapma: stdVal,
         ortalama: ortVal,
         can_turu: canTuru
     };
+
+    if (std) {
+        const stdVal = parseFloat(std);
+        if (isNaN(stdVal) || stdVal < 0 || stdVal > 50) { sonucAlani.innerHTML = '<p class="error-message">Standart sapma 0-50 arasında olmalıdır.</p>'; return; }
+        insertData.std_sapma = stdVal;
+    }
 
     if (ogrenciSayisi) {
         const n = parseInt(ogrenciSayisi);
