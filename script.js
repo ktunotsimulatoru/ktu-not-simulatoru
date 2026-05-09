@@ -590,6 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? parseFloat(document.getElementById('midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-harf').value);
             hesaplamaLogKaydet('harf', harfNotu, isNaN(vizeLogHarf) ? null : vizeLogHarf, isNaN(finalNotu) ? null : finalNotu);
+            paylasimButonuGoster('harf');
         });
     }
 
@@ -755,6 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? parseFloat(document.getElementById('req-midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-gerekli').value);
             hesaplamaLogKaydet('gerekli', null, isNaN(vizeLogGerekli) ? null : vizeLogGerekli, null);
+            paylasimButonuGoster('gerekli');
         });
     }
 
@@ -932,6 +934,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? parseFloat(document.getElementById('scenario-midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-senaryo').value);
             hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryo) ? null : vizeLogSenaryo, null);
+            paylasimButonuGoster('senaryo');
         });
     }
 
@@ -965,6 +968,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Dönem Ortalaması başlat ---
     ganoDersEkle(); // İlk ders otomatik eklensin
+
+    // --- Paylaşma linki varsa yükle ---
+    urldenHesaplamaYukle();
 
     // Supabase başlat
     fakulteleriYukle();
@@ -1123,6 +1129,7 @@ function ganoHesapla() {
 
     sonucEl.style.display = 'block';
     sonucEl.innerHTML = html;
+    paylasimButonuGoster('ano');
 
     // ANO hesaplamasını logla — debounced (2sn sonra, aynı değer tekrar loglanmaz)
     if (ano !== null) {
@@ -1144,8 +1151,216 @@ function ganoHesapla() {
 }
 
 // ============================================================
-// SUPABASE ENTEGRASYONU — Ders Verileri Sekmesi
+// PAYLAŞMA LİNKİ
 // ============================================================
+
+function hesaplamaPaylas(sekme) {
+    const url = new URL(window.location.href.split('?')[0]);
+    let harfNotu = null;
+    let anoVal = null;
+
+    if (sekme === 'harf') {
+        const yontem = document.querySelector('input[name="hesaplamaYontemiHarf"]:checked')?.value;
+        if (yontem === 'tek') {
+            const vize = document.getElementById('midterm-avg')?.value;
+            if (vize) url.searchParams.set('vize', vize);
+        } else {
+            const vn = document.getElementById('vize-notu-harf')?.value;
+            const va = document.getElementById('vize-agirlik-harf')?.value;
+            const on = document.getElementById('odev-notu-harf')?.value;
+            const oa = document.getElementById('odev-agirlik-harf')?.value;
+            if (vn) url.searchParams.set('vize', vn);
+            if (va) url.searchParams.set('va', va);
+            if (on) url.searchParams.set('odev', on);
+            if (oa) url.searchParams.set('oa', oa);
+            url.searchParams.set('detay', '1');
+        }
+        const final = document.getElementById('final-grade')?.value;
+        const ort = document.getElementById('class-avg')?.value;
+        const std = document.getElementById('class-stddev')?.value;
+        if (final) url.searchParams.set('final', final);
+        if (ort) url.searchParams.set('ort', ort);
+        if (std) url.searchParams.set('std', std);
+        // Sonuçtaki harf notunu al
+        const sonucEl = document.getElementById('grade-result');
+        const harfMatch = sonucEl?.textContent.match(/\b(AA|BA|BB|CB|CC|DC|DD|FD|FF)\b/);
+        harfNotu = harfMatch ? harfMatch[1] : null;
+
+    } else if (sekme === 'gerekli') {
+        const vize = document.getElementById('req-midterm-avg')?.value;
+        const ort = document.getElementById('req-class-avg')?.value;
+        const std = document.getElementById('req-class-stddev')?.value;
+        const hedef = document.getElementById('target-grade')?.value;
+        if (vize) url.searchParams.set('vize', vize);
+        if (ort) url.searchParams.set('ort', ort);
+        if (std) url.searchParams.set('std', std);
+        if (hedef) url.searchParams.set('hedef', hedef);
+
+    } else if (sekme === 'senaryo') {
+        const yontem = document.querySelector('input[name="hesaplamaYontemiSenaryo"]:checked')?.value;
+        if (yontem === 'tek') {
+            const vize = document.getElementById('scenario-midterm-avg')?.value;
+            if (vize) url.searchParams.set('vize', vize);
+        }
+        const hedefNot = document.querySelector('input[name="scenarioTargetGrade"]:checked')?.value;
+        if (hedefNot) url.searchParams.set('hedef', hedefNot);
+
+    } else if (sekme === 'ano') {
+        // ANO: dersler listesini kodla
+        const satirlar = document.querySelectorAll('.gano-ders-satir');
+        const dersler = [];
+        satirlar.forEach(s => {
+            const ad = s.querySelector('.gano-ders-adi-input')?.value.trim() || '';
+            const kredi = s.querySelector('.gano-kredi-input')?.value;
+            const not = s.querySelector('.gano-not-input')?.value;
+            if (kredi && not) dersler.push(`${encodeURIComponent(ad)}:${kredi}:${not}`);
+        });
+        if (dersler.length) url.searchParams.set('dersler', dersler.join(','));
+        // ANO değerini al
+        const anoEl = document.querySelector('.gano-sonuc-deger');
+        anoVal = anoEl ? parseFloat(anoEl.textContent) : null;
+    }
+
+    url.searchParams.set('sekme', sekme);
+
+    navigator.clipboard.writeText(url.toString()).then(() => {
+        toastGoster('🔗 Link kopyalandı!');
+        // Log
+        paylasimLogKaydet(sekme, harfNotu, anoVal);
+    }).catch(() => {
+        // Clipboard izni yoksa fallback
+        prompt('Linki kopyala:', url.toString());
+        paylasimLogKaydet(sekme, harfNotu, anoVal);
+    });
+}
+
+function toastGoster(mesaj) {
+    const t = document.getElementById('paylasim-toast');
+    if (!t) return;
+    t.textContent = mesaj;
+    t.style.display = 'block';
+    t.classList.add('toast-goster');
+    setTimeout(() => {
+        t.classList.remove('toast-goster');
+        t.style.display = 'none';
+    }, 2500);
+}
+
+async function paylasimLogKaydet(sekme, harfNotu, anoVal) {
+    try {
+        const sb = getSupabase();
+        const insertData = {
+            sekme,
+            is_mobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+        };
+        if (harfNotu) insertData.harf_notu = harfNotu;
+        if (anoVal && !isNaN(anoVal)) insertData.ano_degeri = parseFloat(anoVal.toFixed(2));
+        await sb.from('paylasim_loglari').insert(insertData);
+    } catch (e) { /* sessizce geç */ }
+}
+
+function urldenHesaplamaYukle() {
+    const params = new URLSearchParams(window.location.search);
+    const sekme = params.get('sekme');
+    if (!sekme) return;
+
+    // Sekmeyi aç
+    const tabBtn = document.querySelector(`.tab-button[onclick*="'${sekme}'"],[onclick*='"${sekme}"']`);
+    if (tabBtn) openTab({ currentTarget: tabBtn }, sekme);
+
+    if (sekme === 'harf') {
+        const detay = params.get('detay');
+        if (detay === '1') {
+            const radio = document.getElementById('detayliGirisHarf');
+            if (radio) { radio.checked = true; toggleInputFields('Harf'); }
+            setVal('vize-notu-harf', params.get('vize'));
+            setVal('vize-agirlik-harf', params.get('va'));
+            setVal('odev-notu-harf', params.get('odev'));
+            setVal('odev-agirlik-harf', params.get('oa'));
+        } else {
+            setVal('midterm-avg', params.get('vize'));
+        }
+        setVal('final-grade', params.get('final'));
+        setVal('class-avg', params.get('ort'));
+        setVal('class-stddev', params.get('std'));
+        // Formu otomatik gönder
+        setTimeout(() => document.getElementById('grade-form')?.dispatchEvent(new Event('submit', { bubbles: true })), 300);
+
+    } else if (sekme === 'gerekli') {
+        setVal('req-midterm-avg', params.get('vize'));
+        setVal('req-class-avg', params.get('ort'));
+        setVal('req-class-stddev', params.get('std'));
+        const hedef = params.get('hedef');
+        if (hedef) { const s = document.getElementById('target-grade'); if (s) s.value = hedef; }
+        setTimeout(() => document.getElementById('required-grade-form')?.dispatchEvent(new Event('submit', { bubbles: true })), 300);
+
+    } else if (sekme === 'senaryo') {
+        setVal('scenario-midterm-avg', params.get('vize'));
+        const hedef = params.get('hedef');
+        if (hedef) {
+            const r = document.querySelector(`input[name="scenarioTargetGrade"][value="${hedef}"]`);
+            if (r) r.checked = true;
+        }
+        setTimeout(() => document.getElementById('scenario-form')?.dispatchEvent(new Event('submit', { bubbles: true })), 300);
+
+    } else if (sekme === 'ano') {
+        const derslerStr = params.get('dersler');
+        if (!derslerStr) return;
+        // Mevcut dersleri temizle
+        document.getElementById('gano-dersler-listesi').innerHTML = '';
+        ganoDersSayac = 0;
+        const dersler = derslerStr.split(',');
+        dersler.forEach(d => {
+            const [ad, kredi, not] = d.split(':');
+            ganoDersSayac++;
+            const id = ganoDersSayac;
+            const liste = document.getElementById('gano-dersler-listesi');
+            const div = document.createElement('div');
+            div.className = 'gano-ders-satir';
+            div.id = `gano-ders-${id}`;
+            div.innerHTML = buildGanoDersSatirHTML(id, decodeURIComponent(ad || ''), kredi || '', not || '');
+            liste.appendChild(div);
+        });
+        ganoHesapla();
+    }
+}
+
+function setVal(id, val) {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+}
+
+function buildGanoDersSatirHTML(id, ad, kredi, not) {
+    const notler = ['AA','BA','BB','CB','CC','DC','DD','FD','FF','D','G','K'];
+    const notLabels = { AA:'AA — 4.0', BA:'BA — 3.5', BB:'BB — 3.0', CB:'CB — 2.5', CC:'CC — 2.0',
+        DC:'DC — 1.5 ⚠', DD:'DD — 1.0', FD:'FD — 0.5', FF:'FF — 0.0', D:'D — Devamsız', G:'G — Geçer', K:'K — Kalır' };
+    const opts = notler.map(n => `<option value="${n}" ${n === not ? 'selected' : ''}>${notLabels[n]}</option>`).join('');
+    return `<div class="gano-ders-icerik">
+        <div class="form-group gano-ders-adi-grup">
+            <label>Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span></label>
+            <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" value="${ad}" oninput="ganoHesapla()">
+        </div>
+        <div class="form-group gano-kredi-grup">
+            <label>Kredi <span class="zorunlu">*</span></label>
+            <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" value="${kredi}" oninput="ganoHesapla()">
+        </div>
+        <div class="form-group gano-not-grup">
+            <label>Harf Notu <span class="zorunlu">*</span></label>
+            <select class="gano-not-input" onchange="ganoHesapla()">
+                <option value="">Seç</option>${opts}
+            </select>
+        </div>
+        <button type="button" class="gano-ders-sil-btn" onclick="ganoDersSil(${id})" aria-label="Dersi kaldır">✕</button>
+    </div>`;
+}
+
+// Paylaşım butonlarını sonuç gelince göster
+function paylasimButonuGoster(sekme) {
+    const idler = { harf: 'grade-paylasim-kutu', gerekli: 'gerekli-paylasim-kutu', senaryo: 'senaryo-paylasim-kutu', ano: 'ano-paylasim-kutu' };
+    const el = document.getElementById(idler[sekme]);
+    if (el) el.style.display = 'block';
+}
 const SUPABASE_URL = 'https://tsfscfgwbmiouptsljyi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7VUXgTfS6iYY3NU0IVwYpA_FRI0t7MI';
 let supabaseClient = null;

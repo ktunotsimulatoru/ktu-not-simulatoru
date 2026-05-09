@@ -368,7 +368,7 @@ async function onayBekleyenSayisiGoster() {
 // ── İSTATİSTİKLER ──
 async function istatistikleriYukle() {
     const aralik = parseInt(document.getElementById('istat-aralik').value);
-    let query = sb.from('hesaplama_loglari').select('sekme, harf_notu, vize_notu, final_notu, is_mobile, olusturulma_tarihi');
+    let query = sb.from('hesaplama_loglari').select('sekme, harf_notu, vize_notu, final_notu, ano, basarisiz_sayi, is_mobile, olusturulma_tarihi');
     if (aralik > 0) {
         const sinir = new Date(); sinir.setDate(sinir.getDate() - aralik);
         query = query.gte('olusturulma_tarihi', sinir.toISOString());
@@ -376,11 +376,23 @@ async function istatistikleriYukle() {
     const { data } = await query;
     if (!data) return;
 
+    // Paylaşım logları
+    let paylasimQuery = sb.from('paylasim_loglari').select('sekme, olusturulma_tarihi');
+    if (aralik > 0) {
+        const sinir2 = new Date(); sinir2.setDate(sinir2.getDate() - aralik);
+        paylasimQuery = paylasimQuery.gte('olusturulma_tarihi', sinir2.toISOString());
+    }
+    const { data: paylasimData } = await paylasimQuery;
+    const paylasimToplam = paylasimData?.length || 0;
+    const paylasimSekme = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
+    paylasimData?.forEach(r => { if (paylasimSekme[r.sekme] !== undefined) paylasimSekme[r.sekme]++; });
+
     const toplam = data.length;
-    const sekmeler = { harf: 0, gerekli: 0, senaryo: 0, matris: 0 };
+    const sekmeler = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
     const harfSayac = {};
     let mobilSayisi = 0, masaustuSayisi = 0, final45 = 0;
     const vizeler = [], finaller = [];
+    let anoToplam = 0, anoSayisi = 0;
     const gunSayac = {};
     const gunSayisi = aralik > 0 ? aralik : 30;
     for (let i = gunSayisi - 1; i >= 0; i--) {
@@ -396,24 +408,31 @@ async function istatistikleriYukle() {
         if (r.sekme === 'harf' && r.final_notu === 45) final45++;
         if (r.sekme === 'harf' && r.vize_notu !== null) vizeler.push(r.vize_notu);
         if (r.sekme === 'harf' && r.final_notu !== null) finaller.push(r.final_notu);
+        if (r.sekme === 'ano' && r.ano != null) { anoToplam += parseFloat(r.ano); anoSayisi++; }
         const gun = r.olusturulma_tarihi?.slice(0, 10);
         if (gun && gunSayac[gun] !== undefined) gunSayac[gun]++;
     });
 
     const ortVize = vizeler.length ? (vizeler.reduce((a,b)=>a+b,0)/vizeler.length).toFixed(1) : '—';
     const ortFinal = finaller.length ? (finaller.reduce((a,b)=>a+b,0)/finaller.length).toFixed(1) : '—';
+    const ortAno = anoSayisi > 0 ? (anoToplam / anoSayisi).toFixed(2) : '—';
     const ffSayisi = harfSayac['FF'] || 0;
     const aaSayisi = harfSayac['AA'] || 0;
     const ffOran = toplam ? ((ffSayisi/toplam)*100).toFixed(1) : 0;
     const aaOran = toplam ? ((aaSayisi/toplam)*100).toFixed(1) : 0;
+    const paylasimOran = toplam ? ((paylasimToplam/toplam)*100).toFixed(1) : 0;
 
     document.getElementById('stat-kartlar').innerHTML = `
-        <div class="stat-karti"><div class="stat-karti-baslik">Toplam Hesaplama</div><div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Toplam Hesaplama</div><div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div>
+            <div class="stat-karti-alt">Harf: ${sekmeler.harf} · Gerekli: ${sekmeler.gerekli} · Senaryo: ${sekmeler.senaryo} · ANO: ${sekmeler.ano}</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">FF Oranı</div><div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div><div class="stat-karti-alt">${ffSayisi} hesaplama</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">AA Oranı</div><div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div><div class="stat-karti-alt">${aaSayisi} hesaplama</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">Ort. Vize</div><div class="stat-karti-deger">${ortVize}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">Ort. Final</div><div class="stat-karti-deger">${ortFinal}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">"Final=45" 😅</div><div class="stat-karti-deger" style="color:var(--orange)">${final45}</div><div class="stat-karti-alt">Umut hesaplaması</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. ANO</div><div class="stat-karti-deger" style="color:var(--purple)">${ortAno}</div><div class="stat-karti-alt">${anoSayisi} hesaplamadan</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">🔗 Paylaşılan Link</div><div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam}</div>
+            <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimSekme.harf} · ANO: ${paylasimSekme.ano}</div></div>
     `;
 
     ['sekmeChart','harfChart','cihazChart','gunlukChart'].forEach(id => {
@@ -422,8 +441,8 @@ async function istatistikleriYukle() {
 
     chartInstances['sekmeChart'] = new Chart(document.getElementById('sekmeChart'), {
         type: 'bar',
-        data: { labels: ['Harf Notu','Gerekli Final','Senaryo','Matris'],
-            datasets: [{ data: [sekmeler.harf, sekmeler.gerekli, sekmeler.senaryo, sekmeler.matris],
+        data: { labels: ['Harf Notu','Gerekli Final','Senaryo','Dönem Ort.'],
+            datasets: [{ data: [sekmeler.harf, sekmeler.gerekli, sekmeler.senaryo, sekmeler.ano],
                 backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }] },
         options: { plugins: { legend: { display: false } }, scales: {
             x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },

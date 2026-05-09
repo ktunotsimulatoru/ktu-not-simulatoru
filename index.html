@@ -147,6 +147,9 @@
             <div id="grade-result" class="result-box">
                 <p>Sonuçlar burada gösterilecektir.</p>
             </div>
+            <div id="grade-paylasim-kutu" class="paylasim-kutu" style="display:none;">
+                <button class="paylasim-btn" onclick="hesaplamaPaylas('harf')">🔗 Bu Hesaplamayı Paylaş</button>
+            </div>
             
             <div id="tScoreChartContainer" style="width:100%; max-width:650px; height: 400px; margin: 25px auto 0 auto; padding: 15px; background-color: #f8f9fa; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none;">
                 <h3 style="text-align: center; color: var(--content-title); margin-top:0; margin-bottom: 15px;">T-Skoru Dağılım Grafiği</h3>
@@ -227,6 +230,9 @@
             <div id="required-result" class="result-box">
                  <p>Sonuçlar burada gösterilecektir.</p>
             </div>
+            <div id="gerekli-paylasim-kutu" class="paylasim-kutu" style="display:none;">
+                <button class="paylasim-btn" onclick="hesaplamaPaylas('gerekli')">🔗 Bu Hesaplamayı Paylaş</button>
+            </div>
         </div>
 
         <div id="gecmeSenaryo" class="tab-content">
@@ -295,6 +301,9 @@
              <div id="scenario-table-output" class="result-box" style="margin-top: 1.5rem;">
                   <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
              </div>
+             <div id="senaryo-paylasim-kutu" class="paylasim-kutu" style="display:none;">
+                <button class="paylasim-btn" onclick="hesaplamaPaylas('senaryo')">🔗 Bu Hesaplamayı Paylaş</button>
+             </div>
         </div>
         <div id="donemOrtalama" class="tab-content">
             <h2>Dönem Not Ortalaması (ANO)</h2>
@@ -318,6 +327,9 @@
             <button type="button" class="gano-ders-ekle-btn" onclick="ganoDersEkle()">➕ Ders Ekle</button>
 
             <div id="gano-sonuc" class="result-box" style="display:none;"></div>
+            <div id="ano-paylasim-kutu" class="paylasim-kutu" style="display:none;">
+                <button class="paylasim-btn" onclick="hesaplamaPaylas('ano')">🔗 Bu Hesaplamayı Paylaş</button>
+            </div>
 
             <p class="info-text" style="margin-top: 1.5rem;">
                 <strong>Not:</strong> Bu hesaplama KTÜ Senatosu Usul ve Esasları Madde 11 ve 12'ye göre yapılmaktadır. DC notu koşullu geçme notu olup, dönem ANO'sunuzun 2.00 ve üzerinde olması gerekir.
@@ -536,6 +548,9 @@
     </footer>
 
     <script src="script.js"></script>
+
+<!-- Paylaşım toast bildirimi -->
+<div id="paylasim-toast" class="paylasim-toast" style="display:none;">🔗 Link kopyalandı!</div>
 
 </body>
 
