@@ -985,7 +985,8 @@ const GANO_KATSAYILARI = {
 };
 const GANO_HARIC_NOTLAR = ['D', 'G', 'K', 'S'];
 
-let ganoDersSayac = 0;
+let ganoLogTimeout = null;
+let ganoSonLogAno = null; // aynı ANO değerini tekrar loglamamak için
 
 function ganoDersEkle() {
     ganoDersSayac++;
@@ -1121,6 +1122,24 @@ function ganoHesapla() {
 
     sonucEl.style.display = 'block';
     sonucEl.innerHTML = html;
+
+    // ANO hesaplamasını logla — debounced (2sn sonra, aynı değer tekrar loglanmaz)
+    if (ano !== null) {
+        const anoRounded = parseFloat(ano.toFixed(2));
+        clearTimeout(ganoLogTimeout);
+        ganoLogTimeout = setTimeout(() => {
+            if (anoRounded !== ganoSonLogAno) {
+                ganoSonLogAno = anoRounded;
+                hesaplamaLogKaydet('ano', null, null, null, {
+                    ano: anoRounded,
+                    ders_sayisi: gecerliDersler.length,
+                    toplam_kredi: toplamKredi,
+                    basarisiz_sayi: basarisizlar.length,
+                    dc_sayi: dcDersler.length
+                });
+            }
+        }, 2000);
+    }
 }
 
 // ============================================================
@@ -1618,12 +1637,18 @@ document.addEventListener('keydown', e => {
 // HESAPLAMA LOGLAMA & İSTATİSTİKSEVER
 // ============================================================
 
-async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu) {
+async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu, ekstra = {}) {
     try {
         const insertData = { sekme };
         if (harfNotu) insertData.harf_notu = harfNotu;
-        if (vizeNotu !== null) insertData.vize_notu = Math.round(vizeNotu);
-        if (finalNotu !== null) insertData.final_notu = Math.round(finalNotu);
+        if (vizeNotu !== null && vizeNotu !== undefined) insertData.vize_notu = Math.round(vizeNotu);
+        if (finalNotu !== null && finalNotu !== undefined) insertData.final_notu = Math.round(finalNotu);
+        // ANO alanları
+        if (ekstra.ano !== undefined)            insertData.ano            = parseFloat(ekstra.ano.toFixed(2));
+        if (ekstra.ders_sayisi !== undefined)    insertData.ders_sayisi    = ekstra.ders_sayisi;
+        if (ekstra.toplam_kredi !== undefined)   insertData.toplam_kredi   = ekstra.toplam_kredi;
+        if (ekstra.basarisiz_sayi !== undefined) insertData.basarisiz_sayi = ekstra.basarisiz_sayi;
+        if (ekstra.dc_sayi !== undefined)        insertData.dc_sayi        = ekstra.dc_sayi;
         insertData.is_mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         await getSupabase().from('hesaplama_loglari').insert(insertData);
     } catch (e) { /* sessizce geç */ }
@@ -1636,25 +1661,35 @@ async function istatistikleriYukle() {
         // Tüm kayıtları çek
         const { data: tumData } = await sb
             .from('hesaplama_loglari')
-            .select('sekme, harf_notu, vize_notu, final_notu');
+            .select('sekme, harf_notu, vize_notu, final_notu, ano, basarisiz_sayi');
 
         if (!tumData) return;
 
-        const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, matris: 0 };
+        const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
         const harfSayac = {};
-        const vizeSayac = {};   // sadece harf sekmesinden
-        const finalSayac = {};  // sadece harf sekmesinden
-        let final45Sayisi = 0;  // harf sekmesinde final=45 girilenlerin sayısı
+        const vizeSayac = {};
+        const finalSayac = {};
+        let final45Sayisi = 0;
+
+        // ANO istatistikleri
+        let anoToplam = 0;
+        let anoSayisi = 0;
+        let anoBasarisizToplam = 0;
 
         tumData.forEach(r => {
             if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
             if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
 
-            // Vize ve final notları sadece harf sekmesinden say
             if (r.sekme === 'harf') {
                 if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
                 if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
                 if (r.final_notu === 45) final45Sayisi++;
+            }
+
+            if (r.sekme === 'ano' && r.ano !== null) {
+                anoToplam += r.ano;
+                anoSayisi++;
+                if (r.basarisiz_sayi !== null) anoBasarisizToplam += r.basarisiz_sayi;
             }
         });
 
@@ -1668,14 +1703,16 @@ async function istatistikleriYukle() {
         const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
         const topFinal = Object.entries(finalSayac).sort((a, b) => b[1] - a[1])[0];
 
-        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Sayisi);
+        const anoOrtalama = anoSayisi > 0 ? anoToplam / anoSayisi : null;
+
+        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Sayisi, anoOrtalama, anoSayisi);
 
     } catch (e) {
         console.error('İstatistik yükleme hatası:', e);
     }
 }
 
-function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, harfSayac, final45Sayisi) {
+function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, harfSayac, final45Sayisi, anoOrtalama, anoSayisi) {
     const el = document.getElementById('footer-istatistikler');
     if (!el) return;
 
@@ -1703,7 +1740,7 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                     <span>Harf Notu: <strong>${sekmeler.harf.toLocaleString('tr-TR')}</strong></span>
                     <span>Gerekli Final: <strong>${sekmeler.gerekli.toLocaleString('tr-TR')}</strong></span>
                     <span>Senaryo: <strong>${sekmeler.senaryo.toLocaleString('tr-TR')}</strong></span>
-                    <span>Matris: <strong>${sekmeler.matris.toLocaleString('tr-TR')}</strong></span>
+                    <span>Dönem Ort.: <strong>${sekmeler.ano.toLocaleString('tr-TR')}</strong></span>
                 </div>
             </div>
             <div class="stat-blok">
@@ -1732,6 +1769,15 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                 <div class="stat-buyuk">${final45Sayisi.toLocaleString('tr-TR')}</div>
                 <div class="stat-alt-satirlar">
                     <span>kez hesaplandı</span>
+                </div>
+            </div>
+            <div class="stat-blok">
+                <div class="stat-blok-baslik">🎓 Ortalama ANO</div>
+                <div class="stat-buyuk ${anoOrtalama !== null ? (anoOrtalama >= 3.0 ? 'stat-ano-iyi' : anoOrtalama >= 2.0 ? 'stat-ano-orta' : 'stat-ano-dusuk') : ''}">
+                    ${anoOrtalama !== null ? anoOrtalama.toFixed(2) : '—'}
+                </div>
+                <div class="stat-alt-satirlar">
+                    <span>${anoSayisi.toLocaleString('tr-TR')} hesaplamadan</span>
                 </div>
             </div>
         </div>

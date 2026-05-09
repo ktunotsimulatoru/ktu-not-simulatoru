@@ -1305,3 +1305,8 @@ main { margin-top: 1.5rem; }
     .gano-ders-adi-grup, .gano-kredi-grup, .gano-not-grup { min-width: unset; width: 100%; }
     .gano-ders-sil-btn { width: 100%; }
 }
+
+/* ANO istatistik renkleri */
+.stat-ano-iyi   { color: #28a745; }
+.stat-ano-orta  { color: #fd7e14; }
+.stat-ano-dusuk { color: #dc3545; }
