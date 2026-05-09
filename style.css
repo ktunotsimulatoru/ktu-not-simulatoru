@@ -1177,38 +1177,79 @@ main { margin-top: 1.5rem; }
 }
 .gano-bilgi-liste li { margin-bottom: 2px; }
 
-/* Dönem kutuları */
-
-.gano-ders-satir { margin-bottom: 10px; }
-.gano-ders-icerik {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    flex-wrap: wrap;
+/* Dönem Ortalaması — Ders Satırları */
+.gano-ders-satir {
+    background: var(--tab-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
 }
-.gano-ders-adi-grup { flex: 2; min-width: 140px; }
-.gano-kredi-grup { flex: 0.6; min-width: 70px; }
-.gano-not-grup { flex: 1; min-width: 130px; }
+.gano-ders-satir:hover { border-color: var(--input-focus-border); }
+
+.gano-ders-icerik {
+    display: grid;
+    grid-template-columns: 2fr 80px 1fr 36px;
+    gap: 8px;
+    align-items: end;
+}
+
+/* Tüm grup etiketleri */
+.gano-ders-adi-grup,
+.gano-kredi-grup,
+.gano-not-grup { margin: 0; }
+
+/* Label stilleri — tutarlı */
+.gano-ders-icerik .form-group label {
+    font-size: 0.78em;
+    font-weight: 600;
+    color: var(--small-text);
+    margin-bottom: 4px;
+    display: block;
+    white-space: nowrap;
+}
+
+/* Input/select yüksekliği eşitle */
+.gano-ders-icerik input,
+.gano-ders-icerik select {
+    height: 38px;
+    width: 100%;
+    box-sizing: border-box;
+}
 
 .gano-ders-sil-btn {
     background: none;
     border: 1px solid var(--input-border);
     color: var(--small-text);
-    border-radius: 5px;
-    padding: 6px 10px;
-    font-size: 0.85em;
+    border-radius: 6px;
     cursor: pointer;
-    align-self: flex-end;
-    margin-bottom: 0;
     transition: all 0.2s;
     height: 38px;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    padding: 0;
+    align-self: end;
+    flex-shrink: 0;
 }
 .gano-ders-sil-btn:hover { border-color: var(--error-border); color: var(--error-text); background: var(--error-bg); }
 
 .gano-opsiyonel {
-    font-size: 0.8em;
+    font-size: 0.78em;
     font-weight: 400;
     color: var(--small-text);
+}
+
+/* Mobilde de tek sıra — sadece ders adı daraltılır */
+@media (max-width: 500px) {
+    .gano-ders-icerik {
+        grid-template-columns: 1fr 64px 1fr 32px;
+        gap: 6px;
+    }
+    .gano-ders-sil-btn { width: 32px; }
 }
 
 /* Ders ekleme butonu */
@@ -1300,11 +1341,7 @@ main { margin-top: 1.5rem; }
     margin-bottom: 5px;
 }
 
-@media (max-width: 580px) {
-    .gano-ders-icerik { flex-direction: column; }
-    .gano-ders-adi-grup, .gano-kredi-grup, .gano-not-grup { min-width: unset; width: 100%; }
-    .gano-ders-sil-btn { width: 100%; }
-}
+
 
 /* ANO istatistik renkleri */
 .stat-ano-iyi   { color: #28a745; }

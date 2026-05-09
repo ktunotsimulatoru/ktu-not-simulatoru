@@ -1011,19 +1011,19 @@ function ganoDersEkle() {
             <div class="form-group gano-not-grup">
                 <label>Harf Notu <span class="zorunlu">*</span></label>
                 <select class="gano-not-input" onchange="ganoHesapla()">
-                    <option value="">-- Seç --</option>
-                    <option value="AA">AA (4.0)</option>
-                    <option value="BA">BA (3.5)</option>
-                    <option value="BB">BB (3.0)</option>
-                    <option value="CB">CB (2.5)</option>
-                    <option value="CC">CC (2.0)</option>
-                    <option value="DC">DC (1.5) — Koşullu</option>
-                    <option value="DD">DD (1.0) — Başarısız</option>
-                    <option value="FD">FD (0.5) — Başarısız</option>
-                    <option value="FF">FF (0.0) — Başarısız</option>
-                    <option value="D">D — Devamsız (sayılmaz)</option>
-                    <option value="G">G — Geçer (sayılmaz)</option>
-                    <option value="K">K — Kalır (sayılmaz)</option>
+                    <option value="">Seç</option>
+                    <option value="AA">AA — 4.0</option>
+                    <option value="BA">BA — 3.5</option>
+                    <option value="BB">BB — 3.0</option>
+                    <option value="CB">CB — 2.5</option>
+                    <option value="CC">CC — 2.0</option>
+                    <option value="DC">DC — 1.5 ⚠</option>
+                    <option value="DD">DD — 1.0</option>
+                    <option value="FD">FD — 0.5</option>
+                    <option value="FF">FF — 0.0</option>
+                    <option value="D">D — Devamsız</option>
+                    <option value="G">G — Geçer</option>
+                    <option value="K">K — Kalır</option>
                 </select>
             </div>
             <button type="button" class="gano-ders-sil-btn" onclick="ganoDersSil(${id})" aria-label="Dersi kaldır">✕</button>
