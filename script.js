@@ -962,125 +962,9 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleInputFields('Harf');
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
-    toggleInputFields('Matris');
 
-    // --- Not Matrisi Formu ---
-    const matrisFormu = document.getElementById('matris-form');
-    const matrisTabloAlani = document.getElementById('matris-table-output');
-
-    if (matrisFormu && matrisTabloAlani) {
-        const matrisMidtermAvgInput = document.getElementById('matris-midterm-avg');
-        const vizeNotuMatrisInput = document.getElementById('vize-notu-matris');
-        const vizeAgirlikMatrisInput = document.getElementById('vize-agirlik-matris');
-        const odevNotuMatrisInput = document.getElementById('odev-notu-matris');
-        const odevAgirlikMatrisInput = document.getElementById('odev-agirlik-matris');
-        const matrisStdDevInput = document.getElementById('matris-stddev');
-
-        matrisFormu.addEventListener('submit', (event) => {
-            event.preventDefault();
-            matrisTabloAlani.innerHTML = '<p>Matris oluşturuluyor...</p>';
-            let formGecerli = true;
-            const secilenYontem = matrisFormu.querySelector('input[name="hesaplamaYontemiMatris"]:checked').value;
-
-            if (secilenYontem === 'tek') {
-                if (!validateNumberField(matrisMidtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
-            } else {
-                if (!validateNumberField(vizeNotuMatrisInput, 'Vize Notu', 0, 100)) formGecerli = false;
-                if (!validateNumberField(vizeAgirlikMatrisInput, 'Vize Ağırlığı', 0, 50)) formGecerli = false;
-                if (!validateNumberField(odevNotuMatrisInput, 'Ödev/Proje Notu', 0, 100)) formGecerli = false;
-                if (!validateNumberField(odevAgirlikMatrisInput, 'Ödev/Proje Ağırlığı', 0, 50)) formGecerli = false;
-                if (formGecerli) {
-                    if (!validateDetailedWeights(vizeAgirlikMatrisInput, odevAgirlikMatrisInput, 'Matris')) formGecerli = false;
-                }
-            }
-            if (!validateNumberField(matrisStdDevInput, 'Standart Sapma', 0.01, null)) formGecerli = false;
-
-            if (!formGecerli) {
-                matrisTabloAlani.innerHTML = '<p class="error-message">Lütfen formdaki işaretli hataları düzeltin.</p>';
-                const firstInvalid = matrisFormu.querySelector('input.invalid-input');
-                if (firstInvalid) firstInvalid.focus();
-                return;
-            }
-
-            const araSinavKatkisi = calculateMidtermContribution('Matris', matrisFormu);
-            const stdSapma = parseFloat(matrisStdDevInput.value);
-
-            const finalAdimlar = [];
-            for (let f = 0; f <= 100; f += 5) finalAdimlar.push(f);
-
-            const ortalamaAdimlar = [];
-            for (let o = 5; o <= 75; o += 5) ortalamaAdimlar.push(o);
-
-            const gradeColors = {
-                AA: 'var(--grade-aa-bg)', BA: 'var(--grade-ba-bg)', BB: 'var(--grade-bb-bg)',
-                CB: 'var(--grade-cb-bg)', CC: 'var(--grade-cc-bg)', DC: 'var(--grade-dc-bg)',
-                DD: 'var(--grade-dd-bg)', FD: 'var(--grade-fd-bg)', FF: 'var(--grade-ff-bg)'
-            };
-
-            let tabloHTML = '<table><thead>';
-            tabloHTML += '<tr>';
-            tabloHTML += `<th rowspan="3" style="vertical-align:middle; text-align:center;">Final<br>Notu</th>`;
-            tabloHTML += `<th colspan="${ortalamaAdimlar.length + 1}" style="text-align:center; border-bottom: 1px solid var(--input-focus-border);">Ham Başarı Ortalaması</th>`;
-            tabloHTML += '</tr>';
-            tabloHTML += '<tr>';
-            ortalamaAdimlar.forEach(o => { tabloHTML += `<th>${o}</th>`; });
-            tabloHTML += '<th>≥80<br><small style="font-weight:normal">(Mutlak)</small></th>';
-            tabloHTML += '</tr>';
-            tabloHTML += '<tr>';
-            tabloHTML += `<td colspan="${ortalamaAdimlar.length + 1}" class="grade-FF" style="text-align:center; font-size:0.82em; font-weight:500; padding:6px; border:1px solid var(--result-border);">⚠️ Final notu 45'in altında olan durumlarda harf notu KTÜ Yönetmeliği Madde 7 gereği doğrudan <strong>FF</strong>'dir.</td>`;
-            tabloHTML += '</tr>';
-            tabloHTML += '</thead><tbody>';
-
-            finalAdimlar.filter(f => f >= 45).forEach(final => {
-                tabloHTML += `<tr><td class="row-label">${final}</td>`;
-
-                ortalamaAdimlar.forEach(ort => {
-                    const hbn = araSinavKatkisi + (final * 0.5);
-                    let harfNotu;
-
-                    if (hbn <= 15) {
-                        harfNotu = 'FF';
-                    } else if (ort >= 80) {
-                        harfNotu = getMutlakDegerlendirmeNotu(hbn);
-                    } else {
-                        const tSkoruHam = ((hbn - ort) / stdSapma) * 10 + 50;
-                        const tSkoru = Math.round(tSkoruHam);
-                        const bagilNot = getBagilDegerlendirmeNotuTskor(tSkoru, ort);
-                        const mutlakNot = getMutlakDegerlendirmeNotu(hbn);
-                        harfNotu = bagilNot ? karsilastirHarfNotlari(bagilNot, mutlakNot) : mutlakNot;
-                    }
-
-                    const hbnGoster = (araSinavKatkisi + final * 0.5).toFixed(1);
-                    tabloHTML += `<td class="grade-${harfNotu}" title="HBN: ${hbnGoster}">${harfNotu}</td>`;
-                });
-
-                const hbn80 = araSinavKatkisi + (final * 0.5);
-                let harfMutlak = hbn80 > 15 ? getMutlakDegerlendirmeNotu(hbn80) : 'FF';
-                tabloHTML += `<td class="grade-${harfMutlak}" title="HBN: ${hbn80.toFixed(1)}">${harfMutlak}</td>`;
-                tabloHTML += '</tr>';
-            });
-
-            tabloHTML += '</tbody></table>';
-
-            const gradeNames = { AA:'AA (4.0)', BA:'BA (3.5)', BB:'BB (3.0)', CB:'CB (2.5)', CC:'CC (2.0)', DC:'DC (1.5)', DD:'DD (1.0)', FD:'FD (0.5)', FF:'FF (0.0)' };
-            let legendHTML = '<div class="matris-legend">';
-            Object.keys(gradeNames).forEach(g => {
-                legendHTML += `<div class="matris-legend-item"><div class="matris-legend-box" style="background-color:${gradeColors[g]};"></div><span>${gradeNames[g]}</span></div>`;
-            });
-            legendHTML += '</div>';
-
-            const bilgiHTML = `<p class="info-text" style="margin-top:12px; font-size:0.82em;">
-                <strong>Not:</strong> Final &lt; 45 olan tüm hücreler KTÜ Yönetmeliği Madde 7 gereği otomatik FF'dir. 
-                Hücre üzerine gelince Ham Başarı Notu (HBN) görüntülenir. σ = ${stdSapma}
-            </p>`;
-
-            matrisTabloAlani.innerHTML = tabloHTML + legendHTML + bilgiHTML;
-            const vizeLogMatris = secilenYontem === 'tek'
-                ? parseFloat(document.getElementById('matris-midterm-avg').value)
-                : parseFloat(document.getElementById('vize-notu-matris').value);
-            hesaplamaLogKaydet('matris', null, isNaN(vizeLogMatris) ? null : vizeLogMatris, null);
-        });
-    }
+    // --- Dönem Ortalaması (GANO) başlat ---
+    ganoDonemEkle(); // İlk dönem otomatik eklensin
 
     // Supabase başlat
     fakulteleriYukle();
@@ -1090,6 +974,235 @@ document.addEventListener('DOMContentLoaded', () => {
     if (veriEkleFormu) veriEkleFormu.addEventListener('submit', veriEkleSubmit);
 
 });
+
+// ============================================================
+// DÖNEM ORTALAMASI (ANO / AGNO) — Madde 11 & 12
+// ============================================================
+
+// Katsayılar (Madde 11 - resmi tablo)
+const GANO_KATSAYILARI = {
+    'AA': 4.0, 'BA': 3.5, 'BB': 3.0, 'CB': 2.5,
+    'CC': 2.0, 'DC': 1.5, 'DD': 1.0, 'FD': 0.5, 'FF': 0.0
+};
+// AGNO'ya dahil edilmeyen notlar (kredi taşımaz)
+const GANO_HARIC_NOTLAR = ['D', 'G', 'K', 'S'];
+
+let ganoDonemSayac = 0;
+
+function ganoDonemEkle() {
+    ganoDonemSayac++;
+    const id = ganoDonemSayac;
+    const wrapper = document.getElementById('gano-donemler-wrapper');
+    if (!wrapper) return;
+
+    const donemDiv = document.createElement('div');
+    donemDiv.className = 'gano-donem-kutu';
+    donemDiv.id = `gano-donem-${id}`;
+    donemDiv.innerHTML = `
+        <div class="gano-donem-baslik">
+            <span class="gano-donem-etiket">📅 ${id}. Dönem</span>
+            ${id > 1 ? `<button type="button" class="gano-donem-sil-btn" onclick="ganoDonemSil(${id})">✕ Kaldır</button>` : ''}
+        </div>
+        <div class="gano-dersler-listesi" id="gano-dersler-${id}">
+            <!-- Dersler buraya eklenir -->
+        </div>
+        <button type="button" class="gano-ders-ekle-btn" onclick="ganoDersEkle(${id})">➕ Ders Ekle</button>
+    `;
+    wrapper.appendChild(donemDiv);
+    // İlk dönem için bir ders otomatik ekle
+    ganoDersEkle(id);
+    ganoHesapla();
+}
+
+function ganoDonemSil(id) {
+    const el = document.getElementById(`gano-donem-${id}`);
+    if (el) el.remove();
+    ganoHesapla();
+}
+
+let ganoDersSayac = 0;
+
+function ganoDersEkle(donemId) {
+    ganoDersSayac++;
+    const dersId = ganoDersSayac;
+    const liste = document.getElementById(`gano-dersler-${donemId}`);
+    if (!liste) return;
+
+    const dersDiv = document.createElement('div');
+    dersDiv.className = 'gano-ders-satir';
+    dersDiv.id = `gano-ders-${dersId}`;
+    dersDiv.dataset.donemId = donemId;
+    dersDiv.innerHTML = `
+        <div class="gano-ders-icerik">
+            <div class="form-group gano-ders-adi-grup">
+                <label>Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span></label>
+                <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" oninput="ganoHesapla()">
+            </div>
+            <div class="form-group gano-kredi-grup">
+                <label>Kredi <span class="zorunlu">*</span></label>
+                <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" oninput="ganoHesapla()">
+            </div>
+            <div class="form-group gano-not-grup">
+                <label>Harf Notu <span class="zorunlu">*</span></label>
+                <select class="gano-not-input" onchange="ganoHesapla()">
+                    <option value="">-- Seç --</option>
+                    <option value="AA">AA (4.0)</option>
+                    <option value="BA">BA (3.5)</option>
+                    <option value="BB">BB (3.0)</option>
+                    <option value="CB">CB (2.5)</option>
+                    <option value="CC">CC (2.0)</option>
+                    <option value="DC">DC (1.5) — Koşullu</option>
+                    <option value="DD">DD (1.0) — Başarısız</option>
+                    <option value="FD">FD (0.5) — Başarısız</option>
+                    <option value="FF">FF (0.0) — Başarısız</option>
+                    <option value="D">D — Devamsız (sayılmaz)</option>
+                    <option value="G">G — Geçer (sayılmaz)</option>
+                    <option value="K">K — Kalır (sayılmaz)</option>
+                </select>
+            </div>
+            <button type="button" class="gano-ders-sil-btn" onclick="ganoDersSil(${dersId})" aria-label="Dersi kaldır">✕</button>
+        </div>
+    `;
+    liste.appendChild(dersDiv);
+    ganoHesapla();
+}
+
+function ganoDersSil(dersId) {
+    const el = document.getElementById(`gano-ders-${dersId}`);
+    if (el) el.remove();
+    ganoHesapla();
+}
+
+function ganoHesapla() {
+    const sonucEl = document.getElementById('gano-sonuc');
+    if (!sonucEl) return;
+
+    // Tüm dönemlerden ders topla
+    const donemKutulari = document.querySelectorAll('.gano-donem-kutu');
+    let tumDersler = []; // {donemId, ad, kredi, not, katsayi, dahil}
+
+    donemKutulari.forEach(donemKutu => {
+        const donemId = donemKutu.id.replace('gano-donem-', '');
+        const dersler = donemKutu.querySelectorAll('.gano-ders-satir');
+        dersler.forEach(dersSatir => {
+            const ad = dersSatir.querySelector('.gano-ders-adi-input')?.value.trim() || '';
+            const krediVal = dersSatir.querySelector('.gano-kredi-input')?.value;
+            const notVal = dersSatir.querySelector('.gano-not-input')?.value;
+            const kredi = parseFloat(krediVal);
+            const dahil = notVal && !GANO_HARIC_NOTLAR.includes(notVal);
+            const katsayi = dahil ? (GANO_KATSAYILARI[notVal] ?? null) : null;
+            tumDersler.push({ donemId, ad, kredi, not: notVal, katsayi, dahil });
+        });
+    });
+
+    // Geçerli girişleri filtrele (kredi ve not dolu, sayılır)
+    const gecerliDersler = tumDersler.filter(d => !isNaN(d.kredi) && d.kredi > 0 && d.not);
+
+    if (gecerliDersler.length === 0) {
+        sonucEl.style.display = 'none';
+        return;
+    }
+
+    // AGNO hesabına dahil olanlar
+    const dahilDersler = gecerliDersler.filter(d => d.dahil);
+
+    // AGNO: toplam (kredi × katsayı) / toplam kredi
+    const toplamKrediXKatsayi = dahilDersler.reduce((sum, d) => sum + d.kredi * d.katsayi, 0);
+    const toplamKredi = dahilDersler.reduce((sum, d) => sum + d.kredi, 0);
+    const agno = toplamKredi > 0 ? toplamKrediXKatsayi / toplamKredi : null;
+
+    // Her dönem için ANO hesapla
+    const donemIdler = [...new Set(gecerliDersler.map(d => d.donemId))];
+    let donemSonuclari = donemIdler.map(dId => {
+        const donemDersler = dahilDersler.filter(d => d.donemId === dId);
+        const dk = donemDersler.reduce((s, d) => s + d.kredi, 0);
+        const dkk = donemDersler.reduce((s, d) => s + d.kredi * d.katsayi, 0);
+        const ano = dk > 0 ? dkk / dk : null;
+        return { donemId: dId, ano, toplamKredi: dk };
+    });
+
+    // DC geçme kontrolü: o dönem ANO >= 2.00 ise geçer
+    // (Madde 12)
+    const dcUyarilar = [];
+    donemSonuclari.forEach(ds => {
+        const dcDersler = gecerliDersler.filter(d => d.donemId === ds.donemId && d.not === 'DC');
+        dcDersler.forEach(d => {
+            if (ds.ano !== null) {
+                if (ds.ano >= 2.00) {
+                    dcUyarilar.push({ ad: d.ad || 'İsimsiz ders', durum: 'gecti', ano: ds.ano });
+                } else {
+                    dcUyarilar.push({ ad: d.ad || 'İsimsiz ders', durum: 'kaldi', ano: ds.ano });
+                }
+            }
+        });
+    });
+
+    // Başarısız ders sayısı
+    const basarisizDersler = gecerliDersler.filter(d => ['FF', 'FD', 'DD'].includes(d.not) || (d.not === 'DC' && dcUyarilar.find(u => u.durum === 'kaldi')));
+
+    // Sonuç HTML
+    let html = '';
+
+    // ANO tablosu (birden fazla dönem varsa)
+    if (donemSonuclari.length > 0) {
+        html += `<div class="gano-sonuc-grid">`;
+        donemSonuclari.forEach((ds, i) => {
+            const anoStr = ds.ano !== null ? ds.ano.toFixed(2) : '—';
+            const anoClass = ds.ano === null ? '' : ds.ano >= 3.0 ? 'gano-iyi' : ds.ano >= 2.0 ? 'gano-orta' : 'gano-dusuk';
+            html += `
+                <div class="gano-sonuc-kutu">
+                    <div class="gano-sonuc-etiket">${i + 1}. Dönem ANO</div>
+                    <div class="gano-sonuc-deger ${anoClass}">${anoStr}</div>
+                    <div class="gano-sonuc-alt">${ds.toplamKredi} kredi</div>
+                </div>`;
+        });
+        if (agno !== null) {
+            const agnoClass = agno >= 3.0 ? 'gano-iyi' : agno >= 2.0 ? 'gano-orta' : 'gano-dusuk';
+            html += `
+                <div class="gano-sonuc-kutu gano-agno-kutu">
+                    <div class="gano-sonuc-etiket">AGNO (Genel)</div>
+                    <div class="gano-sonuc-deger ${agnoClass}">${agno.toFixed(2)}</div>
+                    <div class="gano-sonuc-alt">${toplamKredi} toplam kredi</div>
+                </div>`;
+        }
+        html += `</div>`;
+    }
+
+    // DC uyarıları
+    if (dcUyarilar.length > 0) {
+        html += `<div class="gano-dc-uyari-kutu">`;
+        dcUyarilar.forEach(u => {
+            if (u.durum === 'gecti') {
+                html += `<div class="gano-dc-gecti">✅ <strong>${u.ad}</strong> — DC ile dönem ANO'su ${u.ano.toFixed(2)} ≥ 2.00 olduğu için <strong>geçtiniz</strong>.</div>`;
+            } else {
+                html += `<div class="gano-dc-kaldi">❌ <strong>${u.ad}</strong> — DC ile dönem ANO'su ${u.ano.toFixed(2)} &lt; 2.00 olduğu için <strong>kaldınız</strong>. Bu dersi tekrar almanız gerekiyor.</div>`;
+            }
+        });
+        html += `</div>`;
+    }
+
+    // Başarısız dersler
+    const gercekBasarisizlar = gecerliDersler.filter(d => {
+        if (['FF', 'FD', 'DD'].includes(d.not)) return true;
+        if (d.not === 'DC') {
+            const dc = dcUyarilar.find(u => (u.ad === (d.ad || 'İsimsiz ders')) && u.durum === 'kaldi');
+            return !!dc;
+        }
+        return false;
+    });
+
+    if (gercekBasarisizlar.length > 0) {
+        html += `<div class="gano-basarisiz-kutu">`;
+        html += `<div class="gano-basarisiz-baslik">⚠️ Tekrar Almanız Gereken Dersler (Madde 12)</div>`;
+        gercekBasarisizlar.forEach(d => {
+            html += `<div class="gano-basarisiz-ders"><span class="grade-display-badge grade-display-${d.not.toLowerCase()}">${d.not}</span> ${d.ad || 'İsimsiz ders'} (${d.kredi} kredi)</div>`;
+        });
+        html += `</div>`;
+    }
+
+    sonucEl.style.display = 'block';
+    sonucEl.innerHTML = html;
+}
 
 // ============================================================
 // SUPABASE ENTEGRASYONU — Ders Verileri Sekmesi
