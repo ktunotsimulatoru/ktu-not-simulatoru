@@ -985,6 +985,7 @@ const GANO_KATSAYILARI = {
 };
 const GANO_HARIC_NOTLAR = ['D', 'G', 'K', 'S'];
 
+let ganoDersSayac = 0;
 let ganoLogTimeout = null;
 let ganoSonLogAno = null; // aynı ANO değerini tekrar loglamamak için
 
@@ -1658,25 +1659,31 @@ async function istatistikleriYukle() {
     try {
         const sb = getSupabase();
 
-        // Tüm kayıtları çek
-        const { data: tumData } = await sb
+        // Tüm kayıtları çek — yeni sütunlar migration'dan önce yoksa da çalışır
+        const { data: tumData, error: tumError } = await sb
             .from('hesaplama_loglari')
             .select('sekme, harf_notu, vize_notu, final_notu, ano, basarisiz_sayi');
 
-        if (!tumData) return;
+        // Yeni sütunlar henüz yoksa eski sütunlarla tekrar dene
+        let logData = tumData;
+        if (tumError || !tumData) {
+            const { data: eskiData } = await sb
+                .from('hesaplama_loglari')
+                .select('sekme, harf_notu, vize_notu, final_notu');
+            logData = eskiData;
+        }
+
+        if (!logData) return;
 
         const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
         const harfSayac = {};
         const vizeSayac = {};
         const finalSayac = {};
         let final45Sayisi = 0;
-
-        // ANO istatistikleri
         let anoToplam = 0;
         let anoSayisi = 0;
-        let anoBasarisizToplam = 0;
 
-        tumData.forEach(r => {
+        logData.forEach(r => {
             if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
             if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
 
@@ -1686,14 +1693,13 @@ async function istatistikleriYukle() {
                 if (r.final_notu === 45) final45Sayisi++;
             }
 
-            if (r.sekme === 'ano' && r.ano !== null) {
-                anoToplam += r.ano;
+            if (r.sekme === 'ano' && r.ano != null) {
+                anoToplam += parseFloat(r.ano);
                 anoSayisi++;
-                if (r.basarisiz_sayi !== null) anoBasarisizToplam += r.basarisiz_sayi;
             }
         });
 
-        const genelToplam = tumData.length;
+        const genelToplam = logData.length;
 
         const topHarfler = Object.entries(harfSayac)
             .sort((a, b) => b[1] - a[1])
