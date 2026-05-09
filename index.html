@@ -144,11 +144,13 @@
                 </p>
                 <button type="submit">Harf Notunu Hesapla</button>
             </form>
-            <div id="grade-result" class="result-box result-box-paylasimli">
+            <div class="result-box-wrapper">
                 <div id="grade-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
                     <button class="paylasim-btn-ic" onclick="paylasimMenuAc('harf', this)" title="Paylaş">🔗</button>
                 </div>
-                <p>Sonuçlar burada gösterilecektir.</p>
+                <div id="grade-result" class="result-box" style="margin-top:0;">
+                    <p>Sonuçlar burada gösterilecektir.</p>
+                </div>
             </div>
             
             <div id="tScoreChartContainer" style="width:100%; max-width:650px; height: 400px; margin: 25px auto 0 auto; padding: 15px; background-color: #f8f9fa; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none;">
@@ -227,11 +229,13 @@
                   </p>
                  <button type="submit">Gerekli Final Notunu Hesapla</button>
             </form>
-            <div id="required-result" class="result-box result-box-paylasimli">
+            <div class="result-box-wrapper">
                 <div id="gerekli-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
                     <button class="paylasim-btn-ic" onclick="paylasimMenuAc('gerekli', this)" title="Paylaş">🔗</button>
                 </div>
-                 <p>Sonuçlar burada gösterilecektir.</p>
+                <div id="required-result" class="result-box" style="margin-top:0;">
+                    <p>Sonuçlar burada gösterilecektir.</p>
+                </div>
             </div>
         </div>
 
@@ -295,11 +299,13 @@
                  </div>
                  <button type="submit">Senaryo Tablosunu Oluştur</button>
             </form>
-             <div id="scenario-table-output" class="result-box result-box-paylasimli" style="margin-top: 1.5rem;">
+             <div class="result-box-wrapper">
                 <div id="senaryo-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
                     <button class="paylasim-btn-ic" onclick="paylasimMenuAc('senaryo', this)" title="Paylaş">🔗</button>
                 </div>
-                  <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
+                <div id="scenario-table-output" class="result-box" style="margin-top: 0;">
+                    <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
+                </div>
              </div>
         </div>
         <div id="donemOrtalama" class="tab-content">
@@ -323,10 +329,11 @@
 
             <button type="button" class="gano-ders-ekle-btn" onclick="ganoDersEkle()">➕ Ders Ekle</button>
 
-            <div id="gano-sonuc" class="result-box result-box-paylasimli" style="display:none;">
+            <div class="result-box-wrapper">
                 <div id="ano-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
                     <button class="paylasim-btn-ic" onclick="paylasimMenuAc('ano', this)" title="Paylaş">🔗</button>
                 </div>
+                <div id="gano-sonuc" class="result-box" style="display:none;"></div>
             </div>
 
             <p class="info-text" style="margin-top: 1.5rem;">

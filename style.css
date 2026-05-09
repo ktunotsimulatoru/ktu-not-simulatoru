@@ -1396,16 +1396,20 @@ main { margin-top: 1.5rem; }
    PAYLAŞMA LİNKİ
    ============================================================ */
 
-/* result-box içinde relative pozisyon */
-.result-box-paylasimli {
+/* result-box wrapper — paylaşım butonunu sağ üste konumlandırır */
+.result-box-wrapper {
     position: relative;
+    margin-top: 2rem;
+}
+.result-box-wrapper .result-box {
+    margin-top: 0;
 }
 
 /* Sağ üst köşe butonu */
 .paylasim-kutu-ic {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: -32px;
+    right: 0;
     z-index: 2;
 }
 .paylasim-btn-ic {
