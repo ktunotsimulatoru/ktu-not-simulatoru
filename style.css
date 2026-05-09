@@ -338,8 +338,22 @@ p.tab-description { text-align: center; margin-top:-1rem; margin-bottom: 1.5rem;
 /* Form Stilleri */
 .form-group { margin-bottom: 1.3rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--label-color); font-size: 0.95em; }
-.form-group input[type="number"], .form-group select { width: 100%; padding: 0.9rem; border: 1px solid var(--input-border); border-radius: 5px; box-sizing: border-box; background-color: var(--input-bg); transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s; font-size: 1em; font-family: 'Poppins', sans-serif; color: var(--input-text); }
-.form-group input[type="number"]:focus, .form-group select:focus { border-color: var(--input-focus-border); outline: none; box-shadow: 0 0 0 3px var(--input-focus-shadow); background-color: var(--main-bg); }
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group select {
+    width: 100%; padding: 0.9rem; border: 1px solid var(--input-border); border-radius: 5px;
+    box-sizing: border-box; background-color: var(--input-bg);
+    transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+    font-size: 1em; font-family: 'Poppins', sans-serif; color: var(--input-text);
+}
+.form-group input[type="number"]:focus,
+.form-group input[type="text"]:focus,
+.form-group select:focus {
+    border-color: var(--input-focus-border); outline: none;
+    box-shadow: 0 0 0 3px var(--input-focus-shadow); background-color: var(--main-bg);
+}
+.form-group input[type="text"]::placeholder { color: var(--small-text); opacity: 0.7; }
+.form-group select option { background-color: var(--main-bg); color: var(--input-text); }
 .form-group small { display: block; font-size: 0.8em; color: var(--small-text); margin-top: 0.4rem; }
 small.weight-warning { text-align: center; display: block; margin-top: -10px; margin-bottom: 15px; font-size: 0.85em; }
 button[type="submit"] { display: block; width: 100%; background-color: var(--button-bg); color: var(--button-text); padding: 0.9rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: background-color 0.3s ease, transform 0.1s ease; margin-top: 1.5rem; font-family: 'Poppins', sans-serif; }
@@ -706,7 +720,7 @@ main { margin-top: 1.5rem; }
     .header-inner { padding: 10px 12px; }
     .tab-button { padding: 10px 5px; font-size: 0.72em; }
     .tab-content { padding: 14px 11px; }
-    .form-group input[type="number"], .form-group select { padding: 0.72rem; font-size: 0.92em; }
+    .form-group input[type="number"], .form-group input[type="text"], .form-group select { padding: 0.72rem; font-size: 0.92em; }
     button[type="submit"] { font-size: 0.95em; padding: 0.78rem; }
     .degisiklik-kart { margin: 0.8rem 8px 0 8px; }
 }
@@ -1195,27 +1209,57 @@ main { margin-top: 1.5rem; }
     align-items: end;
 }
 
-/* Tüm grup etiketleri */
-.gano-ders-adi-grup,
-.gano-kredi-grup,
-.gano-not-grup { margin: 0; }
-
-/* Label stilleri — tutarlı */
+/* Label stilleri — okunabilir */
+.gano-ders-icerik .form-group { margin: 0; }
 .gano-ders-icerik .form-group label {
-    font-size: 0.78em;
+    font-size: 0.75em;
     font-weight: 600;
-    color: var(--small-text);
+    color: var(--text-color);
     margin-bottom: 4px;
     display: block;
     white-space: nowrap;
 }
 
-/* Input/select yüksekliği eşitle */
-.gano-ders-icerik input,
+/* Input/select — tamamen eşit görünüm */
+.gano-ders-icerik input[type="text"],
+.gano-ders-icerik input[type="number"],
 .gano-ders-icerik select {
     height: 38px;
+    padding: 0 10px;
     width: 100%;
     box-sizing: border-box;
+    background-color: var(--main-bg);
+    color: var(--text-color);
+    border: 1px solid var(--input-border);
+    border-radius: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.gano-ders-icerik input[type="number"] {
+    -webkit-appearance: auto;
+    appearance: auto;
+    padding: 0 4px;
+    text-align: center;
+}
+.gano-ders-icerik select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%238b949e' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+.gano-ders-icerik input[type="text"]::placeholder { color: var(--small-text); opacity: 0.7; }
+.gano-ders-icerik input:focus,
+.gano-ders-icerik select:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+.gano-ders-icerik select option {
+    background-color: var(--main-bg);
+    color: var(--text-color);
 }
 
 .gano-ders-sil-btn {
