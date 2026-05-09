@@ -1405,12 +1405,11 @@ main { margin-top: 1.5rem; }
     margin-top: 0;
 }
 
-/* Sağ üst köşe butonu */
+/* Sağ üst köşe butonu — result-box'ın sağ üstünde hizalanır */
 .paylasim-kutu-ic {
-    position: absolute;
-    top: -32px;
-    right: 0;
-    z-index: 2;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
 }
 .paylasim-btn-ic {
     background: var(--tab-bg);
@@ -1435,38 +1434,7 @@ main { margin-top: 1.5rem; }
 }
 .paylasim-btn-ic:active { transform: scale(0.96); }
 
-/* Paylaşım menüsü (Web Share / fallback) */
-.paylasim-menu {
-    position: absolute;
-    top: 38px;
-    right: 0;
-    background: var(--main-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
-    box-shadow: 0 4px 16px var(--shadow-color);
-    z-index: 100;
-    min-width: 180px;
-    overflow: hidden;
-}
-.paylasim-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    font-size: 0.86em;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: background 0.15s;
-    border: none;
-    background: none;
-    width: 100%;
-    font-family: 'Poppins', sans-serif;
-    text-align: left;
-}
-.paylasim-menu-item:hover { background: var(--tab-bg); }
-.paylasim-menu-item + .paylasim-menu-item { border-top: 1px solid var(--input-border); }
-
-/* Eski dış buton (artık kullanılmıyor ama kalsın) */
+/* Eski paylaşım kutusu — kullanılmıyor */
 .paylasim-kutu { display: none; }
 
 .paylasim-toast {

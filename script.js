@@ -890,39 +890,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             tabloHTML += `</tbody></table>`;
             
-             let aciklamaHTML = `<div class="scenario-explanation" style="margin-top: 20px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
-             aciklamaHTML += `<p style="margin-bottom: 8px;">🎯 <strong>"${hedefHarfNotu}" İçin Finalde Kaç Alman Gerek? (Senaryo Tablosu)</strong></p>`;
-             aciklamaHTML += `<p style="margin-bottom: 8px;">Bu tablo, bu sekmede verdiğin ara sınav bilgilerine dayanarak, çeşitli "Sınıf Ortalaması" ve "Standart Sapma" ihtimallerine göre finalde alman gereken en düşük notu görmene yardımcı olur.</p>`;
-             aciklamaHTML += `<p style="margin-bottom: 8px;">Tabloyu şöyle kullanabilirsin:<br>Soldan bir "Standart Sapma" değeri, üstten de bir "Sınıf Ortalaması" değeri seç. İkisinin kesiştiği yerdeki sayı, "${hedefHarfNotu}" için o durumda alman gereken final notunu gösterir.</p>`;
-             if (ornekGerekenNot !== null && ornekOrtalama !== null && ornekStdSapma !== null) {
-                 aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Mesela, sınıf ortalaması <strong>${ornekOrtalama}</strong>, standart sapma <strong>${ornekStdSapma}</strong> ise, "${hedefHarfNotu}" için alman gereken final notu yaklaşık <strong>${ornekGerekenNot}</strong> olur.</em></p>`;
-             } else {
-                 aciklamaHTML += `<p style="margin-bottom: 8px;">📊 <em>Örnek bir senaryo için tabloya göz atın. Ara sınav notlarınız ve hedeflediğiniz harf notuna göre ulaşılabilir bir senaryo bulunmuyorsa, tabloda uygun bir örnek gösterilemeyebilir.</em></p>`;
-             }
-             aciklamaHTML += `</div>`;
-             aciklamaHTML += `<div class="scenario-notes" style="margin-top: 15px; font-size: 0.9em; line-height: 1.5; text-align: left;">`;
-             aciklamaHTML += `<p style="font-weight:bold; margin-bottom:8px;">⚠️ DİKKAT! BU BİLGİLER HAYAT KURTARIR:</p>`;
-             aciklamaHTML += `<ul style="margin:0; padding-left:0; list-style-type: none;">`;
-             aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
-                                     📌 <strong>"SINIF ORTALAMASI" DEDİĞİMİZ ŞEY (ÇAN ORTALAMASI) NEDİR? AMAN DİKKAT!</strong><br>
-                                     Bu tablodaki "Sınıf Ortalaması" değerleri (ve diğer hesaplamalarda kullandığın "Sınıf Ortalaması") öğrencilerin tek tek hesaplanan Ham Başarı Notlarının (HBN) ortalamasıdır. Yani her öğrencinin vize, ödev, final gibi notlarının ağırlıklarıyla oluşan kendi kişisel başarı puanının ortalamasıdır.<br>
-                                     <strong>SAKIN ŞU HATAYA DÜŞME:</strong> Vize sınavının sınıfça ortalamasıyla Final sınavının sınıfça ortalamasını toplayıp ikiye bölerek "Çan Ortalaması"nı bulamazsın! Gerçek "Çan Ortalaması" böyle hesaplanmaz. Çünkü finale girmeyenler, devamsızlar, HBN'si çok düşük olanlar gibi bağıl değerlendirmeye dahil edilmeyen kişiler bu ortalamanın dışında tutulur. Bu yüzden, senin tahmininle gerçek "Çan Ortalaması" arasında fark olabilir. Bu fark, senin harf notunu doğrudan etkiler!
-                                 </li>`;
-             aciklamaHTML += `<li style="margin-bottom: 12px; padding-left:1.5em; text-indent:-1.5em;">
-                                     🛡️ <strong>BU BİR TAHMİN ARACI, RESMİ SONUÇ DEĞİL! HER ZAMAN İŞİNİ SAĞLAMA AL!</strong><br>
-                                     Bu hesaplayıcı sana yol göstermek için var. Ama unutma, tablodaki "Sınıf Ortalaması" veya "Standart Sapma" senin dersindeki gerçek değerlerden biraz farklı olabilir. Üniversitenin sistemindeki küsurat hesapları da sonucu milimetrik değiştirebilir.<br>
-                                     <strong>ALTIN KURAL:</strong> Tabloda çıkan nota güvenirken, her zaman finalden birkaç puan daha fazlasını almaya çalış ki sonra üzülmeyesin!
-                                 </li>`;
-             aciklamaHTML += `<li style="margin-bottom: 5px; padding-left:1.5em; text-indent:-1.5em;">
-                                     ➡️ <strong>TABLODAKİ DİĞER İŞARETLER NE ANLAMA GELİYOR?</strong>
-                                     <ul style="padding-left: 1.8em; margin-top: 5px; list-style-type: none;">
-                                         <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}":</strong> Finalden en az bu notu almak zorundasın, hesaplama daha düşüğünü gösterse bile!</li>
-                                         <li style="margin-bottom:3px; padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"Ort. &ge;80 (Mutlak)":</strong> Eğer sınıfın genel ortalaması 80 veya üstüyse, işler değişir ve Mutlak Sistem devreye girer. Bu sütun sana o durumu gösterir. (Standart sapma burada önemsizdir).</li>
-                                         <li style="padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"100+":</strong> O durumda finalden 100'den fazla alman gerekiyor demek, yani o hedef biraz zor görünüyor!</li>
-                                          <li style="padding-left:1.5em; text-indent:-1.5em;">▪️ <strong>"-":</strong> Bu senaryoda hedeflenen nota ulaşmak mümkün değil veya standart sapma 0 gibi geçersiz bir durum var.</li>
-                                     </ul>
-                                 </li>`;
-             aciklamaHTML += `</ul></div>`;
+            let aciklamaHTML = `<div class="scenario-explanation">`;
+            if (ornekGerekenNot !== null) {
+                aciklamaHTML += `<p>📊 Örnek: Sınıf ort. <strong>${ornekOrtalama}</strong>, std. sapma <strong>${ornekStdSapma}</strong> ise <strong>${hedefHarfNotu}</strong> için gereken final ≈ <strong>${ornekGerekenNot}</strong></p>`;
+            }
+            aciklamaHTML += `<p>⚠️ <strong>Çan ortalaması</strong>, vize/final sınıf ortalamalarının basit ortalaması <em>değildir</em>. Bağıl değerlendirmeye katılan öğrencilerin HBN ortalamasıdır.</p>`;
+            aciklamaHTML += `<p>📌 <strong>Min ${MINIMUM_FINAL_NOTU_VARSAYILAN}:</strong> Final alt sınırı. &nbsp; <strong>≥80 (Mutlak):</strong> Sınıf ort. 80+ ise mutlak sistem. &nbsp; <strong>100+:</strong> Ulaşılamaz hedef.</p>`;
+            aciklamaHTML += `<p style="color:var(--small-text);font-size:0.85em;">Bu tablo tahmin aracıdır, resmi sonuç değildir. Güvende olmak için tablodaki nottan birkaç puan fazlasını hedefle.</p>`;
+            aciklamaHTML += `</div>`;
 
             senaryoTabloAlani.innerHTML = `
                  <div class="table-scroll-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
@@ -1223,81 +1198,30 @@ function paylasimAnoAl() {
     return el ? parseFloat(el.textContent) : null;
 }
 
-let aktifPaylasimMenu = null;
-
 function paylasimMenuAc(sekme, btn) {
-    // Açık menü varsa kapat
-    if (aktifPaylasimMenu) { aktifPaylasimMenu.remove(); aktifPaylasimMenu = null; return; }
-
     const paylasimUrl = paylasimUrlOlustur(sekme);
     const harfNotu = paylasimHarfNotunuAl(sekme);
     const anoVal = sekme === 'ano' ? paylasimAnoAl() : null;
-
     const sekmAdlar = { harf: 'Harf Notu Hesabı', gerekli: 'Gerekli Final Hesabı', senaryo: 'Senaryo Tablosu', ano: 'Dönem Ortalaması' };
-    const paylasmaMesaj = `KTÜ Not Simülatörü — ${sekmAdlar[sekme] || 'Hesaplama'}`;
+    const baslik = `KTÜ Not Simülatörü — ${sekmAdlar[sekme] || 'Hesaplama'}`;
 
-    const menu = document.createElement('div');
-    menu.className = 'paylasim-menu';
-
-    // Web Share API destekleniyorsa (çoğu mobil)
-    const webShareDestekli = navigator.share && navigator.canShare?.({ url: paylasimUrl });
-
-    let menuHTML = '';
-    if (webShareDestekli) {
-        menuHTML += `<button class="paylasim-menu-item" onclick="paylasimWebShare('${encodeURIComponent(paylasimUrl)}', '${encodeURIComponent(paylasmaMesaj)}')">📤 Uygulamalarla Paylaş</button>`;
+    // Web Share API varsa direkt sistem paylaşım ekranını aç
+    if (navigator.share) {
+        navigator.share({ title: baslik, url: paylasimUrl })
+            .then(() => paylasimLogKaydet(sekme, harfNotu, anoVal))
+            .catch(() => {}); // kullanıcı iptal etti
+        return;
     }
-    // WhatsApp
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(paylasmaMesaj + '\n' + paylasimUrl)}`;
-    menuHTML += `<button class="paylasim-menu-item" onclick="window.open('${waUrl}','_blank'); paylasimMenuKapat()">
-        <span style="color:#25D366">●</span> WhatsApp
-    </button>`;
-    // Linki kopyala
-    menuHTML += `<button class="paylasim-menu-item" onclick="paylasimKopyala('${encodeURIComponent(paylasimUrl)}', '${sekme}', '${harfNotu || ''}', ${isNaN(anoVal) || anoVal === null ? 'null' : anoVal})">
-        🔗 Linki Kopyala
-    </button>`;
 
-    menu.innerHTML = menuHTML;
-    btn.parentElement.style.position = 'relative';
-    btn.parentElement.appendChild(menu);
-    aktifPaylasimMenu = menu;
-
-    // Dışarı tıklayınca kapat
-    setTimeout(() => {
-        document.addEventListener('click', paylasimDisariTikla, { once: true });
-    }, 50);
-}
-
-function paylasimDisariTikla(e) {
-    if (aktifPaylasimMenu && !aktifPaylasimMenu.contains(e.target)) {
-        paylasimMenuKapat();
-    }
-}
-
-function paylasimMenuKapat() {
-    if (aktifPaylasimMenu) { aktifPaylasimMenu.remove(); aktifPaylasimMenu = null; }
-}
-
-async function paylasimWebShare(encodedUrl, encodedTitle) {
-    paylasimMenuKapat();
-    try {
-        await navigator.share({ title: decodeURIComponent(encodedTitle), url: decodeURIComponent(encodedUrl) });
-    } catch (e) { /* kullanıcı iptal etti */ }
-}
-
-function paylasimKopyala(encodedUrl, sekme, harfNotu, anoVal) {
-    paylasimMenuKapat();
-    const url = decodeURIComponent(encodedUrl);
-    navigator.clipboard.writeText(url).then(() => {
+    // Fallback: panoya kopyala
+    navigator.clipboard.writeText(paylasimUrl).then(() => {
         toastGoster('🔗 Link kopyalandı!');
-        paylasimLogKaydet(sekme, harfNotu || null, anoVal);
+        paylasimLogKaydet(sekme, harfNotu, anoVal);
     }).catch(() => {
-        prompt('Linki kopyala:', url);
-        paylasimLogKaydet(sekme, harfNotu || null, anoVal);
+        prompt('Linki kopyala:', paylasimUrl);
+        paylasimLogKaydet(sekme, harfNotu, anoVal);
     });
 }
-
-// Eski fonksiyon adı — geriye dönük uyumluluk
-function hesaplamaPaylas(sekme) { paylasimMenuAc(sekme, document.querySelector(`#${sekme === 'harf' ? 'grade' : sekme === 'gerekli' ? 'required' : sekme === 'senaryo' ? 'scenario-table' : 'gano'}-paylasim-kutu .paylasim-btn-ic`)); }
 
 function toastGoster(mesaj) {
     const t = document.getElementById('paylasim-toast');
