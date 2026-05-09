@@ -1154,11 +1154,8 @@ function ganoHesapla() {
 // PAYLAŞMA LİNKİ
 // ============================================================
 
-function hesaplamaPaylas(sekme) {
+function paylasimUrlOlustur(sekme) {
     const url = new URL(window.location.href.split('?')[0]);
-    let harfNotu = null;
-    let anoVal = null;
-
     if (sekme === 'harf') {
         const yontem = document.querySelector('input[name="hesaplamaYontemiHarf"]:checked')?.value;
         if (yontem === 'tek') {
@@ -1181,11 +1178,6 @@ function hesaplamaPaylas(sekme) {
         if (final) url.searchParams.set('final', final);
         if (ort) url.searchParams.set('ort', ort);
         if (std) url.searchParams.set('std', std);
-        // Sonuçtaki harf notunu al
-        const sonucEl = document.getElementById('grade-result');
-        const harfMatch = sonucEl?.textContent.match(/\b(AA|BA|BB|CB|CC|DC|DD|FD|FF)\b/);
-        harfNotu = harfMatch ? harfMatch[1] : null;
-
     } else if (sekme === 'gerekli') {
         const vize = document.getElementById('req-midterm-avg')?.value;
         const ort = document.getElementById('req-class-avg')?.value;
@@ -1195,7 +1187,6 @@ function hesaplamaPaylas(sekme) {
         if (ort) url.searchParams.set('ort', ort);
         if (std) url.searchParams.set('std', std);
         if (hedef) url.searchParams.set('hedef', hedef);
-
     } else if (sekme === 'senaryo') {
         const yontem = document.querySelector('input[name="hesaplamaYontemiSenaryo"]:checked')?.value;
         if (yontem === 'tek') {
@@ -1204,9 +1195,7 @@ function hesaplamaPaylas(sekme) {
         }
         const hedefNot = document.querySelector('input[name="scenarioTargetGrade"]:checked')?.value;
         if (hedefNot) url.searchParams.set('hedef', hedefNot);
-
     } else if (sekme === 'ano') {
-        // ANO: dersler listesini kodla
         const satirlar = document.querySelectorAll('.gano-ders-satir');
         const dersler = [];
         satirlar.forEach(s => {
@@ -1216,23 +1205,99 @@ function hesaplamaPaylas(sekme) {
             if (kredi && not) dersler.push(`${encodeURIComponent(ad)}:${kredi}:${not}`);
         });
         if (dersler.length) url.searchParams.set('dersler', dersler.join(','));
-        // ANO değerini al
-        const anoEl = document.querySelector('.gano-sonuc-deger');
-        anoVal = anoEl ? parseFloat(anoEl.textContent) : null;
     }
-
     url.searchParams.set('sekme', sekme);
+    return url.toString();
+}
 
-    navigator.clipboard.writeText(url.toString()).then(() => {
+function paylasimHarfNotunuAl(sekme) {
+    if (sekme === 'harf') {
+        const m = document.getElementById('grade-result')?.textContent.match(/\b(AA|BA|BB|CB|CC|DC|DD|FD|FF)\b/);
+        return m ? m[1] : null;
+    }
+    return null;
+}
+
+function paylasimAnoAl() {
+    const el = document.querySelector('.gano-sonuc-deger');
+    return el ? parseFloat(el.textContent) : null;
+}
+
+let aktifPaylasimMenu = null;
+
+function paylasimMenuAc(sekme, btn) {
+    // Açık menü varsa kapat
+    if (aktifPaylasimMenu) { aktifPaylasimMenu.remove(); aktifPaylasimMenu = null; return; }
+
+    const paylasimUrl = paylasimUrlOlustur(sekme);
+    const harfNotu = paylasimHarfNotunuAl(sekme);
+    const anoVal = sekme === 'ano' ? paylasimAnoAl() : null;
+
+    const sekmAdlar = { harf: 'Harf Notu Hesabı', gerekli: 'Gerekli Final Hesabı', senaryo: 'Senaryo Tablosu', ano: 'Dönem Ortalaması' };
+    const paylasmaMesaj = `KTÜ Not Simülatörü — ${sekmAdlar[sekme] || 'Hesaplama'}`;
+
+    const menu = document.createElement('div');
+    menu.className = 'paylasim-menu';
+
+    // Web Share API destekleniyorsa (çoğu mobil)
+    const webShareDestekli = navigator.share && navigator.canShare?.({ url: paylasimUrl });
+
+    let menuHTML = '';
+    if (webShareDestekli) {
+        menuHTML += `<button class="paylasim-menu-item" onclick="paylasimWebShare('${encodeURIComponent(paylasimUrl)}', '${encodeURIComponent(paylasmaMesaj)}')">📤 Uygulamalarla Paylaş</button>`;
+    }
+    // WhatsApp
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(paylasmaMesaj + '\n' + paylasimUrl)}`;
+    menuHTML += `<button class="paylasim-menu-item" onclick="window.open('${waUrl}','_blank'); paylasimMenuKapat()">
+        <span style="color:#25D366">●</span> WhatsApp
+    </button>`;
+    // Linki kopyala
+    menuHTML += `<button class="paylasim-menu-item" onclick="paylasimKopyala('${encodeURIComponent(paylasimUrl)}', '${sekme}', '${harfNotu || ''}', ${isNaN(anoVal) || anoVal === null ? 'null' : anoVal})">
+        🔗 Linki Kopyala
+    </button>`;
+
+    menu.innerHTML = menuHTML;
+    btn.parentElement.style.position = 'relative';
+    btn.parentElement.appendChild(menu);
+    aktifPaylasimMenu = menu;
+
+    // Dışarı tıklayınca kapat
+    setTimeout(() => {
+        document.addEventListener('click', paylasimDisariTikla, { once: true });
+    }, 50);
+}
+
+function paylasimDisariTikla(e) {
+    if (aktifPaylasimMenu && !aktifPaylasimMenu.contains(e.target)) {
+        paylasimMenuKapat();
+    }
+}
+
+function paylasimMenuKapat() {
+    if (aktifPaylasimMenu) { aktifPaylasimMenu.remove(); aktifPaylasimMenu = null; }
+}
+
+async function paylasimWebShare(encodedUrl, encodedTitle) {
+    paylasimMenuKapat();
+    try {
+        await navigator.share({ title: decodeURIComponent(encodedTitle), url: decodeURIComponent(encodedUrl) });
+    } catch (e) { /* kullanıcı iptal etti */ }
+}
+
+function paylasimKopyala(encodedUrl, sekme, harfNotu, anoVal) {
+    paylasimMenuKapat();
+    const url = decodeURIComponent(encodedUrl);
+    navigator.clipboard.writeText(url).then(() => {
         toastGoster('🔗 Link kopyalandı!');
-        // Log
-        paylasimLogKaydet(sekme, harfNotu, anoVal);
+        paylasimLogKaydet(sekme, harfNotu || null, anoVal);
     }).catch(() => {
-        // Clipboard izni yoksa fallback
-        prompt('Linki kopyala:', url.toString());
-        paylasimLogKaydet(sekme, harfNotu, anoVal);
+        prompt('Linki kopyala:', url);
+        paylasimLogKaydet(sekme, harfNotu || null, anoVal);
     });
 }
+
+// Eski fonksiyon adı — geriye dönük uyumluluk
+function hesaplamaPaylas(sekme) { paylasimMenuAc(sekme, document.querySelector(`#${sekme === 'harf' ? 'grade' : sekme === 'gerekli' ? 'required' : sekme === 'senaryo' ? 'scenario-table' : 'gano'}-paylasim-kutu .paylasim-btn-ic`)); }
 
 function toastGoster(mesaj) {
     const t = document.getElementById('paylasim-toast');
@@ -1240,10 +1305,7 @@ function toastGoster(mesaj) {
     t.textContent = mesaj;
     t.style.display = 'block';
     t.classList.add('toast-goster');
-    setTimeout(() => {
-        t.classList.remove('toast-goster');
-        t.style.display = 'none';
-    }, 2500);
+    setTimeout(() => { t.classList.remove('toast-goster'); t.style.display = 'none'; }, 2500);
 }
 
 async function paylasimLogKaydet(sekme, harfNotu, anoVal) {

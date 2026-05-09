@@ -1395,30 +1395,75 @@ main { margin-top: 1.5rem; }
 /* ============================================================
    PAYLAŞMA LİNKİ
    ============================================================ */
-.paylasim-kutu {
-    margin-top: 10px;
-    text-align: right;
+
+/* result-box içinde relative pozisyon */
+.result-box-paylasimli {
+    position: relative;
 }
-.paylasim-btn {
-    background: none;
-    border: 1px solid var(--input-focus-border);
-    color: var(--input-focus-border);
+
+/* Sağ üst köşe butonu */
+.paylasim-kutu-ic {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+.paylasim-btn-ic {
+    background: var(--tab-bg);
+    border: 1px solid var(--input-border);
+    color: var(--small-text);
     border-radius: 6px;
-    padding: 7px 16px;
-    font-size: 0.85em;
-    font-weight: 600;
+    padding: 4px 10px;
+    font-size: 0.82em;
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    white-space: nowrap;
 }
-.paylasim-btn:hover {
-    background: var(--input-focus-border);
-    color: #fff;
+.paylasim-btn-ic::after { content: ' Paylaş'; font-size: 0.9em; }
+.paylasim-btn-ic:hover {
+    border-color: var(--input-focus-border);
+    color: var(--input-focus-border);
+    background: var(--result-bg);
 }
-.paylasim-btn:active { transform: scale(0.97); }
+.paylasim-btn-ic:active { transform: scale(0.96); }
+
+/* Paylaşım menüsü (Web Share / fallback) */
+.paylasim-menu {
+    position: absolute;
+    top: 38px;
+    right: 0;
+    background: var(--main-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow-color);
+    z-index: 100;
+    min-width: 180px;
+    overflow: hidden;
+}
+.paylasim-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 0.86em;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+}
+.paylasim-menu-item:hover { background: var(--tab-bg); }
+.paylasim-menu-item + .paylasim-menu-item { border-top: 1px solid var(--input-border); }
+
+/* Eski dış buton (artık kullanılmıyor ama kalsın) */
+.paylasim-kutu { display: none; }
 
 .paylasim-toast {
     position: fixed;
