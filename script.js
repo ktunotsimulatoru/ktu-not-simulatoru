@@ -963,8 +963,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
 
-    // --- Dönem Ortalaması (GANO) başlat ---
-    ganoDonemEkle(); // İlk dönem otomatik eklensin
+    // --- Dönem Ortalaması başlat ---
+    ganoDersEkle(); // İlk ders otomatik eklensin
 
     // Supabase başlat
     fakulteleriYukle();
@@ -976,62 +976,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-// DÖNEM ORTALAMASI (ANO / AGNO) — Madde 11 & 12
+// DÖNEM ORTALAMASI (ANO) — Madde 11 & 12
 // ============================================================
 
-// Katsayılar (Madde 11 - resmi tablo)
 const GANO_KATSAYILARI = {
     'AA': 4.0, 'BA': 3.5, 'BB': 3.0, 'CB': 2.5,
     'CC': 2.0, 'DC': 1.5, 'DD': 1.0, 'FD': 0.5, 'FF': 0.0
 };
-// AGNO'ya dahil edilmeyen notlar (kredi taşımaz)
 const GANO_HARIC_NOTLAR = ['D', 'G', 'K', 'S'];
-
-let ganoDonemSayac = 0;
-
-function ganoDonemEkle() {
-    ganoDonemSayac++;
-    const id = ganoDonemSayac;
-    const wrapper = document.getElementById('gano-donemler-wrapper');
-    if (!wrapper) return;
-
-    const donemDiv = document.createElement('div');
-    donemDiv.className = 'gano-donem-kutu';
-    donemDiv.id = `gano-donem-${id}`;
-    donemDiv.innerHTML = `
-        <div class="gano-donem-baslik">
-            <span class="gano-donem-etiket">📅 ${id}. Dönem</span>
-            ${id > 1 ? `<button type="button" class="gano-donem-sil-btn" onclick="ganoDonemSil(${id})">✕ Kaldır</button>` : ''}
-        </div>
-        <div class="gano-dersler-listesi" id="gano-dersler-${id}">
-            <!-- Dersler buraya eklenir -->
-        </div>
-        <button type="button" class="gano-ders-ekle-btn" onclick="ganoDersEkle(${id})">➕ Ders Ekle</button>
-    `;
-    wrapper.appendChild(donemDiv);
-    // İlk dönem için bir ders otomatik ekle
-    ganoDersEkle(id);
-    ganoHesapla();
-}
-
-function ganoDonemSil(id) {
-    const el = document.getElementById(`gano-donem-${id}`);
-    if (el) el.remove();
-    ganoHesapla();
-}
 
 let ganoDersSayac = 0;
 
-function ganoDersEkle(donemId) {
+function ganoDersEkle() {
     ganoDersSayac++;
-    const dersId = ganoDersSayac;
-    const liste = document.getElementById(`gano-dersler-${donemId}`);
+    const id = ganoDersSayac;
+    const liste = document.getElementById('gano-dersler-listesi');
     if (!liste) return;
 
     const dersDiv = document.createElement('div');
     dersDiv.className = 'gano-ders-satir';
-    dersDiv.id = `gano-ders-${dersId}`;
-    dersDiv.dataset.donemId = donemId;
+    dersDiv.id = `gano-ders-${id}`;
     dersDiv.innerHTML = `
         <div class="gano-ders-icerik">
             <div class="form-group gano-ders-adi-grup">
@@ -1060,15 +1024,15 @@ function ganoDersEkle(donemId) {
                     <option value="K">K — Kalır (sayılmaz)</option>
                 </select>
             </div>
-            <button type="button" class="gano-ders-sil-btn" onclick="ganoDersSil(${dersId})" aria-label="Dersi kaldır">✕</button>
+            <button type="button" class="gano-ders-sil-btn" onclick="ganoDersSil(${id})" aria-label="Dersi kaldır">✕</button>
         </div>
     `;
     liste.appendChild(dersDiv);
     ganoHesapla();
 }
 
-function ganoDersSil(dersId) {
-    const el = document.getElementById(`gano-ders-${dersId}`);
+function ganoDersSil(id) {
+    const el = document.getElementById(`gano-ders-${id}`);
     if (el) el.remove();
     ganoHesapla();
 }
@@ -1077,95 +1041,59 @@ function ganoHesapla() {
     const sonucEl = document.getElementById('gano-sonuc');
     if (!sonucEl) return;
 
-    // Tüm dönemlerden ders topla
-    const donemKutulari = document.querySelectorAll('.gano-donem-kutu');
-    let tumDersler = []; // {donemId, ad, kredi, not, katsayi, dahil}
+    const dersler = document.querySelectorAll('.gano-ders-satir');
+    let gecerliDersler = [];
 
-    donemKutulari.forEach(donemKutu => {
-        const donemId = donemKutu.id.replace('gano-donem-', '');
-        const dersler = donemKutu.querySelectorAll('.gano-ders-satir');
-        dersler.forEach(dersSatir => {
-            const ad = dersSatir.querySelector('.gano-ders-adi-input')?.value.trim() || '';
-            const krediVal = dersSatir.querySelector('.gano-kredi-input')?.value;
-            const notVal = dersSatir.querySelector('.gano-not-input')?.value;
-            const kredi = parseFloat(krediVal);
-            const dahil = notVal && !GANO_HARIC_NOTLAR.includes(notVal);
-            const katsayi = dahil ? (GANO_KATSAYILARI[notVal] ?? null) : null;
-            tumDersler.push({ donemId, ad, kredi, not: notVal, katsayi, dahil });
-        });
+    dersler.forEach(satir => {
+        const ad = satir.querySelector('.gano-ders-adi-input')?.value.trim() || '';
+        const kredi = parseFloat(satir.querySelector('.gano-kredi-input')?.value);
+        const not = satir.querySelector('.gano-not-input')?.value;
+        if (!isNaN(kredi) && kredi > 0 && not) {
+            const dahil = !GANO_HARIC_NOTLAR.includes(not);
+            const katsayi = dahil ? (GANO_KATSAYILARI[not] ?? null) : null;
+            gecerliDersler.push({ ad, kredi, not, dahil, katsayi });
+        }
     });
-
-    // Geçerli girişleri filtrele (kredi ve not dolu, sayılır)
-    const gecerliDersler = tumDersler.filter(d => !isNaN(d.kredi) && d.kredi > 0 && d.not);
 
     if (gecerliDersler.length === 0) {
         sonucEl.style.display = 'none';
         return;
     }
 
-    // AGNO hesabına dahil olanlar
     const dahilDersler = gecerliDersler.filter(d => d.dahil);
+    const toplamKredi = dahilDersler.reduce((s, d) => s + d.kredi, 0);
+    const toplamKrediXKatsayi = dahilDersler.reduce((s, d) => s + d.kredi * d.katsayi, 0);
+    const ano = toplamKredi > 0 ? toplamKrediXKatsayi / toplamKredi : null;
 
-    // AGNO: toplam (kredi × katsayı) / toplam kredi
-    const toplamKrediXKatsayi = dahilDersler.reduce((sum, d) => sum + d.kredi * d.katsayi, 0);
-    const toplamKredi = dahilDersler.reduce((sum, d) => sum + d.kredi, 0);
-    const agno = toplamKredi > 0 ? toplamKrediXKatsayi / toplamKredi : null;
+    // DC koşullu geçme kontrolü (Madde 12)
+    const dcDersler = gecerliDersler.filter(d => d.not === 'DC');
+    const dcUyarilar = dcDersler.map(d => ({
+        ad: d.ad || 'İsimsiz ders',
+        durum: (ano !== null && ano >= 2.00) ? 'gecti' : 'kaldi',
+        ano
+    }));
 
-    // Her dönem için ANO hesapla
-    const donemIdler = [...new Set(gecerliDersler.map(d => d.donemId))];
-    let donemSonuclari = donemIdler.map(dId => {
-        const donemDersler = dahilDersler.filter(d => d.donemId === dId);
-        const dk = donemDersler.reduce((s, d) => s + d.kredi, 0);
-        const dkk = donemDersler.reduce((s, d) => s + d.kredi * d.katsayi, 0);
-        const ano = dk > 0 ? dkk / dk : null;
-        return { donemId: dId, ano, toplamKredi: dk };
+    // Başarısız dersler
+    const basarisizlar = gecerliDersler.filter(d => {
+        if (['FF', 'FD', 'DD'].includes(d.not)) return true;
+        if (d.not === 'DC' && ano !== null && ano < 2.00) return true;
+        return false;
     });
 
-    // DC geçme kontrolü: o dönem ANO >= 2.00 ise geçer
-    // (Madde 12)
-    const dcUyarilar = [];
-    donemSonuclari.forEach(ds => {
-        const dcDersler = gecerliDersler.filter(d => d.donemId === ds.donemId && d.not === 'DC');
-        dcDersler.forEach(d => {
-            if (ds.ano !== null) {
-                if (ds.ano >= 2.00) {
-                    dcUyarilar.push({ ad: d.ad || 'İsimsiz ders', durum: 'gecti', ano: ds.ano });
-                } else {
-                    dcUyarilar.push({ ad: d.ad || 'İsimsiz ders', durum: 'kaldi', ano: ds.ano });
-                }
-            }
-        });
-    });
-
-    // Başarısız ders sayısı
-    const basarisizDersler = gecerliDersler.filter(d => ['FF', 'FD', 'DD'].includes(d.not) || (d.not === 'DC' && dcUyarilar.find(u => u.durum === 'kaldi')));
-
-    // Sonuç HTML
     let html = '';
 
-    // ANO tablosu (birden fazla dönem varsa)
-    if (donemSonuclari.length > 0) {
-        html += `<div class="gano-sonuc-grid">`;
-        donemSonuclari.forEach((ds, i) => {
-            const anoStr = ds.ano !== null ? ds.ano.toFixed(2) : '—';
-            const anoClass = ds.ano === null ? '' : ds.ano >= 3.0 ? 'gano-iyi' : ds.ano >= 2.0 ? 'gano-orta' : 'gano-dusuk';
-            html += `
-                <div class="gano-sonuc-kutu">
-                    <div class="gano-sonuc-etiket">${i + 1}. Dönem ANO</div>
-                    <div class="gano-sonuc-deger ${anoClass}">${anoStr}</div>
-                    <div class="gano-sonuc-alt">${ds.toplamKredi} kredi</div>
-                </div>`;
-        });
-        if (agno !== null) {
-            const agnoClass = agno >= 3.0 ? 'gano-iyi' : agno >= 2.0 ? 'gano-orta' : 'gano-dusuk';
-            html += `
-                <div class="gano-sonuc-kutu gano-agno-kutu">
-                    <div class="gano-sonuc-etiket">AGNO (Genel)</div>
-                    <div class="gano-sonuc-deger ${agnoClass}">${agno.toFixed(2)}</div>
-                    <div class="gano-sonuc-alt">${toplamKredi} toplam kredi</div>
-                </div>`;
-        }
-        html += `</div>`;
+    // ANO sonuç kutusu
+    if (ano !== null) {
+        const anoClass = ano >= 3.0 ? 'gano-iyi' : ano >= 2.0 ? 'gano-orta' : 'gano-dusuk';
+        html += `<div class="gano-sonuc-grid">
+            <div class="gano-sonuc-kutu gano-agno-kutu">
+                <div class="gano-sonuc-etiket">Dönem Ağırlıklı Not Ortalaması (ANO)</div>
+                <div class="gano-sonuc-deger ${anoClass}">${ano.toFixed(2)}</div>
+                <div class="gano-sonuc-alt">${toplamKredi} kredi üzerinden hesaplandı</div>
+            </div>
+        </div>`;
+    } else {
+        html += `<p style="color:var(--small-text); font-size:0.9em;">Hesaplamaya dahil edilecek ders bulunamadı (D, G, K, S notları ANO'ya dahil edilmez).</p>`;
     }
 
     // DC uyarıları
@@ -1173,28 +1101,19 @@ function ganoHesapla() {
         html += `<div class="gano-dc-uyari-kutu">`;
         dcUyarilar.forEach(u => {
             if (u.durum === 'gecti') {
-                html += `<div class="gano-dc-gecti">✅ <strong>${u.ad}</strong> — DC ile dönem ANO'su ${u.ano.toFixed(2)} ≥ 2.00 olduğu için <strong>geçtiniz</strong>.</div>`;
+                html += `<div class="gano-dc-gecti">✅ <strong>${u.ad}</strong> — DC ile ANO ${u.ano.toFixed(2)} ≥ 2.00 olduğu için <strong>geçtiniz</strong>.</div>`;
             } else {
-                html += `<div class="gano-dc-kaldi">❌ <strong>${u.ad}</strong> — DC ile dönem ANO'su ${u.ano.toFixed(2)} &lt; 2.00 olduğu için <strong>kaldınız</strong>. Bu dersi tekrar almanız gerekiyor.</div>`;
+                html += `<div class="gano-dc-kaldi">❌ <strong>${u.ad}</strong> — DC ile ANO ${u.ano !== null ? u.ano.toFixed(2) : '—'} &lt; 2.00 olduğu için <strong>kaldınız</strong>. Bu dersi tekrar almanız gerekiyor.</div>`;
             }
         });
         html += `</div>`;
     }
 
     // Başarısız dersler
-    const gercekBasarisizlar = gecerliDersler.filter(d => {
-        if (['FF', 'FD', 'DD'].includes(d.not)) return true;
-        if (d.not === 'DC') {
-            const dc = dcUyarilar.find(u => (u.ad === (d.ad || 'İsimsiz ders')) && u.durum === 'kaldi');
-            return !!dc;
-        }
-        return false;
-    });
-
-    if (gercekBasarisizlar.length > 0) {
-        html += `<div class="gano-basarisiz-kutu">`;
-        html += `<div class="gano-basarisiz-baslik">⚠️ Tekrar Almanız Gereken Dersler (Madde 12)</div>`;
-        gercekBasarisizlar.forEach(d => {
+    if (basarisizlar.length > 0) {
+        html += `<div class="gano-basarisiz-kutu">
+            <div class="gano-basarisiz-baslik">⚠️ Tekrar Almanız Gereken Dersler (Madde 12)</div>`;
+        basarisizlar.forEach(d => {
             html += `<div class="gano-basarisiz-ders"><span class="grade-display-badge grade-display-${d.not.toLowerCase()}">${d.not}</span> ${d.ad || 'İsimsiz ders'} (${d.kredi} kredi)</div>`;
         });
         html += `</div>`;

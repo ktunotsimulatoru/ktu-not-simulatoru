@@ -1178,38 +1178,7 @@ main { margin-top: 1.5rem; }
 .gano-bilgi-liste li { margin-bottom: 2px; }
 
 /* Dönem kutuları */
-.gano-donem-kutu {
-    background: var(--main-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 1.2rem;
-    box-shadow: 0 1px 4px var(--shadow-color);
-}
-.gano-donem-baslik {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-.gano-donem-etiket {
-    font-weight: 700;
-    font-size: 0.97em;
-    color: var(--content-title);
-}
-.gano-donem-sil-btn {
-    background: none;
-    border: 1px solid var(--error-border);
-    color: var(--error-text);
-    border-radius: 5px;
-    padding: 3px 10px;
-    font-size: 0.82em;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.gano-donem-sil-btn:hover { background: var(--error-bg); }
 
-/* Ders satırları */
 .gano-ders-satir { margin-bottom: 10px; }
 .gano-ders-icerik {
     display: flex;
@@ -1242,7 +1211,7 @@ main { margin-top: 1.5rem; }
     color: var(--small-text);
 }
 
-/* Ders ve dönem ekleme butonları */
+/* Ders ekleme butonu */
 .gano-ders-ekle-btn {
     background: none;
     border: 1px dashed var(--input-focus-border);
@@ -1257,22 +1226,6 @@ main { margin-top: 1.5rem; }
     font-family: 'Poppins', sans-serif;
 }
 .gano-ders-ekle-btn:hover { background: var(--result-bg); }
-
-.gano-donem-ekle-btn {
-    display: block;
-    width: 100%;
-    background: none;
-    border: 2px dashed var(--input-border);
-    color: var(--small-text);
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 0.9em;
-    cursor: pointer;
-    margin-bottom: 1.5rem;
-    transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
-}
-.gano-donem-ekle-btn:hover { border-color: var(--input-focus-border); color: var(--content-title); background: var(--result-bg); }
 
 /* Sonuç kutusu */
 .gano-sonuc-grid {
