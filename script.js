@@ -1860,59 +1860,71 @@ async function istatistikleriYukle() {
     try {
         const sb = getSupabase();
 
-        // Tüm kayıtları çek — yeni sütunlar migration'dan önce yoksa da çalışır
-        const { data: tumData, error: tumError } = await sb
+        // 1) Toplam sayı — count ile, satır limiti yok
+        const { count: genelToplam } = await sb
             .from('hesaplama_loglari')
-            .select('sekme, harf_notu, vize_notu, final_notu, ano, basarisiz_sayi');
+            .select('*', { count: 'exact', head: true });
 
-        // Yeni sütunlar henüz yoksa eski sütunlarla tekrar dene
-        let logData = tumData;
-        if (tumError || !tumData) {
-            const { data: eskiData } = await sb
-                .from('hesaplama_loglari')
-                .select('sekme, harf_notu, vize_notu, final_notu');
-            logData = eskiData;
-        }
+        // 2) Sekme bazlı sayılar
+        const { data: sekmeData } = await sb
+            .from('hesaplama_loglari')
+            .select('sekme')
+            .limit(10000);
 
-        if (!logData) return;
+        // 3) Harf notu dağılımı — sadece harf_notu sütunu
+        const { data: harfData } = await sb
+            .from('hesaplama_loglari')
+            .select('harf_notu')
+            .not('harf_notu', 'is', null)
+            .limit(10000);
 
+        // 4) Final=45 ve vize/final ortalamaları
+        const { data: notData } = await sb
+            .from('hesaplama_loglari')
+            .select('vize_notu, final_notu')
+            .eq('sekme', 'harf')
+            .not('final_notu', 'is', null)
+            .limit(10000);
+
+        // 5) ANO verileri
+        const { data: anoData } = await sb
+            .from('hesaplama_loglari')
+            .select('ano')
+            .eq('sekme', 'ano')
+            .not('ano', 'is', null)
+            .limit(10000);
+
+        // --- İşle ---
         const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
-        const harfSayac = {};
-        const vizeSayac = {};
-        const finalSayac = {};
-        let final45Sayisi = 0;
-        let anoToplam = 0;
-        let anoSayisi = 0;
-
-        logData.forEach(r => {
+        sekmeData?.forEach(r => {
             if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
-            if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
-
-            if (r.sekme === 'harf') {
-                if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
-                if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
-                if (r.final_notu === 45) final45Sayisi++;
-            }
-
-            if (r.sekme === 'ano' && r.ano != null) {
-                anoToplam += parseFloat(r.ano);
-                anoSayisi++;
-            }
         });
 
-        const genelToplam = logData.length;
+        const harfSayac = {};
+        harfData?.forEach(r => {
+            if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
+        });
 
-        const topHarfler = Object.entries(harfSayac)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(([not]) => not);
+        const vizeSayac = {}, finalSayac = {};
+        let final45Sayisi = 0;
+        notData?.forEach(r => {
+            if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
+            if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
+            if (r.final_notu === 45) final45Sayisi++;
+        });
 
+        let anoToplam = 0, anoSayisi = 0;
+        anoData?.forEach(r => {
+            anoToplam += parseFloat(r.ano);
+            anoSayisi++;
+        });
+
+        const topHarfler = Object.entries(harfSayac).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([not]) => not);
         const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
         const topFinal = Object.entries(finalSayac).sort((a, b) => b[1] - a[1])[0];
-
         const anoOrtalama = anoSayisi > 0 ? anoToplam / anoSayisi : null;
 
-        istatistikleriGoster(genelToplam, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Sayisi, anoOrtalama, anoSayisi);
+        istatistikleriGoster(genelToplam || 0, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Sayisi, anoOrtalama, anoSayisi);
 
     } catch (e) {
         console.error('İstatistik yükleme hatası:', e);
