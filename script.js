@@ -1860,45 +1860,33 @@ async function istatistikleriYukle() {
     try {
         const sb = getSupabase();
 
-        // 1) Toplam sayı — count ile, satır limiti yok
-        const { count: genelToplam } = await sb
-            .from('hesaplama_loglari')
-            .select('*', { count: 'exact', head: true });
+        // Her sekme için ayrı count sorgusu — satır limiti yok
+        const [
+            { count: genelToplam },
+            { count: harfSayisi },
+            { count: gerekliSayisi },
+            { count: senaryoSayisi },
+            { count: anoSayisiSekme },
+            { data: harfData },
+            { data: notData },
+            { data: anoData }
+        ] = await Promise.all([
+            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }),
+            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'harf'),
+            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'gerekli'),
+            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'senaryo'),
+            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'ano'),
+            sb.from('hesaplama_loglari').select('harf_notu').not('harf_notu', 'is', null).limit(10000),
+            sb.from('hesaplama_loglari').select('vize_notu, final_notu').eq('sekme', 'harf').not('final_notu', 'is', null).limit(10000),
+            sb.from('hesaplama_loglari').select('ano').eq('sekme', 'ano').not('ano', 'is', null).limit(10000)
+        ]);
 
-        // 2) Sekme bazlı sayılar
-        const { data: sekmeData } = await sb
-            .from('hesaplama_loglari')
-            .select('sekme')
-            .limit(10000);
-
-        // 3) Harf notu dağılımı — sadece harf_notu sütunu
-        const { data: harfData } = await sb
-            .from('hesaplama_loglari')
-            .select('harf_notu')
-            .not('harf_notu', 'is', null)
-            .limit(10000);
-
-        // 4) Final=45 ve vize/final ortalamaları
-        const { data: notData } = await sb
-            .from('hesaplama_loglari')
-            .select('vize_notu, final_notu')
-            .eq('sekme', 'harf')
-            .not('final_notu', 'is', null)
-            .limit(10000);
-
-        // 5) ANO verileri
-        const { data: anoData } = await sb
-            .from('hesaplama_loglari')
-            .select('ano')
-            .eq('sekme', 'ano')
-            .not('ano', 'is', null)
-            .limit(10000);
-
-        // --- İşle ---
-        const sekmeSayilari = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
-        sekmeData?.forEach(r => {
-            if (sekmeSayilari[r.sekme] !== undefined) sekmeSayilari[r.sekme]++;
-        });
+        const sekmeSayilari = {
+            harf: harfSayisi || 0,
+            gerekli: gerekliSayisi || 0,
+            senaryo: senaryoSayisi || 0,
+            ano: anoSayisiSekme || 0
+        };
 
         const harfSayac = {};
         harfData?.forEach(r => {
@@ -1914,10 +1902,7 @@ async function istatistikleriYukle() {
         });
 
         let anoToplam = 0, anoSayisi = 0;
-        anoData?.forEach(r => {
-            anoToplam += parseFloat(r.ano);
-            anoSayisi++;
-        });
+        anoData?.forEach(r => { anoToplam += parseFloat(r.ano); anoSayisi++; });
 
         const topHarfler = Object.entries(harfSayac).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([not]) => not);
         const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
