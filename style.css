@@ -1458,3 +1458,29 @@ main { margin-top: 1.5rem; }
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* Dönem Ortalaması — alt buton satırı */
+.gano-alt-butonlar {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+.gano-alt-butonlar .gano-ders-ekle-btn {
+    flex: 1;
+    margin-top: 0;
+}
+.gano-hesapla-btn {
+    flex: 1;
+    background: var(--button-bg);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.9em;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: opacity 0.2s;
+}
+.gano-hesapla-btn:hover { opacity: 0.88; }
+.gano-hesapla-btn:active { transform: scale(0.97); }

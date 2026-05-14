@@ -999,15 +999,15 @@ function ganoDersEkle() {
         <div class="gano-ders-icerik">
             <div class="form-group gano-ders-adi-grup">
                 <label>Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span></label>
-                <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" oninput="ganoHesapla()">
+                <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" oninput="">
             </div>
             <div class="form-group gano-kredi-grup">
                 <label>Kredi <span class="zorunlu">*</span></label>
-                <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" oninput="ganoHesapla()">
+                <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" oninput="">
             </div>
             <div class="form-group gano-not-grup">
                 <label>Harf Notu <span class="zorunlu">*</span></label>
-                <select class="gano-not-input" onchange="ganoHesapla()">
+                <select class="gano-not-input" onchange="">
                     <option value="">Seç</option>
                     <option value="AA">AA — 4.0</option>
                     <option value="BA">BA — 3.5</option>
@@ -1030,10 +1030,18 @@ function ganoDersEkle() {
     ganoHesapla();
 }
 
+function ganoHesaplaButon() {
+    // Sonucu göster
+    document.getElementById('gano-sonuc').style.display = 'block';
+    ganoHesapla();
+}
+
 function ganoDersSil(id) {
     const el = document.getElementById(`gano-ders-${id}`);
     if (el) el.remove();
-    ganoHesapla();
+    // Sonucu gizle — içerik değişti, tekrar hesaplansın
+    document.getElementById('gano-sonuc').style.display = 'none';
+    document.getElementById('ano-paylasim-kutu').style.display = 'none';
 }
 
 function ganoHesapla() {
@@ -1341,15 +1349,15 @@ function buildGanoDersSatirHTML(id, ad, kredi, not) {
     return `<div class="gano-ders-icerik">
         <div class="form-group gano-ders-adi-grup">
             <label>Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span></label>
-            <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" value="${ad}" oninput="ganoHesapla()">
+            <input type="text" class="gano-ders-adi-input" placeholder="Örn: Matematik I" value="${ad}" oninput="">
         </div>
         <div class="form-group gano-kredi-grup">
             <label>Kredi <span class="zorunlu">*</span></label>
-            <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" value="${kredi}" oninput="ganoHesapla()">
+            <input type="number" class="gano-kredi-input" min="1" max="10" step="1" placeholder="3" value="${kredi}" oninput="">
         </div>
         <div class="form-group gano-not-grup">
             <label>Harf Notu <span class="zorunlu">*</span></label>
-            <select class="gano-not-input" onchange="ganoHesapla()">
+            <select class="gano-not-input" onchange="">
                 <option value="">Seç</option>${opts}
             </select>
         </div>
