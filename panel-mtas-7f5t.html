@@ -181,6 +181,9 @@
                     </div>
                 </div>
                 <div class="grafik-wrapper"><div class="grafik-baslik" id="gunluk-baslik">Günlük Hesaplama</div><canvas id="gunlukChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">🎯 Hedeflenen Harf Notu (Gerekli+Senaryo)</div><canvas id="hedefChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">📊 Sınıf Ortalaması Dağılımı (Harf sekmesi)</div><canvas id="ortChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">🌐 Ziyaretçi Kaynakları</div><canvas id="referrerChart" height="180"></canvas></div>
             </div>
         </div>
 
@@ -368,74 +371,154 @@ async function onayBekleyenSayisiGoster() {
 // ── İSTATİSTİKLER ──
 async function istatistikleriYukle() {
     const aralik = parseInt(document.getElementById('istat-aralik').value);
-    let query = sb.from('hesaplama_loglari').select('sekme, harf_notu, vize_notu, final_notu, ano, basarisiz_sayi, is_mobile, olusturulma_tarihi');
-    if (aralik > 0) {
-        const sinir = new Date(); sinir.setDate(sinir.getDate() - aralik);
-        query = query.gte('olusturulma_tarihi', sinir.toISOString());
-    }
-    const { data } = await query;
-    if (!data) return;
+    const sinir = aralik > 0 ? (() => { const d = new Date(); d.setDate(d.getDate() - aralik); return d.toISOString(); })() : null;
 
-    // Paylaşım logları
-    let paylasimQuery = sb.from('paylasim_loglari').select('sekme, olusturulma_tarihi');
-    if (aralik > 0) {
-        const sinir2 = new Date(); sinir2.setDate(sinir2.getDate() - aralik);
-        paylasimQuery = paylasimQuery.gte('olusturulma_tarihi', sinir2.toISOString());
-    }
-    const { data: paylasimData } = await paylasimQuery;
-    const paylasimToplam = paylasimData?.length || 0;
-    const paylasimSekme = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
-    paylasimData?.forEach(r => { if (paylasimSekme[r.sekme] !== undefined) paylasimSekme[r.sekme]++; });
+    const q = (tablo) => {
+        let base = sb.from(tablo).select('*', { count: 'exact', head: true });
+        if (sinir) base = base.gte('olusturulma_tarihi', sinir);
+        return base;
+    };    const qf = (filtre) => {
+        let base = sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true });
+        if (sinir) base = base.gte('olusturulma_tarihi', sinir);
+        Object.entries(filtre).forEach(([k, v]) => { base = base.eq(k, v); });
+        return base;
+    };
 
-    const toplam = data.length;
-    const sekmeler = { harf: 0, gerekli: 0, senaryo: 0, ano: 0 };
+    const HARF_LISTESI = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
+
+    // Tüm count sorguları paralel
+    const [
+        { count: toplam },
+        { count: harfSayisi }, { count: gerekliSayisi }, { count: senaryoSayisi }, { count: anoSayisi },
+        { count: mobilSayisi }, { count: masaustuSayisi },
+        { count: final45 },
+        { count: paylasimToplam },
+        { count: paylasimHarf }, { count: paylasimAno },
+        { count: ziyaretciToplam },
+        { count: ziyaretciMobil },
+        ...harfCountler
+    ] = await Promise.all([
+        q('hesaplama_loglari'),
+        qf({ sekme: 'harf' }), qf({ sekme: 'gerekli' }), qf({ sekme: 'senaryo' }), qf({ sekme: 'ano' }),
+        qf({ is_mobile: true }), qf({ is_mobile: false }),
+        qf({ sekme: 'harf', final_notu: 45 }),
+        q('paylasim_loglari'),
+        (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+        (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+        q('sayfa_goruntuleme'),
+        (() => { let b = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+        ...HARF_LISTESI.map(h => qf({ harf_notu: h }))
+    ]);
+
     const harfSayac = {};
-    let mobilSayisi = 0, masaustuSayisi = 0, final45 = 0;
-    const vizeler = [], finaller = [];
-    let anoToplam = 0, anoSayisi = 0;
-    const gunSayac = {};
-    const gunSayisi = aralik > 0 ? aralik : 30;
-    for (let i = gunSayisi - 1; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i);
-        gunSayac[d.toISOString().slice(0, 10)] = 0;
-    }
+    HARF_LISTESI.forEach((h, i) => { if (harfCountler[i]?.count > 0) harfSayac[h] = harfCountler[i].count; });
 
-    data.forEach(r => {
-        if (sekmeler[r.sekme] !== undefined) sekmeler[r.sekme]++;
-        if (r.harf_notu) harfSayac[r.harf_notu] = (harfSayac[r.harf_notu] || 0) + 1;
-        if (r.is_mobile === true) mobilSayisi++;
-        else if (r.is_mobile === false) masaustuSayisi++;
-        if (r.sekme === 'harf' && r.final_notu === 45) final45++;
-        if (r.sekme === 'harf' && r.vize_notu !== null) vizeler.push(r.vize_notu);
-        if (r.sekme === 'harf' && r.final_notu !== null) finaller.push(r.final_notu);
-        if (r.sekme === 'ano' && r.ano != null) { anoToplam += parseFloat(r.ano); anoSayisi++; }
-        const gun = r.olusturulma_tarihi?.slice(0, 10);
-        if (gun && gunSayac[gun] !== undefined) gunSayac[gun]++;
+    const sekmeler = { harf: harfSayisi||0, gerekli: gerekliSayisi||0, senaryo: senaryoSayisi||0, ano: anoSayisi||0 };
+    const mobilBilinmiyor = (toplam||0) - (mobilSayisi||0) - (masaustuSayisi||0);
+    const paylasimOran = toplam ? (((paylasimToplam||0)/toplam)*100).toFixed(1) : 0;
+
+    // Hedef harf notu dağılımı (gerekli + senaryo)
+    const HARF_LISTESI_HEDEF = ['AA','BA','BB','CB','CC','DC','DD'];
+    const hedefCountler = await Promise.all(
+        HARF_LISTESI_HEDEF.map(h => {
+            let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true}).eq('hedef_harf_notu', h);
+            if (sinir) b = b.gte('olusturulma_tarihi', sinir);
+            return b;
+        })
+    );
+    const hedefSayac = {};
+    HARF_LISTESI_HEDEF.forEach((h, i) => { if (hedefCountler[i]?.count > 0) hedefSayac[h] = hedefCountler[i].count; });
+
+    // Sınıf ortalaması dağılımı için örneklem
+    const { data: ortData } = await sb.from('hesaplama_loglari')
+        .select('sinif_ortalamasi')
+        .eq('sekme', 'harf')
+        .not('sinif_ortalamasi', 'is', null)
+        .order('id', { ascending: false })
+        .limit(1000);
+    const ortBantlar = { '0-30': 0, '30-40': 0, '40-50': 0, '50-60': 0, '60-70': 0, '70-80': 0, '80+': 0 };
+    ortData?.forEach(r => {
+        const v = parseFloat(r.sinif_ortalamasi);
+        if (v < 30) ortBantlar['0-30']++;
+        else if (v < 40) ortBantlar['30-40']++;
+        else if (v < 50) ortBantlar['40-50']++;
+        else if (v < 60) ortBantlar['50-60']++;
+        else if (v < 70) ortBantlar['60-70']++;
+        else if (v < 80) ortBantlar['70-80']++;
+        else ortBantlar['80+']++;
     });
+    const { data: ornekData } = await sb.from('hesaplama_loglari')
+        .select('vize_notu, final_notu, tekrar_hesaplama, hesaplama_suresi')
+        .eq('sekme', 'harf')
+        .not('final_notu', 'is', null)
+        .order('id', { ascending: false })
+        .limit(1000);
+
+    const vizeler = [], finaller = [], tekrarlar = [], sureler = [];
+    ornekData?.forEach(r => {
+        if (r.vize_notu !== null) vizeler.push(r.vize_notu);
+        if (r.final_notu !== null) finaller.push(r.final_notu);
+        if (r.tekrar_hesaplama !== null) tekrarlar.push(r.tekrar_hesaplama);
+        if (r.hesaplama_suresi !== null && r.hesaplama_suresi > 0) sureler.push(r.hesaplama_suresi);
+    });
+
+    const { data: anoOrnekData } = await sb.from('hesaplama_loglari')
+        .select('ano').eq('sekme','ano').not('ano','is',null).limit(1000);
+    let anoToplam = 0, anoSayisiOrn = 0;
+    anoOrnekData?.forEach(r => { anoToplam += parseFloat(r.ano); anoSayisiOrn++; });
 
     const ortVize = vizeler.length ? (vizeler.reduce((a,b)=>a+b,0)/vizeler.length).toFixed(1) : '—';
     const ortFinal = finaller.length ? (finaller.reduce((a,b)=>a+b,0)/finaller.length).toFixed(1) : '—';
-    const ortAno = anoSayisi > 0 ? (anoToplam / anoSayisi).toFixed(2) : '—';
-    const ffSayisi = harfSayac['FF'] || 0;
+    const ortAno = anoSayisiOrn > 0 ? (anoToplam/anoSayisiOrn).toFixed(2) : '—';
+
+    // Engagement metrikleri
+    const ortTekrar = tekrarlar.length ? (tekrarlar.reduce((a,b)=>a+b,0)/tekrarlar.length).toFixed(1) : '—';
+    const tekrar2Plus = tekrarlar.filter(t => t >= 2).length;
+    const tekrar2PlusOran = tekrarlar.length ? ((tekrar2Plus/tekrarlar.length)*100).toFixed(0) : 0;
+    const ortSure = sureler.length ? Math.round(sureler.reduce((a,b)=>a+b,0)/sureler.length) : null;
+    const ortSureStr = ortSure !== null ? (ortSure >= 60 ? `${Math.floor(ortSure/60)}dk ${ortSure%60}sn` : `${ortSure}sn`) : '—';
+    const medyanSure = sureler.length ? (() => { const s=[...sureler].sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; })() : null;
+    const medyanSureStr = medyanSure !== null ? (medyanSure >= 60 ? `${Math.floor(medyanSure/60)}dk ${medyanSure%60}sn` : `${medyanSure}sn`) : '—';
+
+    // Referrer dağılımı
+    const { data: referrerData } = await (() => {
+        let b = sb.from('sayfa_goruntuleme').select('referrer').limit(5000);
+        if (sinir) b = b.gte('olusturulma_tarihi', sinir);
+        return b;
+    })();
+    const referrerSayac = {};
+    referrerData?.forEach(r => {
+        const ref = r.referrer || 'direkt';
+        referrerSayac[ref] = (referrerSayac[ref] || 0) + 1;
+    });
+    const topReferrerler = Object.entries(referrerSayac).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+    const hesaplamaOran = ziyaretciToplam ? (((toplam||0)/(ziyaretciToplam||1))*100).toFixed(1) : '—';
+    const ziyaretciMobilOran = ziyaretciToplam ? (((ziyaretciMobil||0)/(ziyaretciToplam||1))*100).toFixed(0) : 0;
     const aaSayisi = harfSayac['AA'] || 0;
     const ffOran = toplam ? ((ffSayisi/toplam)*100).toFixed(1) : 0;
     const aaOran = toplam ? ((aaSayisi/toplam)*100).toFixed(1) : 0;
-    const paylasimOran = toplam ? ((paylasimToplam/toplam)*100).toFixed(1) : 0;
 
     document.getElementById('stat-kartlar').innerHTML = `
-        <div class="stat-karti"><div class="stat-karti-baslik">Toplam Hesaplama</div><div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div>
+        <div class="stat-karti"><div class="stat-karti-baslik">👥 Toplam Ziyaretçi</div><div class="stat-karti-deger">${(ziyaretciToplam||0).toLocaleString('tr-TR')}</div>
+            <div class="stat-karti-alt">%${ziyaretciMobilOran} mobil · %${hesaplamaOran} hesaplama yaptı</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">📊 Toplam Hesaplama</div><div class="stat-karti-deger">${(toplam||0).toLocaleString('tr-TR')}</div>
             <div class="stat-karti-alt">Harf: ${sekmeler.harf} · Gerekli: ${sekmeler.gerekli} · Senaryo: ${sekmeler.senaryo} · ANO: ${sekmeler.ano}</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">FF Oranı</div><div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div><div class="stat-karti-alt">${ffSayisi} hesaplama</div></div>
         <div class="stat-karti"><div class="stat-karti-baslik">AA Oranı</div><div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div><div class="stat-karti-alt">${aaSayisi} hesaplama</div></div>
-        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Vize</div><div class="stat-karti-deger">${ortVize}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
-        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Final</div><div class="stat-karti-deger">${ortFinal}</div><div class="stat-karti-alt">Harf sekmesi</div></div>
-        <div class="stat-karti"><div class="stat-karti-baslik">"Final=45" 😅</div><div class="stat-karti-deger" style="color:var(--orange)">${final45}</div><div class="stat-karti-alt">Umut hesaplaması</div></div>
-        <div class="stat-karti"><div class="stat-karti-baslik">Ort. ANO</div><div class="stat-karti-deger" style="color:var(--purple)">${ortAno}</div><div class="stat-karti-alt">${anoSayisi} hesaplamadan</div></div>
-        <div class="stat-karti"><div class="stat-karti-baslik">🔗 Paylaşılan Link</div><div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam}</div>
-            <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimSekme.harf} · ANO: ${paylasimSekme.ano}</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Vize</div><div class="stat-karti-deger">${ortVize}</div><div class="stat-karti-alt">son 1000 kayıttan</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. Final</div><div class="stat-karti-deger">${ortFinal}</div><div class="stat-karti-alt">son 1000 kayıttan</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">"Final=45" 😅</div><div class="stat-karti-deger" style="color:var(--orange)">${final45||0}</div><div class="stat-karti-alt">umut hesaplaması</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. ANO</div><div class="stat-karti-deger" style="color:var(--purple)">${ortAno}</div><div class="stat-karti-alt">${anoSayisiOrn} kayıttan · toplam ${anoSayisi}</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">🔗 Paylaşılan Link</div><div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam||0}</div>
+            <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimHarf||0} · ANO: ${paylasimAno||0}</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">🔄 Ort. Tekrar Hesaplama</div><div class="stat-karti-deger" style="color:var(--accent)">${ortTekrar}</div>
+            <div class="stat-karti-alt">%${tekrar2PlusOran} kullanıcı 2+ kez hesapladı</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">⏱️ Sayfada Geçirilen Süre</div><div class="stat-karti-deger">${ortSureStr}</div>
+            <div class="stat-karti-alt">Medyan: ${medyanSureStr} · son 1000 kayıttan</div></div>
     `;
 
-    ['sekmeChart','harfChart','cihazChart','gunlukChart'].forEach(id => {
+    ['sekmeChart','harfChart','cihazChart','gunlukChart','hedefChart','ortChart','referrerChart'].forEach(id => {
         if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
     });
 
@@ -459,19 +542,34 @@ async function istatistikleriYukle() {
         options: { plugins: { legend: { position: 'right', labels: { color: '#c9d1d9', font: { family: 'Poppins' }, boxWidth: 12 } } } }
     });
 
-    const mobilBilinmiyor = toplam - mobilSayisi - masaustuSayisi;
     chartInstances['cihazChart'] = new Chart(document.getElementById('cihazChart'), {
         type: 'doughnut',
         data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
-            datasets: [{ data: [mobilSayisi, masaustuSayisi, mobilBilinmiyor],
+            datasets: [{ data: [mobilSayisi||0, masaustuSayisi||0, mobilBilinmiyor],
                 backgroundColor: ['#58a6ff','#3fb950','#30363d'], borderWidth: 2, borderColor: '#161b22' }] },
         options: { plugins: { legend: { display: false } }, cutout: '60%' }
     });
     document.getElementById('cihaz-legend').innerHTML = [
-        { label: 'Mobil', sayi: mobilSayisi, renk: '#58a6ff' },
-        { label: 'Masaüstü', sayi: masaustuSayisi, renk: '#3fb950' },
+        { label: 'Mobil', sayi: mobilSayisi||0, renk: '#58a6ff' },
+        { label: 'Masaüstü', sayi: masaustuSayisi||0, renk: '#3fb950' },
         { label: 'Bilinmiyor', sayi: mobilBilinmiyor, renk: '#30363d' }
     ].map(c => `<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi}</strong></span></div>`).join('');
+
+    // Günlük trafik — sadece tarih ve count, limit yok
+    const gunSayisi = aralik > 0 ? aralik : 30;
+    const gunSayac = {};
+    for (let i = gunSayisi - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        gunSayac[d.toISOString().slice(0, 10)] = 0;
+    }
+    const { data: gunlukData } = await sb.from('hesaplama_loglari')
+        .select('olusturulma_tarihi')
+        .gte('olusturulma_tarihi', Object.keys(gunSayac)[0])
+        .order('olusturulma_tarihi');
+    gunlukData?.forEach(r => {
+        const gun = r.olusturulma_tarihi?.slice(0, 10);
+        if (gun && gunSayac[gun] !== undefined) gunSayac[gun]++;
+    });
 
     document.getElementById('gunluk-baslik').textContent = aralik > 0 ? `Son ${aralik} Gün` : 'Son 30 Gün';
     chartInstances['gunlukChart'] = new Chart(document.getElementById('gunlukChart'), {
@@ -483,9 +581,45 @@ async function istatistikleriYukle() {
             x: { ticks: { color: '#8b949e', maxTicksLimit: 10 }, grid: { color: '#21262d' } },
             y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' }, beginAtZero: true } } }
     });
-}
 
-// ── DERS YÖNETİMİ ──
+    const HARF_CLR2 = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107' };
+    const hedefEtiket = HARF_LISTESI_HEDEF.filter(h => hedefSayac[h]);
+    if (hedefEtiket.length > 0) {
+        chartInstances['hedefChart'] = new Chart(document.getElementById('hedefChart'), {
+            type: 'bar',
+            data: { labels: hedefEtiket,
+                datasets: [{ data: hedefEtiket.map(h => hedefSayac[h]),
+                    backgroundColor: hedefEtiket.map(h => HARF_CLR2[h] || '#8b949e'), borderRadius: 5 }] },
+            options: { plugins: { legend: { display: false } }, scales: {
+                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+        });
+    }
+
+    const ortEtiket = Object.keys(ortBantlar);
+    const ortDeger = Object.values(ortBantlar);
+    if (ortDeger.some(v => v > 0)) {
+        chartInstances['ortChart'] = new Chart(document.getElementById('ortChart'), {
+            type: 'bar',
+            data: { labels: ortEtiket,
+                datasets: [{ data: ortDeger, backgroundColor: '#58a6ff', borderRadius: 5 }] },
+            options: { plugins: { legend: { display: false } }, scales: {
+                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+        });
+    }
+    if (topReferrerler.length > 0) {
+        chartInstances['referrerChart'] = new Chart(document.getElementById('referrerChart'), {
+            type: 'bar',
+            data: { labels: topReferrerler.map(r => r[0]),
+                datasets: [{ data: topReferrerler.map(r => r[1]),
+                    backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff','#f78166'], borderRadius: 5 }] },
+            options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: {
+                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true },
+                y: { ticks: { color: '#c9d1d9' }, grid: { color: '#21262d' } } } }
+        });
+    }
+}
 async function dersleriYukle() {
     onayliDersleriYukle();
     const icerik = document.getElementById('ders-onay-icerik');

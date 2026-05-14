@@ -589,7 +589,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const vizeLogHarf = secilenYontem === 'tek'
                 ? parseFloat(document.getElementById('midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-harf').value);
-            hesaplamaLogKaydet('harf', harfNotu, isNaN(vizeLogHarf) ? null : vizeLogHarf, isNaN(finalNotu) ? null : finalNotu);
+            const sinifOrtLog = parseFloat(classAvgInput.value);
+            const stdSapmaLog = parseFloat(classStdDevInput.value);
+            hesaplamaLogKaydet('harf', harfNotu, isNaN(vizeLogHarf) ? null : vizeLogHarf, isNaN(finalNotu) ? null : finalNotu, {
+                sinif_ortalamasi: isNaN(sinifOrtLog) ? undefined : sinifOrtLog,
+                std_sapma: isNaN(stdSapmaLog) ? undefined : stdSapmaLog
+            });
             paylasimButonuGoster('harf');
         });
     }
@@ -755,7 +760,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const vizeLogGerekli = secilenYontem === 'tek'
                 ? parseFloat(document.getElementById('req-midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-gerekli').value);
-            hesaplamaLogKaydet('gerekli', null, isNaN(vizeLogGerekli) ? null : vizeLogGerekli, null);
+            const reqOrtLog = parseFloat(reqClassAvgInput.value);
+            const reqStdLog = parseFloat(reqClassStdDevInput.value);
+            hesaplamaLogKaydet('gerekli', null, isNaN(vizeLogGerekli) ? null : vizeLogGerekli, null, {
+                hedef_harf_notu: hedefHarfNotu || undefined,
+                sinif_ortalamasi: isNaN(reqOrtLog) ? undefined : reqOrtLog,
+                std_sapma: isNaN(reqStdLog) ? undefined : reqStdLog
+            });
             paylasimButonuGoster('gerekli');
         });
     }
@@ -908,7 +919,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const vizeLogSenaryo = secilenYontem === 'tek'
                 ? parseFloat(document.getElementById('scenario-midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-senaryo').value);
-            hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryo) ? null : vizeLogSenaryo, null);
+            hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryo) ? null : vizeLogSenaryo, null, {
+                hedef_harf_notu: hedefHarfNotu || undefined
+            });
             paylasimButonuGoster('senaryo');
         });
     }
@@ -940,6 +953,9 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleInputFields('Harf');
     toggleInputFields('Gerekli');
     toggleInputFields('Senaryo');
+
+    // --- Sayfa görüntüleme logu ---
+    sayfaGoruntulemeLogKaydet();
 
     // --- Dönem Ortalaması başlat ---
     ganoDersEkle(); // İlk ders otomatik eklensin
@@ -1347,6 +1363,30 @@ function paylasimButonuGoster(sekme) {
     const el = document.getElementById(idler[sekme]);
     if (el) el.style.display = 'block';
 }
+async function sayfaGoruntulemeLogKaydet() {
+    try {
+        const referrerHam = document.referrer;
+        let referrer = 'direkt';
+        if (referrerHam) {
+            try {
+                const host = new URL(referrerHam).hostname.replace('www.', '');
+                if (host.includes('google')) referrer = 'google';
+                else if (host.includes('bing')) referrer = 'bing';
+                else if (host.includes('yandex')) referrer = 'yandex';
+                else if (host.includes('instagram')) referrer = 'instagram';
+                else if (host.includes('twitter') || host.includes('x.com')) referrer = 'twitter';
+                else if (host.includes('whatsapp')) referrer = 'whatsapp';
+                else if (host.includes('t.me') || host.includes('telegram')) referrer = 'telegram';
+                else referrer = host;
+            } catch { referrer = 'diger'; }
+        }
+        await getSupabase().from('sayfa_goruntuleme').insert({
+            is_mobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+            referrer
+        });
+    } catch (e) { /* sessizce geç */ }
+}
+
 const SUPABASE_URL = 'https://tsfscfgwbmiouptsljyi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7VUXgTfS6iYY3NU0IVwYpA_FRI0t7MI';
 let supabaseClient = null;
@@ -1839,18 +1879,36 @@ document.addEventListener('keydown', e => {
 // HESAPLAMA LOGLAMA & İSTATİSTİKSEVER
 // ============================================================
 
+// ============================================================
+// ENGAGEMENT TRACKING — tekrar_hesaplama & hesaplama_suresi
+// ============================================================
+const _sayfaYuklemZamani = Date.now();
+const _sekmeSayaclari = {}; // { 'harf': 3, 'gerekli': 1, ... }
+
+function _engagementVerisiAl(sekme) {
+    _sekmeSayaclari[sekme] = (_sekmeSayaclari[sekme] || 0) + 1;
+    const sure = Math.round((Date.now() - _sayfaYuklemZamani) / 1000);
+    return {
+        tekrar_hesaplama: _sekmeSayaclari[sekme],
+        hesaplama_suresi: Math.min(sure, 7200) // max 2 saat
+    };
+}
+
 async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu, ekstra = {}) {
     try {
-        const insertData = { sekme };
+        const { tekrar_hesaplama, hesaplama_suresi } = _engagementVerisiAl(sekme);
+        const insertData = { sekme, tekrar_hesaplama, hesaplama_suresi };
         if (harfNotu) insertData.harf_notu = harfNotu;
         if (vizeNotu !== null && vizeNotu !== undefined) insertData.vize_notu = Math.round(vizeNotu);
         if (finalNotu !== null && finalNotu !== undefined) insertData.final_notu = Math.round(finalNotu);
-        // ANO alanları
-        if (ekstra.ano !== undefined)            insertData.ano            = parseFloat(ekstra.ano.toFixed(2));
-        if (ekstra.ders_sayisi !== undefined)    insertData.ders_sayisi    = ekstra.ders_sayisi;
-        if (ekstra.toplam_kredi !== undefined)   insertData.toplam_kredi   = ekstra.toplam_kredi;
-        if (ekstra.basarisiz_sayi !== undefined) insertData.basarisiz_sayi = ekstra.basarisiz_sayi;
-        if (ekstra.dc_sayi !== undefined)        insertData.dc_sayi        = ekstra.dc_sayi;
+        if (ekstra.ano !== undefined)             insertData.ano             = parseFloat(ekstra.ano.toFixed(2));
+        if (ekstra.ders_sayisi !== undefined)     insertData.ders_sayisi     = ekstra.ders_sayisi;
+        if (ekstra.toplam_kredi !== undefined)    insertData.toplam_kredi    = ekstra.toplam_kredi;
+        if (ekstra.basarisiz_sayi !== undefined)  insertData.basarisiz_sayi  = ekstra.basarisiz_sayi;
+        if (ekstra.dc_sayi !== undefined)         insertData.dc_sayi         = ekstra.dc_sayi;
+        if (ekstra.hedef_harf_notu !== undefined) insertData.hedef_harf_notu = ekstra.hedef_harf_notu;
+        if (ekstra.sinif_ortalamasi !== undefined) insertData.sinif_ortalamasi = ekstra.sinif_ortalamasi;
+        if (ekstra.std_sapma !== undefined)       insertData.std_sapma       = ekstra.std_sapma;
         insertData.is_mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         await getSupabase().from('hesaplama_loglari').insert(insertData);
     } catch (e) { /* sessizce geç */ }
