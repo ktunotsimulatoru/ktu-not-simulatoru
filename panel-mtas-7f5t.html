@@ -10,11 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d1117; --surface: #161b22; --surface2: #21262d;
-            --border: #30363d; --text: #c9d1d9; --muted: #8b949e;
-            --accent: #58a6ff; --accent-hover: #388bfd;
-            --green: #3fb950; --red: #f85149; --orange: #d29922;
-            --purple: #bc8cff; --radius: 8px;
+            --bg: #f6f8fa; --surface: #ffffff; --surface2: #f0f2f5;
+            --border: #d0d7de; --text: #1f2328; --muted: #57606a;
+            --accent: #0969da; --accent-hover: #0550ae;
+            --green: #1a7f37; --red: #cf222e; --orange: #9a6700;
+            --purple: #8250df; --radius: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -394,8 +394,6 @@ async function istatistikleriYukle() {
         { count: final45 },
         { count: paylasimToplam },
         { count: paylasimHarf }, { count: paylasimAno },
-        { count: ziyaretciToplam },
-        { count: ziyaretciMobil },
         ...harfCountler
     ] = await Promise.all([
         q('hesaplama_loglari'),
@@ -405,8 +403,6 @@ async function istatistikleriYukle() {
         q('paylasim_loglari'),
         (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
         (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
-        q('sayfa_goruntuleme'),
-        (() => { let b = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
         ...HARF_LISTESI.map(h => qf({ harf_notu: h }))
     ]);
 
@@ -480,18 +476,32 @@ async function istatistikleriYukle() {
     const medyanSure = sureler.length ? (() => { const s=[...sureler].sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; })() : null;
     const medyanSureStr = medyanSure !== null ? (medyanSure >= 60 ? `${Math.floor(medyanSure/60)}dk ${medyanSure%60}sn` : `${medyanSure}sn`) : '—';
 
+    // Ziyaretçi sayısı — tablo yoksa sessizce 0 kullan
+    let ziyaretciToplam = 0, ziyaretciMobil = 0;
+    try {
+        const [{ count: zt }, { count: zm }] = await Promise.all([
+            q('sayfa_goruntuleme'),
+            (() => { let b = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })()
+        ]);
+        ziyaretciToplam = zt || 0;
+        ziyaretciMobil = zm || 0;
+    } catch(e) { /* tablo henüz yok */ }
+
     // Referrer dağılımı
-    const { data: referrerData } = await (() => {
-        let b = sb.from('sayfa_goruntuleme').select('referrer').limit(5000);
-        if (sinir) b = b.gte('olusturulma_tarihi', sinir);
-        return b;
-    })();
-    const referrerSayac = {};
-    referrerData?.forEach(r => {
-        const ref = r.referrer || 'direkt';
-        referrerSayac[ref] = (referrerSayac[ref] || 0) + 1;
-    });
-    const topReferrerler = Object.entries(referrerSayac).sort((a,b) => b[1]-a[1]).slice(0, 5);
+    let topReferrerler = [];
+    try {
+        const { data: referrerData } = await (() => {
+            let b = sb.from('sayfa_goruntuleme').select('referrer').limit(5000);
+            if (sinir) b = b.gte('olusturulma_tarihi', sinir);
+            return b;
+        })();
+        const referrerSayac = {};
+        referrerData?.forEach(r => {
+            const ref = r.referrer || 'direkt';
+            referrerSayac[ref] = (referrerSayac[ref] || 0) + 1;
+        });
+        topReferrerler = Object.entries(referrerSayac).sort((a,b) => b[1]-a[1]).slice(0, 5);
+    } catch(e) { /* tablo henüz yok */ }
 
     const hesaplamaOran = ziyaretciToplam ? (((toplam||0)/(ziyaretciToplam||1))*100).toFixed(1) : '—';
     const ziyaretciMobilOran = ziyaretciToplam ? (((ziyaretciMobil||0)/(ziyaretciToplam||1))*100).toFixed(0) : 0;
@@ -528,8 +538,8 @@ async function istatistikleriYukle() {
             datasets: [{ data: [sekmeler.harf, sekmeler.gerekli, sekmeler.senaryo, sekmeler.ano],
                 backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }] },
         options: { plugins: { legend: { display: false } }, scales: {
-            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-            y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+            x: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' } },
+            y: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' }, beginAtZero: true } } }
     });
 
     const HARF_SIR = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
@@ -538,21 +548,21 @@ async function istatistikleriYukle() {
     chartInstances['harfChart'] = new Chart(document.getElementById('harfChart'), {
         type: 'doughnut',
         data: { labels: harfEtiket, datasets: [{ data: harfEtiket.map(h => harfSayac[h]),
-            backgroundColor: harfEtiket.map(h => HARF_CLR[h]), borderWidth: 2, borderColor: '#161b22' }] },
-        options: { plugins: { legend: { position: 'right', labels: { color: '#c9d1d9', font: { family: 'Poppins' }, boxWidth: 12 } } } }
+            backgroundColor: harfEtiket.map(h => HARF_CLR[h]), borderWidth: 2, borderColor: '#ffffff' }] },
+        options: { plugins: { legend: { position: 'right', labels: { color: '#1f2328', font: { family: 'Poppins' }, boxWidth: 12 } } } }
     });
 
     chartInstances['cihazChart'] = new Chart(document.getElementById('cihazChart'), {
         type: 'doughnut',
         data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
             datasets: [{ data: [mobilSayisi||0, masaustuSayisi||0, mobilBilinmiyor],
-                backgroundColor: ['#58a6ff','#3fb950','#30363d'], borderWidth: 2, borderColor: '#161b22' }] },
+                backgroundColor: ['#58a6ff','#3fb950','#adb5bd'], borderWidth: 2, borderColor: '#ffffff' }] },
         options: { plugins: { legend: { display: false } }, cutout: '60%' }
     });
     document.getElementById('cihaz-legend').innerHTML = [
         { label: 'Mobil', sayi: mobilSayisi||0, renk: '#58a6ff' },
         { label: 'Masaüstü', sayi: masaustuSayisi||0, renk: '#3fb950' },
-        { label: 'Bilinmiyor', sayi: mobilBilinmiyor, renk: '#30363d' }
+        { label: 'Bilinmiyor', sayi: mobilBilinmiyor, renk: '#adb5bd' }
     ].map(c => `<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi}</strong></span></div>`).join('');
 
     // Günlük trafik — sadece tarih ve count, limit yok
@@ -578,8 +588,8 @@ async function istatistikleriYukle() {
             datasets: [{ data: Object.values(gunSayac), borderColor: '#58a6ff',
                 backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.4, pointRadius: 3 }] },
         options: { plugins: { legend: { display: false } }, scales: {
-            x: { ticks: { color: '#8b949e', maxTicksLimit: 10 }, grid: { color: '#21262d' } },
-            y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' }, beginAtZero: true } } }
+            x: { ticks: { color: '#57606a', maxTicksLimit: 10 }, grid: { color: '#e8ecef' } },
+            y: { ticks: { color: '#57606a', stepSize: 1 }, grid: { color: '#e8ecef' }, beginAtZero: true } } }
     });
 
     const HARF_CLR2 = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107' };
@@ -589,10 +599,10 @@ async function istatistikleriYukle() {
             type: 'bar',
             data: { labels: hedefEtiket,
                 datasets: [{ data: hedefEtiket.map(h => hedefSayac[h]),
-                    backgroundColor: hedefEtiket.map(h => HARF_CLR2[h] || '#8b949e'), borderRadius: 5 }] },
+                    backgroundColor: hedefEtiket.map(h => HARF_CLR2[h] || '#57606a'), borderRadius: 5 }] },
             options: { plugins: { legend: { display: false } }, scales: {
-                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-                y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+                x: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' } },
+                y: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' }, beginAtZero: true } } }
         });
     }
 
@@ -604,8 +614,8 @@ async function istatistikleriYukle() {
             data: { labels: ortEtiket,
                 datasets: [{ data: ortDeger, backgroundColor: '#58a6ff', borderRadius: 5 }] },
             options: { plugins: { legend: { display: false } }, scales: {
-                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-                y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true } } }
+                x: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' } },
+                y: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' }, beginAtZero: true } } }
         });
     }
     if (topReferrerler.length > 0) {
@@ -615,8 +625,8 @@ async function istatistikleriYukle() {
                 datasets: [{ data: topReferrerler.map(r => r[1]),
                     backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff','#f78166'], borderRadius: 5 }] },
             options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: {
-                x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true },
-                y: { ticks: { color: '#c9d1d9' }, grid: { color: '#21262d' } } } }
+                x: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' }, beginAtZero: true },
+                y: { ticks: { color: '#1f2328' }, grid: { color: '#e8ecef' } } } }
         });
     }
 }
