@@ -53,7 +53,8 @@
         .stat-karti-alt { font-size: 0.78em; color: var(--muted); margin-top: 4px; }
 
         .grafik-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .grafik-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+        .grafik-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow: hidden; }
+        .grafik-wrapper canvas { max-height: 250px; }
         .grafik-baslik { font-size: 0.82em; font-weight: 700; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
         .cihaz-pasta { display: flex; align-items: center; gap: 20px; }
         .cihaz-pasta-canvas { width: 120px; height: 120px; flex-shrink: 0; }
@@ -176,8 +177,8 @@
                 <div class="grafik-wrapper"><div class="grafik-baslik">Harf Notu Dağılımı</div><canvas id="harfChart" height="180"></canvas></div>
                 <div class="grafik-wrapper">
                     <div class="grafik-baslik">Cihaz Türü</div>
-                    <div class="cihaz-pasta">
-                        <canvas id="cihazChart" class="cihaz-pasta-canvas"></canvas>
+                    <div class="cihaz-pasta" style="max-height:220px;">
+                        <canvas id="cihazChart" class="cihaz-pasta-canvas" style="max-height:200px;"></canvas>
                         <div class="cihaz-legend" id="cihaz-legend"></div>
                     </div>
                 </div>
@@ -510,9 +511,9 @@ async function istatistikleriYukle() {
         let ziyaretciToplam=0, ziyaretciMobil=0, topReferrerler=[];
         try {
             const [ztR, zmR, refR] = await Promise.all([
-                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).neq('sayfa','admin'),
-                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true).neq('sayfa','admin'),
-                sb.from('sayfa_goruntuleme').select('referrer').neq('sayfa','admin').limit(10000)
+                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}),
+                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true),
+                sb.from('sayfa_goruntuleme').select('referrer').limit(10000)
             ]);
             ziyaretciToplam = ztR.count||0;
             ziyaretciMobil  = zmR.count||0;
@@ -583,7 +584,8 @@ async function istatistikleriYukle() {
             type: 'doughnut',
             data: { labels: harfEtiket, datasets: [{ data: harfEtiket.map(h=>harfSayac[h]),
                 backgroundColor: harfEtiket.map(h=>HARF_CLR[h]), borderWidth: 2, borderColor: '#ffffff' }] },
-            options: { plugins:{ legend:{ position:'right', labels:{ color:'#1f2328', font:{family:'Poppins'}, boxWidth:12 } },
+            options: { responsive:true, maintainAspectRatio:true,
+                plugins:{ legend:{ position:'right', labels:{ color:'#1f2328', font:{family:'Poppins'}, boxWidth:12 } },
                 tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')} hesaplama` } } } }
         });
 
@@ -592,7 +594,8 @@ async function istatistikleriYukle() {
             data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
                 datasets: [{ data: [mobilSayisi,masaustuSayisi,mobilBilinmiyor],
                     backgroundColor: ['#58a6ff','#3fb950','#adb5bd'], borderWidth:2, borderColor:'#ffffff' }] },
-            options: { plugins:{ legend:{display:false}, cutout:'60%',
+            options: { responsive:true, maintainAspectRatio:true,
+                plugins:{ legend:{display:false},
                 tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')}` } } } }
         });
         document.getElementById('cihaz-legend').innerHTML = [
