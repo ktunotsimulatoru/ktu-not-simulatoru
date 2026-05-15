@@ -380,148 +380,101 @@ async function istatistikleriYukle() {
         const aralik = parseInt(document.getElementById('istat-aralik').value);
         const sinir = aralik > 0 ? (() => { const d = new Date(); d.setDate(d.getDate() - aralik); return d.toISOString(); })() : null;
 
-        const qhl = () => { let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; };
-        const qf = (filtre) => { let b = qhl(); Object.entries(filtre).forEach(([k,v])=>{ b=b.eq(k,v); }); return b; };
-
         const HARF_LISTESI = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
         const HARF_CLR = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107',FD:'#dc3545',FF:'#a21427' };
-        const CHART_OPTS = (yatay=false) => ({ plugins:{legend:{display:false}}, scales:{
-            [yatay?'x':'x']: {ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:yatay},
-            [yatay?'y':'y']: {ticks:{color:yatay?'#1f2328':'#57606a'},grid:{color:'#e8ecef'},beginAtZero:!yatay}
-        }});
+        const fmtSure = s => s==null ? '—' : s>=60 ? `${Math.floor(s/60)}dk ${Math.round(s%60)}sn` : `${Math.round(s)}sn`;
 
-        // ── Paralel count sorguları ──
-        const sonuclar = await Promise.allSettled([
-            qhl(),                                          // 0 toplam
-            qf({sekme:'harf'}),                            // 1
-            qf({sekme:'gerekli'}),                         // 2
-            qf({sekme:'senaryo'}),                         // 3
-            qf({sekme:'ano'}),                             // 4
-            qf({is_mobile:true}),                          // 5
-            qf({is_mobile:false}),                         // 6
-            qf({sekme:'harf',final_notu:45}),              // 7
-            (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(), // 8
-            (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(), // 9
-            (() => { let b = sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),  // 10
-            ...HARF_LISTESI.map(h => qf({harf_notu:h}))   // 11-19
+        const qhl = () => { let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; };
+        const qf  = (filtre) => { let b = qhl(); Object.entries(filtre).forEach(([k,v])=>{ b=b.eq(k,v); }); return b; };
+
+        // ── 1. Count sorguları (limitsiz, sadece sayı) ──
+        const [
+            countR, harfR, gerekliR, senaryoR, anoR,
+            mobilR, masaustuR, final45R,
+            paylasimR, paylasimHarfR, paylasimAnoR,
+            ...harfCountRler
+        ] = await Promise.allSettled([
+            qhl(),
+            qf({sekme:'harf'}), qf({sekme:'gerekli'}), qf({sekme:'senaryo'}), qf({sekme:'ano'}),
+            qf({is_mobile:true}), qf({is_mobile:false}), qf({sekme:'harf',final_notu:45}),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+            ...HARF_LISTESI.map(h => qf({harf_notu:h}))
         ]);
 
-        const c = (i) => sonuclar[i]?.status === 'fulfilled' ? (sonuclar[i].value?.count || 0) : 0;
-        const toplam = c(0), sekmeler = {harf:c(1),gerekli:c(2),senaryo:c(3),ano:c(4)};
-        const mobilSayisi = c(5), masaustuSayisi = c(6), final45 = c(7);
-        const paylasimToplam = c(8), paylasimHarf = c(9), paylasimAno = c(10);
-        const harfSayac = {}; HARF_LISTESI.forEach((h,i) => { const v=c(11+i); if(v>0) harfSayac[h]=v; });
+        const c = r => r?.status==='fulfilled' ? (r.value?.count||0) : 0;
+        const toplam       = c(countR);
+        const sekmeler     = { harf:c(harfR), gerekli:c(gerekliR), senaryo:c(senaryoR), ano:c(anoR) };
+        const mobilSayisi  = c(mobilR), masaustuSayisi = c(masaustuR), final45 = c(final45R);
+        const paylasimToplam = c(paylasimR), paylasimHarf = c(paylasimHarfR), paylasimAno = c(paylasimAnoR);
+        const harfSayac    = {}; HARF_LISTESI.forEach((h,i) => { const v=c(harfCountRler[i]); if(v>0) harfSayac[h]=v; });
         const mobilBilinmiyor = toplam - mobilSayisi - masaustuSayisi;
-        const paylasimOran = toplam ? (((paylasimToplam)/toplam)*100).toFixed(1) : 0;
+        const paylasimOran = toplam ? ((paylasimToplam/toplam)*100).toFixed(1) : 0;
 
-        // ── Veri sorguları (Promise.allSettled ile güvenli) ──
-        // saatData: tarih aralığına göre filtreli + UTC+3 dönüşümü için tam timestamp
-        const saatSinir = sinir || (() => { const d=new Date(); d.setDate(d.getDate()-365); return d.toISOString(); })();
-        const [ornekR, anoR, ortR, saatR, gunlukR, hedefR, vizeHedefR] = await Promise.allSettled([
-            sb.from('hesaplama_loglari').select('vize_notu,final_notu,tekrar_hesaplama,hesaplama_suresi').eq('sekme','harf').not('final_notu','is',null).order('id',{ascending:false}).limit(5000),
-            sb.from('hesaplama_loglari').select('ano').eq('sekme','ano').not('ano','is',null).limit(5000),
-            sb.from('hesaplama_loglari').select('sinif_ortalamasi').eq('sekme','harf').not('sinif_ortalamasi','is',null).order('id',{ascending:false}).limit(5000),
-            sb.from('hesaplama_loglari').select('olusturulma_tarihi').not('olusturulma_tarihi','is',null).gte('olusturulma_tarihi', saatSinir).limit(10000),
-            sb.from('hesaplama_loglari').select('olusturulma_tarihi').gte('olusturulma_tarihi', (() => { const d=new Date(); d.setDate(d.getDate()-(aralik>0?aralik:30)); return d.toISOString(); })()).order('olusturulma_tarihi'),
-            sb.from('hesaplama_loglari').select('hedef_harf_notu').not('hedef_harf_notu','is',null).limit(5000),
-            sb.from('hesaplama_loglari').select('hedef_harf_notu,vize_notu').eq('sekme','gerekli').not('hedef_harf_notu','is',null).not('vize_notu','is',null).limit(5000)
-        ]);
+        // ── 2. Tek RPC çağrısı — tüm ağır hesaplamalar DB'de ──
+        const { data: fnData, error: fnErr } = await sb.rpc('istatistik_ozet', sinir ? { sinir_tarihi: sinir } : {});
+        if (fnErr) throw new Error('istatistik_ozet: ' + fnErr.message);
+        const fn = fnData || {};
 
-        const ornekData = ornekR.status==='fulfilled' ? ornekR.value?.data||[] : [];
-        const anoData = anoR.status==='fulfilled' ? anoR.value?.data||[] : [];
-        const ortData = ortR.status==='fulfilled' ? ortR.value?.data||[] : [];
-        const saatData = saatR.status==='fulfilled' ? saatR.value?.data||[] : [];
-        const gunlukData = gunlukR.status==='fulfilled' ? gunlukR.value?.data||[] : [];
-        const hedefData = hedefR.status==='fulfilled' ? hedefR.value?.data||[] : [];
-        const vizeHedefData = vizeHedefR.status==='fulfilled' ? vizeHedefR.value?.data||[] : [];
+        const ortVize      = fn.ort_vize   != null ? fn.ort_vize   : '—';
+        const ortFinal     = fn.ort_final  != null ? fn.ort_final  : '—';
+        const vizeSayisi   = fn.vize_sayisi || 0;
+        const finalSayisi  = fn.final_sayisi || 0;
+        const ortAno       = fn.ort_ano    != null ? fn.ort_ano    : '—';
+        const anoSayisi    = fn.ano_sayisi || 0;
+        const ortTekrar    = fn.ort_tekrar != null ? fn.ort_tekrar : '—';
+        const tekrarSayisi = fn.tekrar_sayisi || 0;
+        const tekrar2Plus  = fn.tekrar2plus || 0;
+        const tekrar2PlusOran = tekrarSayisi ? ((tekrar2Plus/tekrarSayisi)*100).toFixed(0) : 0;
+        const ortSureStr   = fmtSure(fn.ort_sure);
+        const medyanSureStr= fmtSure(fn.medyan_sure != null ? parseFloat(fn.medyan_sure) : null);
 
-        // ── Hesaplamalar ──
-        const vizeler=[], finaller=[], tekrarlar=[], sureler=[];
-        ornekData.forEach(r => {
-            if(r.vize_notu!=null) vizeler.push(r.vize_notu);
-            if(r.final_notu!=null) finaller.push(r.final_notu);
-            if(r.tekrar_hesaplama!=null) tekrarlar.push(r.tekrar_hesaplama);
-            if(r.hesaplama_suresi!=null && r.hesaplama_suresi>0) sureler.push(r.hesaplama_suresi);
-        });
+        // Dağılımlar — DB'den gelen JSON nesneleri
+        const ortBantSira  = ['0-30','30-40','40-50','50-60','60-70','70-80','80+'];
+        const ortBantlar   = fn.sinif_ort_bantlar || {};
+        const hedefSayac   = fn.hedef_dagilim    || {};
+        const vizeHedefOrt = fn.vize_hedef_ort   || {};
+        const saatDagilim  = fn.saat_dagilim     || {};
+        const gunDagilim   = fn.gun_dagilim      || {};
 
-        let anoToplam=0, anoSayisi=0;
-        anoData.forEach(r => { anoToplam+=parseFloat(r.ano); anoSayisi++; });
+        // Saatlik/haftalık dizileri oluştur
+        const saatBantlar  = Array.from({length:24}, (_,i) => saatDagilim[i] || 0);
+        const gunAdlar     = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+        const haftaBantlar = Array.from({length:7},  (_,i) => gunDagilim[i]  || 0);
 
-        const ort = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : null;
-        const medyan = arr => { if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
-        const fmtSure = s => s==null ? '—' : s>=60 ? `${Math.floor(s/60)}dk ${s%60}sn` : `${s}sn`;
+        // ── 3. Günlük trend (tarih aralığına göre, hâlâ satır bazlı ama filtrelidir) ──
+        const gunSayisi2 = aralik>0 ? aralik : 30;
+        const gunlukSinir = new Date(); gunlukSinir.setDate(gunlukSinir.getDate() - gunSayisi2);
+        const { data: gunlukData } = await sb.from('hesaplama_loglari')
+            .select('olusturulma_tarihi')
+            .gte('olusturulma_tarihi', gunlukSinir.toISOString())
+            .order('olusturulma_tarihi');
+        const gunSayac = {};
+        for(let i=gunSayisi2-1;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); gunSayac[d.toISOString().slice(0,10)]=0; }
+        (gunlukData||[]).forEach(r => { const g=r.olusturulma_tarihi?.slice(0,10); if(g&&gunSayac[g]!==undefined) gunSayac[g]++; });
 
-        const ortVize = ort(vizeler)?.toFixed(1) || '—';
-        const ortFinal = ort(finaller)?.toFixed(1) || '—';
-        const ortAno = anoSayisi>0 ? (anoToplam/anoSayisi).toFixed(2) : '—';
-        const ortTekrar = ort(tekrarlar)?.toFixed(1) || '—';
-        const tekrar2PlusOran = tekrarlar.length ? ((tekrarlar.filter(t=>t>=2).length/tekrarlar.length)*100).toFixed(0) : 0;
-        const ortSureStr = fmtSure(sureler.length ? Math.round(ort(sureler)) : null);
-        const medyanSureStr = fmtSure(medyan(sureler));
-
-        // Sınıf ortalaması bantları
-        const ortBantlar = {'0-30':0,'30-40':0,'40-50':0,'50-60':0,'60-70':0,'70-80':0,'80+':0};
-        ortData.forEach(r => {
-            const v=parseFloat(r.sinif_ortalamasi);
-            if(v<30) ortBantlar['0-30']++; else if(v<40) ortBantlar['30-40']++;
-            else if(v<50) ortBantlar['40-50']++; else if(v<60) ortBantlar['50-60']++;
-            else if(v<70) ortBantlar['60-70']++; else if(v<80) ortBantlar['70-80']++;
-            else ortBantlar['80+']++;
-        });
-
-        // Saatlik dağılım — UTC+3 (Türkiye saati)
-        const saatBantlar = Array(24).fill(0);
-        saatData.forEach(r => {
-            if(r.olusturulma_tarihi) {
-                const trSaat = new Date(new Date(r.olusturulma_tarihi).getTime() + 3*60*60*1000).getUTCHours();
-                saatBantlar[trSaat]++;
-            }
-        });
-
-        // Haftalık dağılım — UTC+3
-        const gunAdlar = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
-        const haftaBantlar = Array(7).fill(0);
-        saatData.forEach(r => {
-            if(r.olusturulma_tarihi) {
-                const trTarih = new Date(new Date(r.olusturulma_tarihi).getTime() + 3*60*60*1000);
-                haftaBantlar[trTarih.getUTCDay()]++;
-            }
-        });
-
-        // Hedef harf notu dağılımı
-        const hedefSayac = {};
-        hedefData.forEach(r => { if(r.hedef_harf_notu) hedefSayac[r.hedef_harf_notu]=(hedefSayac[r.hedef_harf_notu]||0)+1; });
-
-        // Hedef nota göre ortalama vize
-        const vizeHedefGrup = {};
-        vizeHedefData.forEach(r => {
-            const h=r.hedef_harf_notu, v=r.vize_notu;
-            if(!vizeHedefGrup[h]) vizeHedefGrup[h]=[];
-            vizeHedefGrup[h].push(v);
-        });
-        const vizeHedefOrt = {};
-        Object.entries(vizeHedefGrup).forEach(([h,arr]) => { vizeHedefOrt[h] = ort(arr)?.toFixed(1); });
-
-        // Ziyaretçi (opsiyonel tablo)
+        // ── 4. Ziyaretçi verileri ──
         let ziyaretciToplam=0, ziyaretciMobil=0, topReferrerler=[];
         try {
             const [ztR, zmR, refR] = await Promise.all([
                 sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}),
                 sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true),
-                sb.from('sayfa_goruntuleme').select('referrer').limit(5000)
+                sb.from('sayfa_goruntuleme').select('referrer').limit(10000)
             ]);
             ziyaretciToplam = ztR.count||0;
-            ziyaretciMobil = zmR.count||0;
+            ziyaretciMobil  = zmR.count||0;
             const refSayac={};
             refR.data?.forEach(r => { const ref=r.referrer||'direkt'; refSayac[ref]=(refSayac[ref]||0)+1; });
             topReferrerler = Object.entries(refSayac).sort((a,b)=>b[1]-a[1]).slice(0,5);
         } catch(e) {}
 
-        const hesaplamaOran = ziyaretciToplam ? ((toplam/ziyaretciToplam)*100).toFixed(1) : '—';
+        const hesaplamaOran    = ziyaretciToplam ? ((toplam/ziyaretciToplam)*100).toFixed(1) : '—';
         const ziyaretciMobilOran = ziyaretciToplam ? ((ziyaretciMobil/ziyaretciToplam)*100).toFixed(0) : 0;
-        const ffSayisi=harfSayac['FF']||0, aaSayisi=harfSayac['AA']||0;
-        const ffOran=toplam?((ffSayisi/toplam)*100).toFixed(1):0;
-        const aaOran=toplam?((aaSayisi/toplam)*100).toFixed(1):0;
+        const ffSayisi = harfSayac['FF']||0, aaSayisi = harfSayac['AA']||0;
+        const ffOran = toplam ? ((ffSayisi/toplam)*100).toFixed(1) : 0;
+        const aaOran = toplam ? ((aaSayisi/toplam)*100).toFixed(1) : 0;
+        const saatAralikMetin = aralik>0 ? `Son ${aralik} gün` : 'Tüm zamanlar';
 
         // ── KARTLAR ──
         kartlar.innerHTML = `
@@ -530,28 +483,28 @@ async function istatistikleriYukle() {
                 <div class="stat-karti-alt">%${ziyaretciMobilOran} mobil · %${hesaplamaOran} hesaplama yaptı</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">📊 Toplam Hesaplama</div>
                 <div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div>
-                <div class="stat-karti-alt">Harf: ${sekmeler.harf} · Gerekli: ${sekmeler.gerekli} · Senaryo: ${sekmeler.senaryo} · ANO: ${sekmeler.ano}</div></div>
+                <div class="stat-karti-alt">Harf: ${sekmeler.harf.toLocaleString('tr-TR')} · Gerekli: ${sekmeler.gerekli.toLocaleString('tr-TR')} · Senaryo: ${sekmeler.senaryo.toLocaleString('tr-TR')} · ANO: ${sekmeler.ano.toLocaleString('tr-TR')}</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">❌ FF Oranı</div>
                 <div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div>
-                <div class="stat-karti-alt">${ffSayisi} hesaplama</div></div>
+                <div class="stat-karti-alt">${ffSayisi.toLocaleString('tr-TR')} hesaplama</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">✅ AA Oranı</div>
                 <div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div>
-                <div class="stat-karti-alt">${aaSayisi} hesaplama</div></div>
+                <div class="stat-karti-alt">${aaSayisi.toLocaleString('tr-TR')} hesaplama</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Vize</div>
                 <div class="stat-karti-deger">${ortVize}</div>
-                <div class="stat-karti-alt">${vizeler.length.toLocaleString('tr-TR')} kayıttan</div></div>
+                <div class="stat-karti-alt">${vizeSayisi.toLocaleString('tr-TR')} kayıttan</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Final</div>
                 <div class="stat-karti-deger">${ortFinal}</div>
-                <div class="stat-karti-alt">${finaller.length.toLocaleString('tr-TR')} kayıttan</div></div>
+                <div class="stat-karti-alt">${finalSayisi.toLocaleString('tr-TR')} kayıttan</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">😅 Final=45</div>
-                <div class="stat-karti-deger" style="color:var(--orange)">${final45}</div>
+                <div class="stat-karti-deger" style="color:var(--orange)">${final45.toLocaleString('tr-TR')}</div>
                 <div class="stat-karti-alt">umut hesaplaması</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">🎓 Ort. ANO</div>
                 <div class="stat-karti-deger" style="color:var(--purple)">${ortAno}</div>
-                <div class="stat-karti-alt">${anoSayisi} hesaplamadan</div></div>
+                <div class="stat-karti-alt">${anoSayisi.toLocaleString('tr-TR')} hesaplamadan</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">🔗 Paylaşılan Link</div>
-                <div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam}</div>
-                <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimHarf} · ANO: ${paylasimAno}</div></div>
+                <div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam.toLocaleString('tr-TR')}</div>
+                <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimHarf.toLocaleString('tr-TR')} · ANO: ${paylasimAno.toLocaleString('tr-TR')}</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">🔄 Ort. Tekrar</div>
                 <div class="stat-karti-deger" style="color:var(--accent)">${ortTekrar}</div>
                 <div class="stat-karti-alt">%${tekrar2PlusOran} kullanıcı 2+ kez</div></div>
@@ -569,21 +522,17 @@ async function istatistikleriYukle() {
             data: { labels: ['Harf Notu','Gerekli Final','Senaryo','Dönem Ort.'],
                 datasets: [{ label:'Hesaplama', data: [sekmeler.harf,sekmeler.gerekli,sekmeler.senaryo,sekmeler.ano],
                     backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }] },
-            options: {
-                plugins:{
-                    legend:{display:false},
-                    tooltip:{ callbacks:{ label: item => ` ${item.raw.toLocaleString('tr-TR')} hesaplama` } }
-                },
-                scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} }
-            }
+            options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
+                scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
         });
 
-        const harfEtiket = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'].filter(h=>harfSayac[h]);
+        const harfEtiket = HARF_LISTESI.filter(h=>harfSayac[h]);
         chartInstances['harfChart'] = new Chart(document.getElementById('harfChart'), {
             type: 'doughnut',
             data: { labels: harfEtiket, datasets: [{ data: harfEtiket.map(h=>harfSayac[h]),
                 backgroundColor: harfEtiket.map(h=>HARF_CLR[h]), borderWidth: 2, borderColor: '#ffffff' }] },
-            options: { plugins:{ legend:{ position:'right', labels:{ color:'#1f2328', font:{family:'Poppins'}, boxWidth:12 } } } }
+            options: { plugins:{ legend:{ position:'right', labels:{ color:'#1f2328', font:{family:'Poppins'}, boxWidth:12 } },
+                tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')} hesaplama` } } } }
         });
 
         chartInstances['cihazChart'] = new Chart(document.getElementById('cihazChart'), {
@@ -591,83 +540,45 @@ async function istatistikleriYukle() {
             data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
                 datasets: [{ data: [mobilSayisi,masaustuSayisi,mobilBilinmiyor],
                     backgroundColor: ['#58a6ff','#3fb950','#adb5bd'], borderWidth:2, borderColor:'#ffffff' }] },
-            options: { plugins:{legend:{display:false}}, cutout:'60%' }
+            options: { plugins:{ legend:{display:false}, cutout:'60%',
+                tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')}` } } } }
         });
         document.getElementById('cihaz-legend').innerHTML = [
             {label:'Mobil',sayi:mobilSayisi,renk:'#58a6ff'},
             {label:'Masaüstü',sayi:masaustuSayisi,renk:'#3fb950'},
             {label:'Bilinmiyor',sayi:mobilBilinmiyor,renk:'#adb5bd'}
-        ].map(c=>`<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi}</strong></span></div>`).join('');
+        ].map(c=>`<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi.toLocaleString('tr-TR')}</strong></span></div>`).join('');
 
-        const gunSayisi2 = aralik>0 ? aralik : 30;
-        const gunSayac = {};
-        for(let i=gunSayisi2-1;i>=0;i--) {
-            const d=new Date(); d.setDate(d.getDate()-i);
-            gunSayac[d.toISOString().slice(0,10)]=0;
-        }
-        gunlukData.forEach(r => { const g=r.olusturulma_tarihi?.slice(0,10); if(g&&gunSayac[g]!==undefined) gunSayac[g]++; });
+        // Günlük trend — DD.MM formatı
         const gunlukBaslik = aralik>0 ? `Son ${aralik} Gün — Günlük Hesaplama Sayısı` : 'Son 30 Gün — Günlük Hesaplama Sayısı';
         document.getElementById('gunluk-baslik').textContent = gunlukBaslik;
-        // DD.MM formatına çevir
-        const gunlukEtiketler = Object.keys(gunSayac).map(d => {
-            const [yil,ay,gun] = d.split('-');
-            return `${gun}.${ay}`;
-        });
+        const gunlukEtiketler = Object.keys(gunSayac).map(d => { const [,ay,gun]=d.split('-'); return `${gun}.${ay}`; });
         chartInstances['gunlukChart'] = new Chart(document.getElementById('gunlukChart'), {
             type: 'line',
-            data: {
-                labels: gunlukEtiketler,
-                datasets: [{ label:'Hesaplama', data:Object.values(gunSayac), borderColor:'#58a6ff', backgroundColor:'rgba(88,166,255,0.1)', fill:true, tension:0.4, pointRadius:3 }]
-            },
-            options: {
-                plugins:{
-                    legend:{display:false},
-                    tooltip:{ callbacks:{ title: items => items[0].label, label: item => ` ${item.raw} hesaplama` } }
-                },
-                scales:{
-                    x:{ticks:{color:'#57606a',maxTicksLimit:10},grid:{color:'#e8ecef'}},
-                    y:{ticks:{color:'#57606a',stepSize:1},grid:{color:'#e8ecef'},beginAtZero:true}
-                }
-            }
+            data: { labels: gunlukEtiketler,
+                datasets: [{ label:'Hesaplama', data:Object.values(gunSayac), borderColor:'#58a6ff', backgroundColor:'rgba(88,166,255,0.1)', fill:true, tension:0.4, pointRadius:3 }] },
+            options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
+                scales:{ x:{ticks:{color:'#57606a',maxTicksLimit:10},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
         });
 
-        const saatAralikMetin = aralik>0 ? `Son ${aralik} gün` : 'Tüm zamanlar';
         chartInstances['saatChart'] = new Chart(document.getElementById('saatChart'), {
             type: 'bar',
-            data: {
-                labels: Array.from({length:24},(_,i)=>`${i}:00`),
-                datasets: [{ label:'Hesaplama', data:saatBantlar, backgroundColor:'rgba(88,166,255,0.7)', borderRadius:3 }]
-            },
-            options: {
-                plugins:{
-                    legend:{display:false},
-                    subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
-                    tooltip:{ callbacks:{ label: item => ` ${item.raw} hesaplama` } }
-                },
-                scales:{
-                    x:{ticks:{color:'#57606a',maxTicksLimit:12},grid:{color:'#e8ecef'}},
-                    y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}
-                }
-            }
+            data: { labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [{ label:'Hesaplama', data:saatBantlar, backgroundColor:'rgba(88,166,255,0.7)', borderRadius:3 }] },
+            options: { plugins:{ legend:{display:false},
+                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
+                tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
+                scales:{ x:{ticks:{color:'#57606a',maxTicksLimit:12},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
         });
 
         chartInstances['haftaChart'] = new Chart(document.getElementById('haftaChart'), {
             type: 'bar',
-            data: {
-                labels: gunAdlar,
-                datasets: [{ label:'Hesaplama', data:haftaBantlar, backgroundColor:'rgba(63,185,80,0.7)', borderRadius:4 }]
-            },
-            options: {
-                plugins:{
-                    legend:{display:false},
-                    subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
-                    tooltip:{ callbacks:{ label: item => ` ${item.raw} hesaplama` } }
-                },
-                scales:{
-                    x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}},
-                    y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}
-                }
-            }
+            data: { labels: gunAdlar,
+                datasets: [{ label:'Hesaplama', data:haftaBantlar, backgroundColor:'rgba(63,185,80,0.7)', borderRadius:4 }] },
+            options: { plugins:{ legend:{display:false},
+                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
+                tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
+                scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
         });
 
         const hedefEtiket2 = Object.keys(hedefSayac).sort((a,b)=>(hedefSayac[b]||0)-(hedefSayac[a]||0));
@@ -676,52 +587,40 @@ async function istatistikleriYukle() {
                 type: 'bar',
                 data: { labels:hedefEtiket2, datasets:[{ label:'Kişi', data:hedefEtiket2.map(h=>hedefSayac[h]),
                     backgroundColor:hedefEtiket2.map(h=>HARF_CLR[h]||'#57606a'), borderRadius:5 }] },
-                options: {
-                    plugins:{
-                        legend:{display:false},
-                        tooltip:{ callbacks:{ label: item => ` ${item.raw.toLocaleString('tr-TR')} kişi bu notu hedefledi` } }
-                    },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} }
-                }
+                options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} kişi bu notu hedefledi` } } },
+                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
             });
         }
 
-        if(Object.values(ortBantlar).some(v=>v>0)) {
+        const ortBantValues = ortBantSira.map(k => ortBantlar[k]||0);
+        if(ortBantValues.some(v=>v>0)) {
             chartInstances['ortChart'] = new Chart(document.getElementById('ortChart'), {
                 type: 'bar',
-                data: { labels:Object.keys(ortBantlar), datasets:[{ label:'Hesaplama', data:Object.values(ortBantlar), backgroundColor:'#58a6ff', borderRadius:5 }] },
-                options: {
-                    plugins:{
-                        legend:{display:false},
-                        tooltip:{ callbacks:{ label: item => ` ${item.raw.toLocaleString('tr-TR')} hesaplama` } }
-                    },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} }
-                }
+                data: { labels:ortBantSira, datasets:[{ label:'Hesaplama', data:ortBantValues, backgroundColor:'#58a6ff', borderRadius:5 }] },
+                options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
+                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
             });
         }
 
-        const vizeHedefNotlar = Object.keys(vizeHedefOrt).sort((a,b)=>(['AA','BA','BB','CB','CC','DC','DD'].indexOf(a)-['AA','BA','BB','CB','CC','DC','DD'].indexOf(b)));
+        const HARF_SIRA = ['AA','BA','BB','CB','CC','DC','DD'];
+        const vizeHedefNotlar = Object.keys(vizeHedefOrt).sort((a,b)=>HARF_SIRA.indexOf(a)-HARF_SIRA.indexOf(b));
         if(vizeHedefNotlar.length > 0) {
             chartInstances['vizeHedefChart'] = new Chart(document.getElementById('vizeHedefChart'), {
                 type: 'bar',
                 data: { labels:vizeHedefNotlar, datasets:[{ label:'Ort. Vize', data:vizeHedefNotlar.map(h=>parseFloat(vizeHedefOrt[h])),
                     backgroundColor:vizeHedefNotlar.map(h=>HARF_CLR[h]||'#57606a'), borderRadius:5 }] },
-                options: {
-                    plugins:{
-                        legend:{display:false},
-                        tooltip:{ callbacks:{ label: item => ` Ort. vize: ${item.raw}` } }
-                    },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true,max:100} }
-                }
+                options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` Ort. vize: ${i.raw}` } } },
+                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true,max:100} } }
             });
         }
 
         if(topReferrerler.length > 0) {
             chartInstances['referrerChart'] = new Chart(document.getElementById('referrerChart'), {
                 type: 'bar',
-                data: { labels:topReferrerler.map(r=>r[0]), datasets:[{ data:topReferrerler.map(r=>r[1]),
+                data: { labels:topReferrerler.map(r=>r[0]), datasets:[{ label:'Ziyaret', data:topReferrerler.map(r=>r[1]),
                     backgroundColor:['#58a6ff','#3fb950','#d29922','#bc8cff','#f78166'], borderRadius:5 }] },
-                options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}, y:{ticks:{color:'#1f2328'},grid:{color:'#e8ecef'}} } }
+                options: { indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} ziyaret` } } },
+                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}, y:{ticks:{color:'#1f2328'},grid:{color:'#e8ecef'}} } }
             });
         }
 
