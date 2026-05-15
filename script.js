@@ -1144,6 +1144,13 @@ function ganoHesapla() {
                     basarisiz_sayi: basarisizlar.length,
                     dc_sayi: dcDersler.length
                 });
+                // Ders adlarını grup olarak logla
+                const dersAdlari = gecerliDersler
+                    .map(d => d.ad)
+                    .filter(ad => ad && ad.length > 0);
+                if (dersAdlari.length > 0) {
+                    anoDersGrupLogKaydet(anoRounded, toplamKredi, dersAdlari);
+                }
             }
         }, 2000);
     }
@@ -1919,6 +1926,22 @@ async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu, ekstra =
         if (ekstra.std_sapma !== undefined)       insertData.std_sapma       = ekstra.std_sapma;
         insertData.is_mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         await getSupabase().from('hesaplama_loglari').insert(insertData);
+    } catch (e) { /* sessizce geç */ }
+}
+
+async function anoDersGrupLogKaydet(anoDegeri, toplamKredi, dersAdlari) {
+    try {
+        const sb = getSupabase();
+        // Önce grup oluştur
+        const { data: grup, error: grupHata } = await sb
+            .from('ano_hesaplama_gruplari')
+            .insert({ ano_degeri: anoDegeri, toplam_kredi: toplamKredi })
+            .select('id')
+            .single();
+        if (grupHata || !grup) return;
+        // Sonra dersleri ekle
+        const dersRows = dersAdlari.map(ad => ({ grup_id: grup.id, ders_adi: ad }));
+        await sb.from('ano_ders_loglari').insert(dersRows);
     } catch (e) { /* sessizce geç */ }
 }
 

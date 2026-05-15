@@ -119,8 +119,46 @@
 
         @media (max-width: 700px) {
             .grafik-grid, .bolum-grid { grid-template-columns: 1fr; }
-            .admin-icerik { padding: 14px 12px; }
+            .admin-icerik { padding: 14px 10px; }
             .stat-karti-grid { grid-template-columns: 1fr 1fr; }
+
+            /* Header */
+            .admin-header { padding: 10px 14px; gap: 8px; flex-wrap: wrap; }
+            .admin-header h1 { font-size: 0.92em; }
+
+            /* Nav sekmeleri */
+            .nav-btn { padding: 10px 11px; font-size: 0.78em; }
+
+            /* Filtre bar */
+            .filtre-bar { gap: 6px; }
+            .filtre-select, .filtre-input { font-size: 0.8em; padding: 6px 8px; }
+
+            /* Tablo başlığı */
+            .admin-tablo-baslik { padding: 10px 12px; font-size: 0.88em; gap: 8px; }
+            .admin-tablo-baslik .btn-grup { flex-wrap: wrap; }
+
+            /* Tablo içeriği — yatay kaydırma garantisi */
+            .admin-tablo-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .admin-tablo-wrapper table { font-size: 0.8em; }
+            .admin-tablo-wrapper th, .admin-tablo-wrapper td { padding: 8px 10px; }
+
+            /* Butonlar */
+            .btn { padding: 5px 10px; font-size: 0.78em; }
+            .btn-grup { gap: 4px; }
+
+            /* Stat kartları */
+            .stat-karti { padding: 12px; }
+            .stat-karti-deger { font-size: 1.5em; }
+
+            /* Grafik */
+            .grafik-wrapper { padding: 14px; }
+
+            /* Form */
+            .form-row-admin { flex-direction: column; gap: 8px; }
+            .form-group-admin { min-width: unset; }
+
+            /* Modal */
+            .modal-kutu { padding: 18px; }
         }
     </style>
 </head>
@@ -147,6 +185,7 @@
         <button class="nav-btn" onclick="sekmeDegistir('veriler', this)">🗂️ Paylaşılan Veriler</button>
         <button class="nav-btn" onclick="sekmeDegistir('duyurular', this)">📢 Duyurular</button>
         <button class="nav-btn" onclick="sekmeDegistir('fakulteler', this)">🏫 Fakülte & Bölüm</button>
+        <button class="nav-btn" onclick="sekmeDegistir('anodersler', this)">🎓 ANO Ders Analizi</button>
         <button class="nav-btn" onclick="sekmeDegistir('ayarlar', this)">⚙️ Ayarlar</button>
     </div>
 
@@ -287,6 +326,34 @@
             </div>
         </div>
 
+        <!-- ANO DERS ANALİZİ -->
+        <div id="bolum-anodersler" class="panel-bolum">
+            <div class="bolum-baslik">🎓 ANO Ders Analizi</div>
+
+            <!-- Özet stat kartları -->
+            <div class="stat-karti-grid" id="ano-ders-stat-kartlar" style="margin-bottom:20px;">
+                <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
+            </div>
+
+            <!-- En çok girilen dersler -->
+            <div class="grafik-wrapper" style="margin-bottom:20px;">
+                <div class="grafik-baslik">📊 En Çok Girilen Dersler (Top 15)</div>
+                <canvas id="anoDersChart" height="160"></canvas>
+            </div>
+
+            <!-- Hesaplama geçmişi tablosu -->
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>📋 Hesaplama Geçmişi</span>
+                    <div class="btn-grup">
+                        <input type="text" id="ano-ders-arama" class="filtre-input" placeholder="Ders veya ANO ara..." oninput="anoDersFiltrele()" style="width:180px;">
+                        <button class="btn btn-gri" onclick="anoDersAnalizYukle()">↻ Yenile</button>
+                    </div>
+                </div>
+                <div id="ano-ders-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
         <!-- AYARLAR -->
         <div id="bolum-ayarlar" class="panel-bolum">
             <div class="bolum-baslik">⚙️ Ayarlar</div>
@@ -361,7 +428,7 @@ function sekmeDegistir(bolum, btn) {
     else if (bolum === 'veriler') { veriFiltreFakulteDoldur(); }
     else if (bolum === 'duyurular') duyurulariYukle();
     else if (bolum === 'fakulteler') { fakulteleriYukle(); bolumleriYukle(); fakulteSelectDoldur(); }
-    else if (bolum === 'istatistik') istatistikleriYukle();
+    else if (bolum === 'anodersler') anoDersAnalizYukle();
 }
 
 async function onayBekleyenSayisiGoster() {
@@ -912,6 +979,120 @@ async function sifreDegistir() {
     document.getElementById('mevcut-sifre').value='';
     document.getElementById('yeni-sifre').value='';
     document.getElementById('yeni-sifre-tekrar').value='';
+}
+
+// ── ANO DERS ANALİZİ ──
+let anoDersVerisi = []; // { id, ano_degeri, toplam_kredi, tarih, dersler: [] }
+
+async function anoDersAnalizYukle() {
+    document.getElementById('ano-ders-stat-kartlar').innerHTML = '<div style="color:var(--muted);font-size:0.9em;padding:8px;">Yükleniyor...</div>';
+    document.getElementById('ano-ders-tablo-icerik').innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+
+    try {
+        // Grupları ve bağlı dersleri çek
+        const { data: gruplar, error } = await sb
+            .from('ano_hesaplama_gruplari')
+            .select('id, ano_degeri, toplam_kredi, olusturulma_tarihi, ano_ders_loglari(ders_adi)')
+            .order('olusturulma_tarihi', { ascending: false })
+            .limit(500);
+
+        if (error) throw error;
+
+        anoDersVerisi = (gruplar || []).map(g => ({
+            id: g.id,
+            ano: g.ano_degeri,
+            kredi: g.toplam_kredi,
+            tarih: g.olusturulma_tarihi,
+            dersler: (g.ano_ders_loglari || []).map(d => d.ders_adi)
+        }));
+
+        anoDersStat();
+        anoDersGrafik();
+        anoDersTablo(anoDersVerisi);
+    } catch(e) {
+        document.getElementById('ano-ders-tablo-icerik').innerHTML = `<div class="bos-mesaj">Hata: ${e.message}</div>`;
+    }
+}
+
+function anoDersStat() {
+    const toplam = anoDersVerisi.length;
+    const tumDersler = anoDersVerisi.flatMap(g => g.dersler);
+    const benzersiz = new Set(tumDersler.map(d => d.toLowerCase())).size;
+    const ortAno = toplam ? (anoDersVerisi.reduce((s,g) => s + (g.ano||0), 0) / toplam).toFixed(2) : '—';
+    const dersAdliGrup = anoDersVerisi.filter(g => g.dersler.length > 0).length;
+
+    document.getElementById('ano-ders-stat-kartlar').innerHTML = `
+        <div class="stat-karti"><div class="stat-karti-baslik">Toplam Hesaplama</div><div class="stat-karti-deger">${toplam}</div><div class="stat-karti-alt">ders adı girenler dahil</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ders Adı Girilen</div><div class="stat-karti-deger">${dersAdliGrup}</div><div class="stat-karti-alt">hesaplamadan</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Benzersiz Ders</div><div class="stat-karti-deger">${benzersiz}</div><div class="stat-karti-alt">farklı ders adı</div></div>
+        <div class="stat-karti"><div class="stat-karti-baslik">Ort. ANO</div><div class="stat-karti-deger">${ortAno}</div><div class="stat-karti-alt">tüm hesaplamalar</div></div>
+    `;
+}
+
+function anoDersGrafik() {
+    const sayac = {};
+    anoDersVerisi.flatMap(g => g.dersler).forEach(d => {
+        const key = d.trim().toLowerCase();
+        if (!sayac[key]) sayac[key] = { goruntu: d.trim(), sayi: 0 };
+        sayac[key].sayi++;
+    });
+
+    const sirali = Object.values(sayac).sort((a,b) => b.sayi - a.sayi).slice(0, 15);
+
+    if (chartInstances['anoDersChart']) chartInstances['anoDersChart'].destroy();
+    const ctx = document.getElementById('anoDersChart').getContext('2d');
+    chartInstances['anoDersChart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sirali.map(d => d.goruntu),
+            datasets: [{ data: sirali.map(d => d.sayi), backgroundColor: '#0969da', borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#57606a' }, grid: { color: '#e8ecef' }, beginAtZero: true },
+                y: { ticks: { color: '#1f2328', font: { size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+function anoDersTablo(veri) {
+    if (!veri.length) {
+        document.getElementById('ano-ders-tablo-icerik').innerHTML = '<div class="bos-mesaj">Henüz veri yok.</div>';
+        return;
+    }
+
+    const satirlar = veri.map(g => {
+        const tarih = g.tarih ? new Date(g.tarih).toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+        const dersMetin = g.dersler.length > 0
+            ? g.dersler.map(d => `<span style="display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-size:0.78em;margin:2px 2px 2px 0;">${d}</span>`).join('')
+            : '<span style="color:var(--muted);font-size:0.82em;">—</span>';
+        const anoClass = !g.ano ? '' : g.ano >= 3.0 ? 'color:var(--green)' : g.ano >= 2.0 ? 'color:var(--orange)' : 'color:var(--red)';
+        return `<tr>
+            <td style="font-weight:700;${anoClass}">${g.ano != null ? g.ano.toFixed(2) : '—'}</td>
+            <td>${g.kredi != null ? g.kredi + ' kr' : '—'}</td>
+            <td>${dersMetin}</td>
+            <td style="white-space:nowrap;color:var(--muted);font-size:0.82em;">${tarih}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('ano-ders-tablo-icerik').innerHTML = `
+        <table>
+            <thead><tr><th>ANO</th><th>Kredi</th><th>Dersler</th><th>Tarih</th></tr></thead>
+            <tbody>${satirlar}</tbody>
+        </table>`;
+}
+
+function anoDersFiltrele() {
+    const q = document.getElementById('ano-ders-arama').value.trim().toLowerCase();
+    if (!q) { anoDersTablo(anoDersVerisi); return; }
+    const filtrelendi = anoDersVerisi.filter(g =>
+        (g.ano != null && g.ano.toFixed(2).includes(q)) ||
+        g.dersler.some(d => d.toLowerCase().includes(q))
+    );
+    anoDersTablo(filtrelendi);
 }
 
 // ── BİLDİRİM ──
