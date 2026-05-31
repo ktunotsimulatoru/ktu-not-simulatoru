@@ -64,6 +64,11 @@
 
         .filtre-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
         .filtre-select, .filtre-input { padding: 7px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; }
+        .filtre-tarih-ozel { display: none; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .filtre-tarih-ozel.aktif { display: flex; }
+        .filtre-tarih-ozel input[type="date"] { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; }
+        .filtre-tarih-ozel input[type="date"]:focus { outline: none; border-color: var(--accent); }
+        .filtre-tarih-ozel span { font-size: 0.82em; color: var(--muted); }
         .filtre-select:focus, .filtre-input:focus { outline: none; border-color: var(--accent); }
         .filtre-etiket { font-size: 0.8em; color: var(--muted); }
 
@@ -160,12 +165,22 @@
                 <div class="bolum-baslik" style="margin-bottom:0;">📊 Genel İstatistikler</div>
                 <div class="filtre-bar" style="margin-bottom:0;">
                     <span class="filtre-etiket">Tarih Aralığı:</span>
-                    <select class="filtre-select" id="istat-aralik" onchange="istatistikleriYukle()">
+                    <select class="filtre-select" id="istat-aralik" onchange="aralikDegisti()">
+                        <option value="1">Son 24 Saat</option>
                         <option value="7">Son 7 Gün</option>
                         <option value="30">Son 30 Gün</option>
                         <option value="90">Son 90 Gün</option>
+                        <option value="365">Son 1 Yıl</option>
                         <option value="0" selected>Tüm Zamanlar</option>
+                        <option value="ozel">Özel Aralık</option>
                     </select>
+                    <div class="filtre-tarih-ozel" id="filtre-tarih-ozel">
+                        <span>Başlangıç:</span>
+                        <input type="date" id="istat-baslangic">
+                        <span>Bitiş:</span>
+                        <input type="date" id="istat-bitis-tarih">
+                        <button class="btn btn-mavi" onclick="istatistikleriYukle()">Uygula</button>
+                    </div>
                     <button class="btn btn-gri" onclick="istatistikleriYukle()">↻ Yenile</button>
                 </div>
             </div>
@@ -424,21 +439,54 @@ async function onayBekleyenSayisiGoster() {
     else { badge.style.display = 'none'; }
 }
 
+function aralikDegisti() {
+    const val = document.getElementById('istat-aralik').value;
+    const ozelDiv = document.getElementById('filtre-tarih-ozel');
+    if (val === 'ozel') {
+        ozelDiv.classList.add('aktif');
+    } else {
+        ozelDiv.classList.remove('aktif');
+        istatistikleriYukle();
+    }
+}
+
 // ── İSTATİSTİKLER ──
 async function istatistikleriYukle() {
     const kartlar = document.getElementById('stat-kartlar');
     kartlar.innerHTML = '<div style="color:var(--muted);font-size:0.9em;padding:8px;">Yükleniyor...</div>';
 
     try {
-        const aralik = parseInt(document.getElementById('istat-aralik').value);
-        const sinir = aralik > 0 ? (() => { const d = new Date(); d.setDate(d.getDate() - aralik); return d.toISOString(); })() : null;
+        const aralikVal = document.getElementById('istat-aralik').value;
+        let sinir = null, sinirBitis = null, aralikMetinKisa = 'Tüm zamanlar';
+
+        if (aralikVal === 'ozel') {
+            const bas = document.getElementById('istat-baslangic').value;
+            const bit = document.getElementById('istat-bitis-tarih').value;
+            if (bas) { sinir = new Date(bas); sinir.setHours(0,0,0,0); sinir = sinir.toISOString(); }
+            if (bit) { sinirBitis = new Date(bit); sinirBitis.setHours(23,59,59,999); sinirBitis = sinirBitis.toISOString(); }
+            aralikMetinKisa = bas && bit ? `${bas} – ${bit}` : bas ? `${bas} sonrası` : bit ? `${bit} öncesi` : 'Özel';
+        } else {
+            const aralik = parseInt(aralikVal);
+            if (aralik === 1) {
+                const d = new Date(); d.setHours(d.getHours() - 24);
+                sinir = d.toISOString(); aralikMetinKisa = 'Son 24 saat';
+            } else if (aralik > 0) {
+                const d = new Date(); d.setDate(d.getDate() - aralik);
+                sinir = d.toISOString(); aralikMetinKisa = `Son ${aralik} gün`;
+            }
+        }
 
         const HARF_LISTESI = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
         const HARF_CLR = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107',FD:'#dc3545',FF:'#a21427' };
         const fmtSure = s => s==null ? '—' : s>=60 ? `${Math.floor(s/60)}dk ${Math.round(s%60)}sn` : `${Math.round(s)}sn`;
 
-        const qhl = () => { let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; };
-        const qf  = (filtre) => { let b = qhl(); Object.entries(filtre).forEach(([k,v])=>{ b=b.eq(k,v); }); return b; };
+        const qhl = () => {
+            let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true});
+            if(sinir) b=b.gte('olusturulma_tarihi',sinir);
+            if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis);
+            return b;
+        };
+        const qf = (filtre) => { let b = qhl(); Object.entries(filtre).forEach(([k,v])=>{ b=b.eq(k,v); }); return b; };
 
         // ── 1. Count sorguları (limitsiz, sadece sayı) ──
         const [
@@ -450,9 +498,9 @@ async function istatistikleriYukle() {
             qhl(),
             qf({sekme:'harf'}), qf({sekme:'gerekli'}), qf({sekme:'senaryo'}), qf({sekme:'ano'}),
             qf({is_mobile:true}), qf({is_mobile:false}), qf({sekme:'harf',final_notu:45}),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); return b; })(),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
+            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
             ...HARF_LISTESI.map(h => qf({harf_notu:h}))
         ]);
 
@@ -466,7 +514,10 @@ async function istatistikleriYukle() {
         const paylasimOran = toplam ? ((paylasimToplam/toplam)*100).toFixed(1) : 0;
 
         // ── 2. Tek RPC çağrısı — tüm ağır hesaplamalar DB'de ──
-        const { data: fnData, error: fnErr } = await sb.rpc('istatistik_ozet', sinir ? { sinir_tarihi: sinir } : {});
+        const rpcParams = {};
+        if (sinir) rpcParams.sinir_tarihi = sinir;
+        if (sinirBitis) rpcParams.sinir_bitis = sinirBitis;
+        const { data: fnData, error: fnErr } = await sb.rpc('istatistik_ozet', rpcParams);
         if (fnErr) throw new Error('istatistik_ozet: ' + fnErr.message);
         const fn = fnData || {};
 
@@ -496,13 +547,18 @@ async function istatistikleriYukle() {
         const gunAdlar     = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
         const haftaBantlar = Array.from({length:7},  (_,i) => gunDagilim[i]  || 0);
 
-        // ── 3. Günlük trend (tarih aralığına göre, hâlâ satır bazlı ama filtrelidir) ──
-        const gunSayisi2 = aralik>0 ? aralik : 30;
-        const gunlukSinir = new Date(); gunlukSinir.setDate(gunlukSinir.getDate() - gunSayisi2);
-        const { data: gunlukData } = await sb.from('hesaplama_loglari')
+        // ── 3. Günlük trend ──
+        // Tüm zamanlar seçiliyse son 30 gün, aksi halde seçilen aralık kadar gün göster
+        const aralik = aralikVal === 'ozel' ? 30 : (parseInt(aralikVal) || 0);
+        const gunSayisi2 = aralik > 0 ? Math.min(aralik, 365) : 30;
+        const gunlukSinirTarih = new Date(); gunlukSinirTarih.setDate(gunlukSinirTarih.getDate() - gunSayisi2);
+        const gunlukSinirStr = aralikVal === 'ozel' && sinir ? sinir : gunlukSinirTarih.toISOString();
+        let gunlukQ = sb.from('hesaplama_loglari')
             .select('olusturulma_tarihi')
-            .gte('olusturulma_tarihi', gunlukSinir.toISOString())
+            .gte('olusturulma_tarihi', gunlukSinirStr)
             .order('olusturulma_tarihi');
+        if (sinirBitis) gunlukQ = gunlukQ.lte('olusturulma_tarihi', sinirBitis);
+        const { data: gunlukData } = await gunlukQ;
         const gunSayac = {};
         for(let i=gunSayisi2-1;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); gunSayac[d.toISOString().slice(0,10)]=0; }
         (gunlukData||[]).forEach(r => { const g=r.olusturulma_tarihi?.slice(0,10); if(g&&gunSayac[g]!==undefined) gunSayac[g]++; });
@@ -510,58 +566,70 @@ async function istatistikleriYukle() {
         // ── 4. Ziyaretçi verileri ──
         let ziyaretciToplam=0, ziyaretciMobil=0, topReferrerler=[];
         try {
-            const [ztR, zmR, refR] = await Promise.all([
-                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}),
-                sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true),
-                sb.from('sayfa_goruntuleme').select('referrer').limit(10000)
-            ]);
+            let ztQ = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true});
+            let zmQ = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true);
+            if(sinir) { ztQ=ztQ.gte('olusturulma_tarihi',sinir); zmQ=zmQ.gte('olusturulma_tarihi',sinir); }
+            if(sinirBitis) { ztQ=ztQ.lte('olusturulma_tarihi',sinirBitis); zmQ=zmQ.lte('olusturulma_tarihi',sinirBitis); }
+            const [ztR, zmR] = await Promise.all([ztQ, zmQ]);
             ziyaretciToplam = ztR.count||0;
             ziyaretciMobil  = zmR.count||0;
+            // Referrer: sayfalama ile tümünü çek (limit yok)
             const refSayac={};
-            refR.data?.forEach(r => { const ref=r.referrer||'direkt'; refSayac[ref]=(refSayac[ref]||0)+1; });
-            topReferrerler = Object.entries(refSayac).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            let refSayfa=0, refLimit=1000;
+            while(true) {
+                let refQ = sb.from('sayfa_goruntuleme').select('referrer').range(refSayfa*refLimit,(refSayfa+1)*refLimit-1);
+                if(sinir) refQ=refQ.gte('olusturulma_tarihi',sinir);
+                if(sinirBitis) refQ=refQ.lte('olusturulma_tarihi',sinirBitis);
+                const { data: refData } = await refQ;
+                if(!refData || !refData.length) break;
+                refData.forEach(r => { const ref=r.referrer||'direkt'; refSayac[ref]=(refSayac[ref]||0)+1; });
+                if(refData.length < refLimit) break;
+                refSayfa++;
+            }
+            topReferrerler = Object.entries(refSayac).sort((a,b)=>b[1]-a[1]).slice(0,8);
         } catch(e) {}
 
         const hesaplamaOran    = ziyaretciToplam ? ((toplam/ziyaretciToplam)*100).toFixed(1) : '—';
-        const ziyaretciMobilOran = ziyaretciToplam ? ((ziyaretciMobil/ziyaretciToplam)*100).toFixed(0) : 0;
+        const ziyaretciMasaustuSayisi = ziyaretciToplam - ziyaretciMobil;
         const ffSayisi = harfSayac['FF']||0, aaSayisi = harfSayac['AA']||0;
         const ffOran = toplam ? ((ffSayisi/toplam)*100).toFixed(1) : 0;
         const aaOran = toplam ? ((aaSayisi/toplam)*100).toFixed(1) : 0;
-        const saatAralikMetin = aralik>0 ? `Son ${aralik} gün` : 'Tüm zamanlar';
+        const saatAralikMetin = aralikMetinKisa;
 
         // ── KARTLAR ──
         kartlar.innerHTML = `
             <div class="stat-karti"><div class="stat-karti-baslik">👥 Toplam Ziyaretçi</div>
                 <div class="stat-karti-deger">${ziyaretciToplam.toLocaleString('tr-TR')}</div>
-                <div class="stat-karti-alt">%${ziyaretciMobilOran} mobil · %${hesaplamaOran} hesaplama yaptı</div></div>
+                <div class="stat-karti-alt">📱 ${ziyaretciMobil.toLocaleString('tr-TR')} mobil · 🖥️ ${ziyaretciMasaustuSayisi.toLocaleString('tr-TR')} masaüstü</div>
+                <div class="stat-karti-alt" style="margin-top:2px;color:var(--muted)">Bunların %${hesaplamaOran}'i en az 1 hesaplama yaptı</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">📊 Toplam Hesaplama</div>
                 <div class="stat-karti-deger">${toplam.toLocaleString('tr-TR')}</div>
                 <div class="stat-karti-alt">Harf: ${sekmeler.harf.toLocaleString('tr-TR')} · Gerekli: ${sekmeler.gerekli.toLocaleString('tr-TR')} · Senaryo: ${sekmeler.senaryo.toLocaleString('tr-TR')} · ANO: ${sekmeler.ano.toLocaleString('tr-TR')}</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">❌ FF Oranı</div>
                 <div class="stat-karti-deger" style="color:var(--red)">${ffOran}%</div>
-                <div class="stat-karti-alt">${ffSayisi.toLocaleString('tr-TR')} hesaplama</div></div>
+                <div class="stat-karti-alt">${ffSayisi.toLocaleString('tr-TR')} hesaplamada sonuç FF çıktı</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">✅ AA Oranı</div>
                 <div class="stat-karti-deger" style="color:var(--green)">${aaOran}%</div>
-                <div class="stat-karti-alt">${aaSayisi.toLocaleString('tr-TR')} hesaplama</div></div>
-            <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Vize</div>
+                <div class="stat-karti-alt">${aaSayisi.toLocaleString('tr-TR')} hesaplamada sonuç AA çıktı</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Vize Notu</div>
                 <div class="stat-karti-deger">${ortVize}</div>
-                <div class="stat-karti-alt">${vizeSayisi.toLocaleString('tr-TR')} kayıttan</div></div>
-            <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Final</div>
+                <div class="stat-karti-alt">${vizeSayisi.toLocaleString('tr-TR')} kayıt üzerinden hesaplandı</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">📝 Ort. Final Notu</div>
                 <div class="stat-karti-deger">${ortFinal}</div>
-                <div class="stat-karti-alt">${finalSayisi.toLocaleString('tr-TR')} kayıttan</div></div>
-            <div class="stat-karti"><div class="stat-karti-baslik">😅 Final=45</div>
+                <div class="stat-karti-alt">${finalSayisi.toLocaleString('tr-TR')} kayıt üzerinden hesaplandı</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">😅 Final = 45 Girişi</div>
                 <div class="stat-karti-deger" style="color:var(--orange)">${final45.toLocaleString('tr-TR')}</div>
-                <div class="stat-karti-alt">umut hesaplaması</div></div>
+                <div class="stat-karti-alt">Tam 45 girerek hesaplayan kullanıcı sayısı</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">🎓 Ort. ANO</div>
                 <div class="stat-karti-deger" style="color:var(--purple)">${ortAno}</div>
-                <div class="stat-karti-alt">${anoSayisi.toLocaleString('tr-TR')} hesaplamadan</div></div>
+                <div class="stat-karti-alt">${anoSayisi.toLocaleString('tr-TR')} ANO hesaplamasının ortalaması</div></div>
             <div class="stat-karti"><div class="stat-karti-baslik">🔗 Paylaşılan Link</div>
                 <div class="stat-karti-deger" style="color:var(--accent)">${paylasimToplam.toLocaleString('tr-TR')}</div>
-                <div class="stat-karti-alt">%${paylasimOran} oran · Harf: ${paylasimHarf.toLocaleString('tr-TR')} · ANO: ${paylasimAno.toLocaleString('tr-TR')}</div></div>
-            <div class="stat-karti"><div class="stat-karti-baslik">🔄 Ort. Tekrar</div>
+                <div class="stat-karti-alt">Sonuç paylaşım oranı: %${paylasimOran} · Harf: ${paylasimHarf.toLocaleString('tr-TR')} · ANO: ${paylasimAno.toLocaleString('tr-TR')}</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🔄 Oturum Başı Hesaplama</div>
                 <div class="stat-karti-deger" style="color:var(--accent)">${ortTekrar}</div>
-                <div class="stat-karti-alt">%${tekrar2PlusOran} kullanıcı 2+ kez</div></div>
-            <div class="stat-karti"><div class="stat-karti-baslik">⏱️ Ort. Süre</div>
+                <div class="stat-karti-alt">Kullanıcıların %${tekrar2PlusOran}'i aynı oturumda 2+ hesaplama yaptı</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">⏱️ Ort. Sayfa Süresi</div>
                 <div class="stat-karti-deger">${ortSureStr}</div>
                 <div class="stat-karti-alt">Medyan: ${medyanSureStr}</div></div>
         `;
@@ -605,8 +673,10 @@ async function istatistikleriYukle() {
         ].map(c=>`<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi.toLocaleString('tr-TR')}</strong></span></div>`).join('');
 
         // Günlük trend — DD.MM formatı
-        const gunlukBaslik = aralik>0 ? `Son ${aralik} Gün — Günlük Hesaplama Sayısı` : 'Son 30 Gün — Günlük Hesaplama Sayısı';
-        document.getElementById('gunluk-baslik').textContent = gunlukBaslik;
+        const gunlukBaslikMetin = aralikVal === '0'
+            ? `Son 30 Gün — Günlük Hesaplama Sayısı`
+            : `${aralikMetinKisa} — Günlük Hesaplama Sayısı`;
+        document.getElementById('gunluk-baslik').textContent = gunlukBaslikMetin;
         const gunlukEtiketler = Object.keys(gunSayac).map(d => { const [,ay,gun]=d.split('-'); return `${gun}.${ay}`; });
         chartInstances['gunlukChart'] = new Chart(document.getElementById('gunlukChart'), {
             type: 'line',
@@ -681,12 +751,15 @@ async function istatistikleriYukle() {
 
         // ── Ziyaretçi günlük trendi ──
         try {
-            const trendGunSayisi = aralik > 0 ? aralik : 30;
-            const trendSinir = new Date(); trendSinir.setDate(trendSinir.getDate() - trendGunSayisi);
-            const { data: zTrendData } = await sb.from('sayfa_goruntuleme')
+            const trendGunSayisi = aralikVal === 'ozel' ? 30 : (aralik > 0 ? Math.min(aralik, 365) : 30);
+            const trendSinirTarih = new Date(); trendSinirTarih.setDate(trendSinirTarih.getDate() - trendGunSayisi);
+            const trendSinirStr = aralikVal === 'ozel' && sinir ? sinir : trendSinirTarih.toISOString();
+            let zTrendQ = sb.from('sayfa_goruntuleme')
                 .select('olusturulma_tarihi')
-                .gte('olusturulma_tarihi', trendSinir.toISOString())
+                .gte('olusturulma_tarihi', trendSinirStr)
                 .order('olusturulma_tarihi');
+            if (sinirBitis) zTrendQ = zTrendQ.lte('olusturulma_tarihi', sinirBitis);
+            const { data: zTrendData } = await zTrendQ;
             if (zTrendData && zTrendData.length > 0) {
                 const zGunSayac = {};
                 for(let i=trendGunSayisi-1;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); zGunSayac[d.toISOString().slice(0,10)]=0; }
