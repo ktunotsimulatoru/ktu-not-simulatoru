@@ -174,8 +174,8 @@
                 <button type="submit">Harf Notunu Hesapla</button>
             </form>
             <div class="result-box-wrapper">
-                <div id="grade-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
-                    <button class="paylasim-btn-ic" onclick="paylasimMenuAc('harf', this)" title="Paylaş">🔗</button>
+                <div id="grade-indir-kutu" class="sonuc-indir-kutu" style="display:none;">
+                    <button class="sonuc-indir-btn" onclick="sonucKartModalAc('harf')" title="Sonucu Kart Olarak İndir">🖼️ Kart İndir</button>
                 </div>
                 <div id="grade-result" class="result-box" style="margin-top:0;">
                     <p>Sonuçlar burada gösterilecektir.</p>
@@ -311,8 +311,8 @@
                  <button type="submit">Gerekli Final Notunu Hesapla</button>
             </form>
             <div class="result-box-wrapper">
-                <div id="gerekli-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
-                    <button class="paylasim-btn-ic" onclick="paylasimMenuAc('gerekli', this)" title="Paylaş">🔗</button>
+                <div id="gerekli-indir-kutu" class="sonuc-indir-kutu" style="display:none;">
+                    <button class="sonuc-indir-btn" onclick="sonucKartModalAc('gerekli')" title="Sonucu Kart Olarak İndir">🖼️ Kart İndir</button>
                 </div>
                 <div id="required-result" class="result-box" style="margin-top:0;">
                     <p>Sonuçlar burada gösterilecektir.</p>
@@ -431,9 +431,6 @@
                  <button type="submit">Senaryo Tablosunu Oluştur</button>
             </form>
              <div class="result-box-wrapper">
-                <div id="senaryo-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
-                    <button class="paylasim-btn-ic" onclick="paylasimMenuAc('senaryo', this)" title="Paylaş">🔗</button>
-                </div>
                 <div id="scenario-table-output" class="result-box" style="margin-top: 0;">
                     <p>Lütfen ara sınav bilgilerinizi ve hedef notunuzu girip butona tıklayın.</p>
                 </div>
@@ -464,8 +461,8 @@
             </div>
 
             <div class="result-box-wrapper">
-                <div id="ano-paylasim-kutu" class="paylasim-kutu-ic" style="display:none;">
-                    <button class="paylasim-btn-ic" onclick="paylasimMenuAc('ano', this)" title="Paylaş">🔗</button>
+                <div id="ano-indir-kutu" class="sonuc-indir-kutu" style="display:none;">
+                    <button class="sonuc-indir-btn" onclick="sonucKartModalAc('ano')" title="Sonucu Kart Olarak İndir">🖼️ Kart İndir</button>
                 </div>
                 <div id="gano-sonuc" class="result-box" style="display:none;"></div>
             </div>
@@ -683,6 +680,30 @@
         </div>
     </div>
 
+    <!-- Sonuç Kartı Modalı — hesaplama sonucunu PNG kart olarak önizleyip indirme -->
+    <div class="modal-overlay" id="kartOnizlemeModal" onclick="kartModalKapat(event)">
+        <div class="modal-kutu" style="max-width:420px;">
+            <div class="modal-baslik">
+                <span>🖼️ Sonuç Kartı</span>
+                <button class="modal-kapat-btn" onclick="kartModalKapat(null)">✕</button>
+            </div>
+            <div class="modal-icerik">
+                <canvas id="kart-canvas" class="kart-onizleme-canvas"></canvas>
+                <div class="form-group">
+                    <label for="kart-ders-adi" id="kart-ders-adi-etiket">Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span></label>
+                    <input type="text" id="kart-ders-adi" placeholder="Örn: Matematik I" maxlength="60" oninput="kartOnizlemeGuncelle()">
+                </div>
+                <div class="form-group">
+                    <label for="kart-mesaj">Mesaj <span class="gano-opsiyonel">(opsiyonel)</span></label>
+                    <input type="text" id="kart-mesaj" placeholder="Örn: Harika bir sonuç!" maxlength="70" oninput="kartOnizlemeGuncelle()">
+                </div>
+                <div class="kart-alan-secim-baslik">Kartta Görünsün:</div>
+                <div class="kart-alan-secim" id="kart-alan-secim-alani"></div>
+                <button type="button" class="kart-indir-onayla-btn" onclick="kartPngIndir()">⬇️ PNG Olarak İndir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Anket Modalı — içerik aktif anket varsa JS ile dolduruluyor -->
     <div class="modal-overlay" id="anketModal" onclick="anketModalKapat(event)">
         <div class="modal-kutu">
@@ -715,7 +736,7 @@
     <script src="script.js"></script>
 
 <!-- Paylaşım toast bildirimi -->
-<div id="paylasim-toast" class="paylasim-toast" style="display:none;">🔗 Link kopyalandı!</div>
+<div id="paylasim-toast" class="paylasim-toast" style="display:none;"></div>
 
 </body>
 
