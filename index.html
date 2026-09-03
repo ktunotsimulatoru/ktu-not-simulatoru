@@ -43,31 +43,8 @@
         </div>
     </header>
 
-    <!-- Dinamik Duyurular (Supabase'den) -->
+    <!-- Duyurular artık tamamen admin panelinden yönetiliyor (Supabase 'duyurular' tablosu) -->
     <div id="dinamik-duyurular-wrapper"></div>
-
-    <!-- Duyuru Bandı (Sabit) -->
-    <div class="duyuru-wrapper" id="duyuruWrapper">
-        <div class="duyuru-bandi" id="duyuruBandi">
-            <!-- Tıklanabilir özet satırı -->
-            <div class="duyuru-ozet" onclick="duyuruToggle()" role="button" tabindex="0" aria-expanded="false" id="duyuruOzetBtn">
-                <span class="duyuru-etiket">📢 Önemli Duyuru</span>
-                <span class="duyuru-ozet-metin"><strong>2026-2027 eğitim öğretim yılından itibaren</strong> not hesaplama sisteminde değişiklikler yapılacaktır. <span class="duyuru-tikla">Detaylar için tıklayın ▼</span></span>
-                <button class="duyuru-kapat" onclick="event.stopPropagation(); duyuruKapat();" aria-label="Duyuruyu kapat">✕</button>
-            </div>
-            <!-- Açılır detay -->
-            <div class="duyuru-detay" id="duyuruDetay">
-                <div class="duyuru-detay-icerik">
-                    <p class="duyuru-alt-metin">Yaz ayından itibaren bu değişiklikler sitemize uygulanmaya çalışılacaktır. <a href="https://ktu.edu.tr/oidb/duyuru/onlisans-ve-lisans-programlarinda-basari-notunun-degerlendirilmesine-dair-usul-ve-esaslarda-degisiklik" target="_blank" rel="noopener" class="duyuru-link">Resmi duyuruya git →</a></p>
-                    <div class="duyuru-degisiklik-kutu">
-                        <div class="duyuru-degisiklik-baslik">⚠️ En Önemli Değişiklik</div>
-                        <p>Bir dersteki HBN'u 100 üzerinden <strong>30'un altında</strong> olan öğrenciler o ders için başarısız sayılır ve <strong>FF</strong> harfli notu verilir.</p>
-                        <div class="duyuru-ornek">📌 <em>Örnek: Vizeden 14, Finalden 45 → HBN = (14×0.5)+(45×0.5) = <strong>29.5</strong> → 30'un altında → <strong>FF</strong></em></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <main>
         <div class="tab-buttons">
@@ -81,6 +58,37 @@
         <div id="harfNotu" class="tab-content active">
             <h2>Harf Notu Hesaplama</h2>
             <form id="grade-calculator-form" novalidate>
+                <div class="form-group sistem-secim-grup">
+                    <label>Hesaplama Sistemi:</label>
+                    <div class="sistem-secim-satir">
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo1Harf">
+                                <input type="radio" id="sistemTablo1Harf" name="hesaplamaSistemiHarf" value="tablo1" checked onchange="sistemSecimiDegisti('Harf')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">30+ Öğrenci</span><span class="sistem-karti-alt">T-Skoru</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo1')" title="Bu sistem hakkında bilgi" aria-label="30+ öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo2Harf">
+                                <input type="radio" id="sistemTablo2Harf" name="hesaplamaSistemiHarf" value="tablo2" onchange="sistemSecimiDegisti('Harf')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">1-29 Öğrenci</span><span class="sistem-karti-alt">Yüzdelik Dilim</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo2')" title="Bu sistem hakkında bilgi" aria-label="1-29 öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemMutlakHarf">
+                                <input type="radio" id="sistemMutlakHarf" name="hesaplamaSistemiHarf" value="mutlak" onchange="sistemSecimiDegisti('Harf')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">Mutlak Sistem</span><span class="sistem-karti-alt">Doğrudan Puan</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('mutlak')" title="Bu sistem hakkında bilgi" aria-label="Mutlak sistem hakkında bilgi">ℹ️</button>
+                        </div>
+                    </div>
+                    <div id="ogrenciSayisiKutuHarf" class="form-group" style="display:none; margin:12px 0 0 0;">
+                        <label for="ogrenci-sayisi-harf">Tahmini Öğrenci Sayısı (Opsiyonel):</label>
+                        <input type="number" id="ogrenci-sayisi-harf" name="ogrenci_sayisi_harf" min="1" max="29" step="1">
+                        <small>Zorunlu değildir; girerseniz sonuç mesajında dikkate alındığı belirtilir.</small>
+                    </div>
+                </div>
                 <div class="form-group calculation-method">
                     <label>Ara Sınav Hesaplama Yöntemi:</label>
                     <div>
@@ -130,18 +138,39 @@
                     <input type="number" id="final-grade" name="final_grade" min="0" max="100" step="0.01" required>
                     <small>Final notunuzu gireceğiniz alan.</small>
                 </div>
-                <div class="form-group">
-                    <label for="class-avg">Sınıf Ham Başarı Notu (Çan) Ortalaması:</label>
-                    <input type="number" id="class-avg" name="class_avg" min="0" max="100" step="0.01" required>
+                <div id="sinifOrtalamaKutuHarf">
+                    <div class="form-group">
+                        <label for="class-avg">Sınıf Çan Ortalaması (Ham Başarı Notu):</label>
+                        <input type="number" id="class-avg" name="class_avg" min="0" max="100" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="class-stddev">Standart Sapma:</label>
+                        <input type="number" id="class-stddev" name="class_stddev" min="0" step="0.01" required>
+                    </div>
+                    <button type="button" class="ders-veri-modal-btn" onclick="modalAc('harf')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
+                    <p class="info-text">
+                        <strong>Not:</strong> Sınıf Çan Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
+                    </p>
                 </div>
-                <div class="form-group">
-                    <label for="class-stddev">Standart Sapma:</label>
-                    <input type="number" id="class-stddev" name="class_stddev" min="0" step="0.01" required>
-                </div>
-                <button type="button" class="ders-veri-modal-btn" onclick="modalAc('harf')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
-                <p class="info-text">
-                    <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
+                <p id="mutlakBilgiNotuHarf" class="info-text" style="display:none;">
+                    <strong>Not:</strong> Mutlak sistemde sınıf çan ortalaması ve standart sapma gerekmez; harf notunuz doğrudan puanınıza göre belirlenir.
                 </p>
+                <div class="form-group calculation-method">
+                    <label>Fakülteniz (Final Notu Alt Sınırı İçin):</label>
+                    <div>
+                        <input type="radio" id="fakulteGenelHarf" name="fakulteHarf" value="genel" checked>
+                        <label for="fakulteGenelHarf">Genel (Final ≥ 45)</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="fakulteSaglikHarf" name="fakulteHarf" value="saglik">
+                        <label for="fakulteSaglikHarf">Sağlık Bilimleri Fakültesi (Final ≥ 50)</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="fakulteEczacilikHarf" name="fakulteHarf" value="eczacilik">
+                        <label for="fakulteEczacilikHarf">Eczacılık Fakültesi (Final ≥ 60)</label>
+                    </div>
+                    <small>Bu seçim yalnızca finalden alınması gereken en az puanı etkiler (KTÜ Usul ve Esaslar Madde 8).</small>
+                </div>
                 <button type="submit">Harf Notunu Hesapla</button>
             </form>
             <div class="result-box-wrapper">
@@ -153,10 +182,10 @@
                 </div>
             </div>
             
-            <div id="tScoreChartContainer" style="width:100%; max-width:650px; height: 400px; margin: 25px auto 0 auto; padding: 15px; background-color: #f8f9fa; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none;">
+            <div id="tScoreChartContainer" style="width:100%; max-width:650px; height: 400px; margin: 25px auto 0 auto; padding: 15px; background-color: var(--tab-bg); border-radius: 5px; box-shadow: 0 2px 5px var(--shadow-color); display: none;">
                 <h3 style="text-align: center; color: var(--content-title); margin-top:0; margin-bottom: 15px;">T-Skoru Dağılım Grafiği</h3>
                 <canvas id="tScoreChart"></canvas>
-                <div id="tScoreChartExplanation" style="font-size: 0.85em; color: #454545; margin-top: 15px; padding: 10px 15px; background-color: #fff; border: 1px solid #e0e0e0; border-radius: 4px; line-height: 1.5;">
+                <div id="tScoreChartExplanation" style="font-size: 0.85em; color: var(--small-text); margin-top: 15px; padding: 10px 15px; background-color: var(--main-bg); border: 1px solid var(--input-border); border-radius: 4px; line-height: 1.5;">
                     {/* Açıklama buraya JavaScript ile eklenecek */}
                 </div>
             </div>
@@ -165,6 +194,37 @@
         <div id="gerekliNot" class="tab-content">
             <h2>Gerekli Final Notu Hesaplama</h2>
             <form id="required-grade-form" novalidate>
+                <div class="form-group sistem-secim-grup">
+                    <label>Hesaplama Sistemi:</label>
+                    <div class="sistem-secim-satir">
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo1Gerekli">
+                                <input type="radio" id="sistemTablo1Gerekli" name="hesaplamaSistemiGerekli" value="tablo1" checked onchange="sistemSecimiDegisti('Gerekli')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">30+ Öğrenci</span><span class="sistem-karti-alt">T-Skoru</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo1')" title="Bu sistem hakkında bilgi" aria-label="30+ öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo2Gerekli">
+                                <input type="radio" id="sistemTablo2Gerekli" name="hesaplamaSistemiGerekli" value="tablo2" onchange="sistemSecimiDegisti('Gerekli')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">1-29 Öğrenci</span><span class="sistem-karti-alt">Yüzdelik Dilim</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo2')" title="Bu sistem hakkında bilgi" aria-label="1-29 öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemMutlakGerekli">
+                                <input type="radio" id="sistemMutlakGerekli" name="hesaplamaSistemiGerekli" value="mutlak" onchange="sistemSecimiDegisti('Gerekli')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">Mutlak Sistem</span><span class="sistem-karti-alt">Doğrudan Puan</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('mutlak')" title="Bu sistem hakkında bilgi" aria-label="Mutlak sistem hakkında bilgi">ℹ️</button>
+                        </div>
+                    </div>
+                    <div id="ogrenciSayisiKutuGerekli" class="form-group" style="display:none; margin:12px 0 0 0;">
+                        <label for="ogrenci-sayisi-gerekli">Tahmini Öğrenci Sayısı (Opsiyonel):</label>
+                        <input type="number" id="ogrenci-sayisi-gerekli" name="ogrenci_sayisi_gerekli" min="1" max="29" step="1">
+                        <small>Zorunlu değildir; girerseniz sonuç mesajında dikkate alındığı belirtilir.</small>
+                    </div>
+                </div>
                 <div class="form-group calculation-method">
                     <label>Ara Sınav Hesaplama Yöntemi:</label>
                     <div>
@@ -215,18 +275,39 @@
                           <option value="CB">CB</option> <option value="CC">CC</option> <option value="DC">DC</option>
                       </select>
                   </div>
-                   <div class="form-group">
-                     <label for="req-class-avg">Sınıf Ham Başarı Notu (Çan) Ortalaması:</label>
-                     <input type="number" id="req-class-avg" name="req_class_avg" min="0" max="100" step="0.01" required>
+                 <div id="sinifOrtalamaKutuGerekli">
+                     <div class="form-group">
+                         <label for="req-class-avg">Sınıf Çan Ortalaması (Ham Başarı Notu):</label>
+                         <input type="number" id="req-class-avg" name="req_class_avg" min="0" max="100" step="0.01" required>
+                     </div>
+                     <div class="form-group">
+                         <label for="req-class-stddev">Standart Sapma:</label>
+                         <input type="number" id="req-class-stddev" name="req_class_stddev" min="0" step="0.01" required>
+                     </div>
+                     <button type="button" class="ders-veri-modal-btn" onclick="modalAc('gerekli')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
+                      <p class="info-text">
+                          <strong>Not:</strong> Sınıf Çan Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
+                      </p>
                  </div>
-                  <div class="form-group">
-                     <label for="req-class-stddev">Standart Sapma:</label>
-                     <input type="number" id="req-class-stddev" name="req_class_stddev" min="0" step="0.01" required>
+                 <p id="mutlakBilgiNotuGerekli" class="info-text" style="display:none;">
+                     <strong>Not:</strong> Mutlak sistemde sınıf çan ortalaması ve standart sapma gerekmez; gereken final notu doğrudan hedeflenen puana göre belirlenir.
+                 </p>
+                 <div class="form-group calculation-method">
+                     <label>Fakülteniz (Final Notu Alt Sınırı İçin):</label>
+                     <div>
+                         <input type="radio" id="fakulteGenelGerekli" name="fakulteGerekli" value="genel" checked>
+                         <label for="fakulteGenelGerekli">Genel (Final ≥ 45)</label>
+                     </div>
+                     <div>
+                         <input type="radio" id="fakulteSaglikGerekli" name="fakulteGerekli" value="saglik">
+                         <label for="fakulteSaglikGerekli">Sağlık Bilimleri Fakültesi (Final ≥ 50)</label>
+                     </div>
+                     <div>
+                         <input type="radio" id="fakulteEczacilikGerekli" name="fakulteGerekli" value="eczacilik">
+                         <label for="fakulteEczacilikGerekli">Eczacılık Fakültesi (Final ≥ 60)</label>
+                     </div>
+                     <small>Bu seçim yalnızca finalden alınması gereken en az puanı etkiler (KTÜ Usul ve Esaslar Madde 8).</small>
                  </div>
-                 <button type="button" class="ders-veri-modal-btn" onclick="modalAc('gerekli')">📊 Bu Dersin Paylaşılan Verilerini Gör</button>
-                  <p class="info-text">
-                      <strong>Not:</strong> Sınıf Ortalaması ve Standart Sapma, dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan (Bağıl Değerlendirmeye katılan) öğrencilerin notlarına göre hesaplanır.
-                  </p>
                  <button type="submit">Gerekli Final Notunu Hesapla</button>
             </form>
             <div class="result-box-wrapper">
@@ -245,6 +326,40 @@
                 Çan ortalaması bilinmediğinde, varsayımsal senaryolara göre CC veya DC için gereken minimum final notunu gösterir.
             </p>
             <form id="scenario-form" novalidate>
+                 <div class="form-group sistem-secim-grup">
+                    <label>Hesaplama Sistemi:</label>
+                    <div class="sistem-secim-satir">
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo1Senaryo">
+                                <input type="radio" id="sistemTablo1Senaryo" name="hesaplamaSistemiSenaryo" value="tablo1" checked onchange="sistemSecimiDegisti('Senaryo')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">30+ Öğrenci</span><span class="sistem-karti-alt">T-Skoru</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo1')" title="Bu sistem hakkında bilgi" aria-label="30+ öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemTablo2Senaryo">
+                                <input type="radio" id="sistemTablo2Senaryo" name="hesaplamaSistemiSenaryo" value="tablo2" onchange="sistemSecimiDegisti('Senaryo')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">1-29 Öğrenci</span><span class="sistem-karti-alt">Yüzdelik Dilim</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('tablo2')" title="Bu sistem hakkında bilgi" aria-label="1-29 öğrenci sistemi hakkında bilgi">ℹ️</button>
+                        </div>
+                        <div class="sistem-karti">
+                            <label class="sistem-karti-ic" for="sistemMutlakSenaryo">
+                                <input type="radio" id="sistemMutlakSenaryo" name="hesaplamaSistemiSenaryo" value="mutlak" onchange="sistemSecimiDegisti('Senaryo')">
+                                <span class="sistem-karti-metin"><span class="sistem-karti-baslik">Mutlak Sistem</span><span class="sistem-karti-alt">Doğrudan Puan</span></span>
+                            </label>
+                            <button type="button" class="sistem-bilgi-btn" onclick="sistemBilgiGoster('mutlak')" title="Bu sistem hakkında bilgi" aria-label="Mutlak sistem hakkında bilgi">ℹ️</button>
+                        </div>
+                    </div>
+                    <div id="ogrenciSayisiKutuSenaryo" class="form-group" style="display:none; margin:12px 0 0 0;">
+                        <label for="ogrenci-sayisi-senaryo">Tahmini Öğrenci Sayısı (Opsiyonel):</label>
+                        <input type="number" id="ogrenci-sayisi-senaryo" name="ogrenci_sayisi_senaryo" min="1" max="29" step="1">
+                        <small>Zorunlu değildir; girerseniz sonuç mesajında dikkate alındığı belirtilir.</small>
+                    </div>
+                    <p id="mutlakBilgiNotuSenaryo" class="info-text" style="display:none; margin:12px 0 0 0;">
+                        <strong>Not:</strong> Mutlak sistemde sınıf çan ortalaması senaryolarının bir önemi yoktur; tek bir sonuç gösterilir.
+                    </p>
+                 </div>
                  <div class="form-group calculation-method">
                     <label>Ara Sınav Hesaplama Yöntemi:</label>
                     <div>
@@ -297,6 +412,22 @@
                          <label for="targetDC">DC (Koşullu Geçme)</label>
                      </div>
                  </div>
+                 <div class="form-group calculation-method">
+                     <label>Fakülteniz (Final Notu Alt Sınırı İçin):</label>
+                     <div>
+                         <input type="radio" id="fakulteGenelSenaryo" name="fakulteSenaryo" value="genel" checked>
+                         <label for="fakulteGenelSenaryo">Genel (Final ≥ 45)</label>
+                     </div>
+                     <div>
+                         <input type="radio" id="fakulteSaglikSenaryo" name="fakulteSenaryo" value="saglik">
+                         <label for="fakulteSaglikSenaryo">Sağlık Bilimleri Fakültesi (Final ≥ 50)</label>
+                     </div>
+                     <div>
+                         <input type="radio" id="fakulteEczacilikSenaryo" name="fakulteSenaryo" value="eczacilik">
+                         <label for="fakulteEczacilikSenaryo">Eczacılık Fakültesi (Final ≥ 60)</label>
+                     </div>
+                     <small>Bu seçim yalnızca finalden alınması gereken en az puanı etkiler (KTÜ Usul ve Esaslar Madde 8).</small>
+                 </div>
                  <button type="submit">Senaryo Tablosunu Oluştur</button>
             </form>
              <div class="result-box-wrapper">
@@ -340,7 +471,7 @@
             </div>
 
             <p class="info-text" style="margin-top: 1.5rem;">
-                <strong>Not:</strong> Bu hesaplama KTÜ Senatosu Usul ve Esasları Madde 11 ve 12'ye göre yapılmaktadır. DC notu koşullu geçme notu olup, dönem ANO'sunuzun 2.00 ve üzerinde olması gerekir.
+                <strong>Not:</strong> Bu hesaplama KTÜ Senatosu Usul ve Esasları Madde 11 ve 13'e göre yapılmaktadır. DC notu koşullu geçme notu olup, dönem ANO'sunuzun 2.00 ve üzerinde olması gerekir.
             </p>
         </div>
         <div id="veriPaylasim" class="tab-content">
@@ -463,13 +594,13 @@
                     </div>
 
                     <!-- Sıra: Standart Sapma → Ham Başarı Ortalaması → Öğrenci Sayısı -->
-                    <div class="form-row">
+                    <div class="form-row form-row-label-hizali">
                         <div class="form-group">
                             <label for="ekle-std">Standart Sapma:</label>
                             <input type="number" id="ekle-std" min="0" max="50" step="0.01" placeholder="0 – 50">
                         </div>
                         <div class="form-group">
-                            <label for="ekle-ortalama">Ham Başarı Ortalaması (Çan): <span class="zorunlu">*</span></label>
+                            <label for="ekle-ortalama">Sınıf Çan Ortalaması (Ham Başarı): <span class="zorunlu">*</span></label>
                             <input type="number" id="ekle-ortalama" min="0" max="100" step="0.01" placeholder="0 – 100">
                         </div>
                         <div class="form-group">
@@ -504,6 +635,17 @@
     </main>
 
     <!-- Ders Verisi Modal -->
+    <!-- Hesaplama Sistemi Bilgi Modalı -->
+    <div class="modal-overlay" id="sistemBilgiModal" onclick="sistemBilgiKapat(event)">
+        <div class="modal-kutu" style="max-width:480px;">
+            <div class="modal-baslik">
+                <span id="sistemBilgiBaslik">Sistem Bilgisi</span>
+                <button class="modal-kapat-btn" onclick="sistemBilgiKapat(null)">✕</button>
+            </div>
+            <div class="modal-icerik" id="sistemBilgiIcerik"></div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="dersVeriModal" onclick="modalKapat(event)">
         <div class="modal-kutu">
             <div class="modal-baslik">
@@ -536,9 +678,24 @@
                 <div id="modal-veri-alani">
                     <p class="veri-bos">Fakülte, bölüm ve ders seçerek verileri görüntüleyin.</p>
                 </div>
+                <button type="button" class="ders-veri-modal-btn" style="margin-top:12px;width:100%;" onclick="dersVeriModalPaylasaGit()">📤 Sen de Ders Verisi Paylaş</button>
             </div>
         </div>
     </div>
+
+    <!-- Anket Modalı — içerik aktif anket varsa JS ile dolduruluyor -->
+    <div class="modal-overlay" id="anketModal" onclick="anketModalKapat(event)">
+        <div class="modal-kutu">
+            <div class="modal-baslik">
+                <span id="anket-modal-baslik">📊 Anket</span>
+                <button class="modal-kapat-btn" onclick="anketModalKapat(null)">✕</button>
+            </div>
+            <div class="modal-icerik" id="anket-modal-icerik"></div>
+        </div>
+    </div>
+
+    <!-- Anket bildirim butonu — sadece aktif ve henüz yanıtlanmamış bir anket varsa JS ile dolduruluyor -->
+    <div id="anket-pill-wrapper"></div>
 
     <footer>
          <!-- İstatistiksever -->
