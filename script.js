@@ -2506,6 +2506,7 @@ async function sayfaGoruntulemeLogKaydet() {
                 const host = new URL(referrerHam).hostname.replace('www.', '');
                 if (host.includes('google')) referrer = 'google';
                 else if (host.includes('bing')) referrer = 'bing';
+                else if (host.includes('yandex')) referrer = 'yandex';
                 else if (host.includes('instagram')) referrer = 'instagram';
                 else if (host.includes('twitter') || host.includes('x.com')) referrer = 'twitter';
                 else if (host.includes('whatsapp')) referrer = 'whatsapp';
