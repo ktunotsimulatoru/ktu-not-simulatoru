@@ -365,6 +365,21 @@ function sistemSecimiDegisti(formType) {
         el.required = !mutlakSecili;
         if (mutlakSecili) clearFieldError(el);
     });
+
+    // "Mezuniyet Sınavı" giriş yöntemi yalnızca Harf Notu Hesaplama sekmesinde ve
+    // Mutlak Sistem seçiliyken sunulur. Sistem Mutlak dışına alınırsa, seçili kalmış
+    // olabilecek Mezuniyet Sınavı yöntemini "Tek Not Girişi"ne geri döndürüp arayüzü
+    // güncelliyoruz ki gizli kalan bir yöntemle form kilitlenmesin.
+    if (formType === 'Harf') {
+        const mezuniyetSecenegi = document.getElementById('mezuniyetSinaviSecenegiHarf');
+        if (mezuniyetSecenegi) mezuniyetSecenegi.style.display = mutlakSecili ? '' : 'none';
+        if (!mutlakSecili) {
+            const mezuniyetRadio = document.getElementById('mezuniyetSinaviHarf');
+            const tekRadio = document.getElementById('tekOrtalamaHarf');
+            if (mezuniyetRadio && mezuniyetRadio.checked && tekRadio) tekRadio.checked = true;
+        }
+        toggleInputFields('Harf');
+    }
 }
 
 // --- Hesaplama Sistemi Bilgi Modalı ---
@@ -519,6 +534,39 @@ function toggleInputFields(formType) {
     const vizeAgirlikInputDetayli = document.getElementById(`vize-agirlik-${formSuffixLower}`);
     const odevNotuInputDetayli = document.getElementById(`odev-notu-${formSuffixLower}`);
     const odevAgirlikInputDetayli = document.getElementById(`odev-agirlik-${formSuffixLower}`);
+
+    // --- Mezuniyet Sınavı (yalnızca Harf Notu sekmesinde, Mutlak Sistem seçiliyken sunulur) ---
+    // Bu yöntemde ara sınav/final ayrımı, sınıf ortalaması ve final alt sınırı hiç aranmaz;
+    // tek bir "Sınav Notu" girilir ve doğrudan Mutlak Değerlendirme aralıklarıyla karşılaştırılır.
+    if (formType === 'Harf') {
+        const secilenYontemHarf = document.querySelector(`input[name="hesaplamaYontemi${formType}"]:checked`)?.value || 'tek';
+        const mezuniyetSecili = secilenYontemHarf === 'mezuniyet';
+        const mezuniyetGrup = document.getElementById('mezuniyet-sinav-grupHarf');
+        const normalDegerlendirmeBlok = document.getElementById('normal-degerlendirme-blokHarf');
+        const mezuniyetBilgiNotu = document.getElementById('mezuniyetBilgiNotuHarf');
+        const sinavNotuInput = document.getElementById('sinav-notu-harf');
+        const finalGradeInput = document.getElementById('final-grade');
+
+        if (mezuniyetGrup) mezuniyetGrup.classList.toggle('active', mezuniyetSecili);
+        if (normalDegerlendirmeBlok) normalDegerlendirmeBlok.style.display = mezuniyetSecili ? 'none' : '';
+        if (mezuniyetBilgiNotu) mezuniyetBilgiNotu.style.display = mezuniyetSecili ? '' : 'none';
+        if (sinavNotuInput) {
+            sinavNotuInput.required = mezuniyetSecili;
+            if (!mezuniyetSecili) clearFieldError(sinavNotuInput);
+        }
+        if (finalGradeInput) {
+            finalGradeInput.required = !mezuniyetSecili;
+            if (mezuniyetSecili) clearFieldError(finalGradeInput);
+        }
+
+        if (mezuniyetSecili) {
+            tekOrtalamaGrup.classList.remove('active');
+            detayliGirisGrup.classList.remove('active');
+            if (tekOrtalamaInput) { tekOrtalamaInput.required = false; clearFieldError(tekOrtalamaInput); }
+            detayliInputs.forEach(input => { input.required = false; clearFieldError(input); });
+            return;
+        }
+    }
 
     if (tekOrtalamaRadio.checked) {
         tekOrtalamaGrup.classList.add('active');
@@ -939,6 +987,52 @@ document.addEventListener('DOMContentLoaded', () => {
             let formGecerli = true;
             const secilenYontem = harfNotuFormu.querySelector('input[name="hesaplamaYontemiHarf"]:checked').value;
 
+            // --- Mezuniyet Sınavı: tamamen ayrı, sade bir hesaplama akışı ---
+            // Ara sınav/final ayrımı, sınıf ortalaması ve final alt sınırı bu yöntemde hiç
+            // aranmaz; girilen tek "Sınav Notu" doğrudan Mutlak Değerlendirme aralıklarıyla
+            // karşılaştırılıp harf notu bulunur, ardından geçiş koşuluna göre mesaj üretilir.
+            if (secilenYontem === 'mezuniyet') {
+                const sinavNotuInputHarf = document.getElementById('sinav-notu-harf');
+                if (!validateNumberField(sinavNotuInputHarf, 'Sınav Notu', 0, 100)) {
+                    harfNotuSonucAlani.innerHTML = `<p class="error-message">Lütfen formdaki işaretli hataları düzeltin.</p>`;
+                    sinavNotuInputHarf.focus();
+                    return;
+                }
+
+                const sinavNotu = parseFloat(sinavNotuInputHarf.value);
+                const harfNotuMezuniyet = getMutlakDegerlendirmeNotu(sinavNotu);
+
+                const mantikAdimlariMezuniyet = [
+                    `Mezuniyet sınavında ara sınav/final ayrımı ve sınıf ortalaması aranmaz; girdiğiniz Sınav Notu (<strong>${sinavNotu.toFixed(2)}</strong>) doğrudan Mutlak Değerlendirme aralıklarıyla karşılaştırıldı.`,
+                    `Bu karşılaştırma sonucunda harf notunuz <strong>${harfNotuMezuniyet}</strong> olarak belirlendi.`
+                ];
+
+                let sonucMesajiMezuniyet = "";
+                const harfNotuBadgeHTMLMezuniyet = `<span class="grade-display-badge grade-display-${harfNotuMezuniyet.toLowerCase()}">${harfNotuMezuniyet}</span>`;
+                sonucMesajiMezuniyet += `Sınav Notu: <strong>${sinavNotu.toFixed(2)}</strong><br>`;
+                sonucMesajiMezuniyet += `Harf Notu: <strong style="font-size: 1.1em; vertical-align: middle;">${harfNotuBadgeHTMLMezuniyet}</strong>`;
+                sonucMesajiMezuniyet += buildHesaplamaMantigiHTML('Nasıl Hesaplandı?', mantikAdimlariMezuniyet);
+
+                if (["AA", "BA", "BB", "CB", "CC"].includes(harfNotuMezuniyet)) {
+                    sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">🎉 <strong>Tebrikler!</strong> Mezuniyet sınavını başarıyla geçtiniz. Diplomanızın hayırlısı olsun, önünüzdeki hayatta başarılar dileriz.</p>`;
+                } else if (harfNotuMezuniyet === "DC") {
+                    sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">ℹ️ Mezuniyet sınavından <strong>DC</strong> aldınız. Bu durumda iki ihtimal söz konusu: bu dersi aldığınız <strong>son dönemdeki dönem ortalamanız (ANO) 2.00 ve üzerindeyse</strong> mezuniyet sınavını geçmiş olursunuz; o dönemdeki ortalamanız <strong>2.00'ın altındaysa</strong>, maalesef mezuniyet sınavını geçememiş olursunuz.</p>`;
+                } else {
+                    sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">❌ Maalesef mezuniyet sınavını geçemediniz.</p>`;
+                }
+
+                harfNotuSonucAlani.innerHTML = sonucMesajiMezuniyet;
+                dersiLinkGoster('ders-link-harf');
+                hesaplamaLogKaydet('harf', harfNotuMezuniyet, null, null, {
+                    sistem_secimi: 'mutlak',
+                    fakulte_turu: harfNotuFormu.querySelector('input[name="fakulteHarf"]:checked')?.value || 'genel',
+                    giris_yontemi: 'mezuniyet',
+                    sinav_notu: sinavNotu
+                });
+                sonucIndirButonuGoster('harf');
+                return;
+            }
+
             if (secilenYontem === 'tek') {
                 if (!validateNumberField(midtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
             } else {
@@ -1073,7 +1167,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sinif_ortalamasi: isNaN(sinifOrtLog) ? undefined : sinifOrtLog,
                 std_sapma: isNaN(stdSapmaLog) ? undefined : stdSapmaLog,
                 sistem_secimi: sistemSeciliHarf,
-                fakulte_turu: harfNotuFormu.querySelector('input[name="fakulteHarf"]:checked')?.value || 'genel'
+                fakulte_turu: harfNotuFormu.querySelector('input[name="fakulteHarf"]:checked')?.value || 'genel',
+                giris_yontemi: secilenYontem
             });
             sonucIndirButonuGoster('harf');
         });
@@ -1255,7 +1350,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sinif_ortalamasi: isNaN(reqOrtLog) ? undefined : reqOrtLog,
                 std_sapma: isNaN(reqStdLog) ? undefined : reqStdLog,
                 sistem_secimi: sistemSeciliGerekli,
-                fakulte_turu: gerekliNotFormu.querySelector('input[name="fakulteGerekli"]:checked')?.value || 'genel'
+                fakulte_turu: gerekliNotFormu.querySelector('input[name="fakulteGerekli"]:checked')?.value || 'genel',
+                giris_yontemi: secilenYontem
             });
             sonucIndirButonuGoster('gerekli');
         });
@@ -1367,7 +1463,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryoMutlak) ? null : vizeLogSenaryoMutlak, null, {
                     hedef_harf_notu: hedefHarfNotu || undefined,
                     sistem_secimi: sistemSeciliSenaryo,
-                    fakulte_turu: senaryoFormu.querySelector('input[name="fakulteSenaryo"]:checked')?.value || 'genel'
+                    fakulte_turu: senaryoFormu.querySelector('input[name="fakulteSenaryo"]:checked')?.value || 'genel',
+                    giris_yontemi: secilenYontem
                 });
                 return;
             }
@@ -1461,7 +1558,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hesaplamaLogKaydet('senaryo', null, isNaN(vizeLogSenaryo) ? null : vizeLogSenaryo, null, {
                 hedef_harf_notu: hedefHarfNotu || undefined,
                 sistem_secimi: sistemSeciliSenaryo,
-                fakulte_turu: senaryoFormu.querySelector('input[name="fakulteSenaryo"]:checked')?.value || 'genel'
+                fakulte_turu: senaryoFormu.querySelector('input[name="fakulteSenaryo"]:checked')?.value || 'genel',
+                giris_yontemi: secilenYontem
             });
         });
     }
@@ -3164,6 +3262,11 @@ async function hesaplamaLogKaydet(sekme, harfNotu, vizeNotu, finalNotu, ekstra =
         if (ekstra.std_sapma !== undefined)       insertData.std_sapma       = ekstra.std_sapma;
         if (ekstra.sistem_secimi !== undefined)   insertData.sistem_secimi   = ekstra.sistem_secimi;
         if (ekstra.fakulte_turu !== undefined)    insertData.fakulte_turu    = ekstra.fakulte_turu;
+        // Ara Sınav Hesaplama Yöntemi (tek / detayli / mezuniyet) — sistem bazlı yöntem kullanım
+        // istatistikleri için. Mezuniyet Sınavı'nın notu ise final_notu'ya KARIŞTIRILMAZ; kendi
+        // sütununda (sinav_notu) tutulur ki genel "Ort. Final Notu" istatistiğini bozmasın.
+        if (ekstra.giris_yontemi !== undefined)   insertData.giris_yontemi   = ekstra.giris_yontemi;
+        if (ekstra.sinav_notu !== undefined && ekstra.sinav_notu !== null) insertData.sinav_notu = Math.round(ekstra.sinav_notu);
         insertData.is_mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         await getSupabase().from('hesaplama_loglari').insert(insertData);
     } catch (e) { /* sessizce geç */ }

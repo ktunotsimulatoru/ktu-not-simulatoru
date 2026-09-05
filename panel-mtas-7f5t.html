@@ -733,6 +733,55 @@ async function istatistikleriYukle() {
             topReferrerler = Object.entries(refSayac).sort((a,b)=>b[1]-a[1]).slice(0,8);
         } catch(e) {}
 
+        // ── 5. Ara Sınav Hesaplama Yöntemi kullanımı — sistem bazında (Tek Not Girişi /
+        // Detaylı Giriş / Mezuniyet Sınavı). 'giris_yontemi' sütunu henüz eklenmediyse
+        // (migration çalıştırılmadıysa) sorgular hatasız biçimde 0 döner, panel kırılmaz.
+        const [
+            t1TekR, t1DetayliR, t2TekR, t2DetayliR, mTekR, mDetayliR, mMezuniyetR
+        ] = await Promise.allSettled([
+            qf({sistem_secimi:'tablo1', giris_yontemi:'tek'}), qf({sistem_secimi:'tablo1', giris_yontemi:'detayli'}),
+            qf({sistem_secimi:'tablo2', giris_yontemi:'tek'}), qf({sistem_secimi:'tablo2', giris_yontemi:'detayli'}),
+            qf({sistem_secimi:'mutlak', giris_yontemi:'tek'}), qf({sistem_secimi:'mutlak', giris_yontemi:'detayli'}),
+            qf({sistem_secimi:'mutlak', giris_yontemi:'mezuniyet'})
+        ]);
+        const yontemSayac = {
+            tablo1: { tek: c(t1TekR), detayli: c(t1DetayliR) },
+            tablo2: { tek: c(t2TekR), detayli: c(t2DetayliR) },
+            mutlak: { tek: c(mTekR), detayli: c(mDetayliR), mezuniyet: c(mMezuniyetR) }
+        };
+
+        // ── 6. Mezuniyet Sınavı'na özgü istatistik ──
+        // Bilinçli olarak "Ort. Final Notu" / "Ort. Vize Notu" gibi genel sınav istatistiklerine
+        // KARIŞTIRILMIYOR (mezuniyet sınavının ara sınav/final ayrımı olmadığından karşılaştırılabilir
+        // bir "final notu" değildir) — kendi sinav_notu sütunundan, ayrı bir kart olarak hesaplanır.
+        // Toplam hesaplama sayısına (yukarıdaki `toplam`) zaten hesaplama_loglari'na eklenen her satır
+        // gibi otomatik dahildir.
+        let mezuniyetSayisi = 0, mezuniyetOrtSinavNotu = '—', mezuniyetGecti = 0, mezuniyetDcSartli = 0, mezuniyetKaldi = 0;
+        try {
+            const GECEN_NOTLAR = ['AA','BA','BB','CB','CC'];
+            let mezSayfa = 0, mezLimit = 1000, mezSatirlar = [];
+            while (true) {
+                let mezQ = sb.from('hesaplama_loglari').select('harf_notu, sinav_notu').eq('giris_yontemi', 'mezuniyet').range(mezSayfa*mezLimit, (mezSayfa+1)*mezLimit-1);
+                if (sinir) mezQ = mezQ.gte('olusturulma_tarihi', sinir);
+                if (sinirBitis) mezQ = mezQ.lte('olusturulma_tarihi', sinirBitis);
+                const { data: mezData, error: mezErr } = await mezQ;
+                if (mezErr || !mezData || !mezData.length) break;
+                mezSatirlar = mezSatirlar.concat(mezData);
+                if (mezData.length < mezLimit) break;
+                mezSayfa++;
+            }
+            mezuniyetSayisi = mezSatirlar.length;
+            if (mezuniyetSayisi > 0) {
+                const notlar = mezSatirlar.map(r => r.sinav_notu).filter(v => v !== null && v !== undefined);
+                if (notlar.length) mezuniyetOrtSinavNotu = (notlar.reduce((a,b)=>a+b,0) / notlar.length).toFixed(1);
+                mezSatirlar.forEach(r => {
+                    if (GECEN_NOTLAR.includes(r.harf_notu)) mezuniyetGecti++;
+                    else if (r.harf_notu === 'DC') mezuniyetDcSartli++;
+                    else mezuniyetKaldi++;
+                });
+            }
+        } catch (e) { /* giris_yontemi/sinav_notu sütunları henüz yoksa sessizce geç */ }
+
         // Bu sırada daha yeni bir istatistikleriYukle() çağrısı başlamışsa (ör. kullanıcı aralığı
         // tekrar değiştirdi), bu eski sonucu ekrana hiç yazmadan sessizce vazgeçiyoruz.
         if (!gecerliMi()) return;
@@ -792,6 +841,19 @@ async function istatistikleriYukle() {
             <div class="stat-karti"><div class="stat-karti-baslik">🏛️ Seçilen Final Alt Sınırı</div>
                 <div class="stat-karti-deger" style="font-size:1.05em;color:var(--accent)">${fakulteTuruToplam.toLocaleString('tr-TR')} kayıt</div>
                 <div class="stat-karti-alt">Genel/45: ${fakulteTuruSayac.genel.toLocaleString('tr-TR')} · Sağlık/50: ${fakulteTuruSayac.saglik.toLocaleString('tr-TR')} · Eczacılık/60: ${fakulteTuruSayac.eczacilik.toLocaleString('tr-TR')}</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🎯 T-Skoru — Giriş Yöntemi</div>
+                <div class="stat-karti-deger" style="font-size:1.05em;color:var(--accent)">${(yontemSayac.tablo1.tek+yontemSayac.tablo1.detayli).toLocaleString('tr-TR')} kayıt</div>
+                <div class="stat-karti-alt">Tek Not Girişi: ${yontemSayac.tablo1.tek.toLocaleString('tr-TR')} · Detaylı Giriş: ${yontemSayac.tablo1.detayli.toLocaleString('tr-TR')}</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🎯 Yüzdelik Dilim — Giriş Yöntemi</div>
+                <div class="stat-karti-deger" style="font-size:1.05em;color:var(--accent)">${(yontemSayac.tablo2.tek+yontemSayac.tablo2.detayli).toLocaleString('tr-TR')} kayıt</div>
+                <div class="stat-karti-alt">Tek Not Girişi: ${yontemSayac.tablo2.tek.toLocaleString('tr-TR')} · Detaylı Giriş: ${yontemSayac.tablo2.detayli.toLocaleString('tr-TR')}</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🎯 Mutlak Sistem — Giriş Yöntemi</div>
+                <div class="stat-karti-deger" style="font-size:1.05em;color:var(--accent)">${(yontemSayac.mutlak.tek+yontemSayac.mutlak.detayli+yontemSayac.mutlak.mezuniyet).toLocaleString('tr-TR')} kayıt</div>
+                <div class="stat-karti-alt">Tek Not Girişi: ${yontemSayac.mutlak.tek.toLocaleString('tr-TR')} · Detaylı Giriş: ${yontemSayac.mutlak.detayli.toLocaleString('tr-TR')} · Mezuniyet Sınavı: ${yontemSayac.mutlak.mezuniyet.toLocaleString('tr-TR')}</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🎓 Mezuniyet Sınavı</div>
+                <div class="stat-karti-deger" style="color:var(--purple)">${mezuniyetSayisi.toLocaleString('tr-TR')}</div>
+                <div class="stat-karti-alt">Ort. Sınav Notu: ${mezuniyetOrtSinavNotu} · ✅ Geçti: ${mezuniyetGecti.toLocaleString('tr-TR')} · ℹ️ DC (şartlı): ${mezuniyetDcSartli.toLocaleString('tr-TR')} · ❌ Kaldı: ${mezuniyetKaldi.toLocaleString('tr-TR')}</div>
+                <div class="stat-karti-alt" style="margin-top:2px;color:var(--muted)">Genel sınav istatistiklerine (Ort. Final Notu vb.) dahil edilmez; Toplam Hesaplama sayısına dahildir</div></div>
         `;
 
         // ── GRAFİKLER ──
