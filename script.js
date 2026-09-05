@@ -1014,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sonucMesajiMezuniyet += buildHesaplamaMantigiHTML('Nasıl Hesaplandı?', mantikAdimlariMezuniyet);
 
                 if (["AA", "BA", "BB", "CB", "CC"].includes(harfNotuMezuniyet)) {
-                    sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">🎉 <strong>Tebrikler!</strong> Mezuniyet sınavını başarıyla geçtiniz. Diplomanızın hayırlısı olsun, önünüzdeki hayatta başarılar dileriz.</p>`;
+                    sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">🎉 <strong>Tebrikler!</strong> Mezuniyet sınavını başarıyla geçtiniz. Diplomanızın hayırlı olmasını, önünüzdeki hayatta da başarılar dileriz.</p>`;
                 } else if (harfNotuMezuniyet === "DC") {
                     sonucMesajiMezuniyet += `<p class="hesaplama-sonuc-uyari">ℹ️ Mezuniyet sınavından <strong>DC</strong> aldınız. Bu durumda iki ihtimal söz konusu: bu dersi aldığınız <strong>son dönemdeki dönem ortalamanız (ANO) 2.00 ve üzerindeyse</strong> mezuniyet sınavını geçmiş olursunuz; o dönemdeki ortalamanız <strong>2.00'ın altındaysa</strong>, maalesef mezuniyet sınavını geçememiş olursunuz.</p>`;
                 } else {
