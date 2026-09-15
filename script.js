@@ -922,6 +922,15 @@ document.addEventListener('DOMContentLoaded', () => {
     dinamikDuyurulariYukle();
     anketAktifOlanYukle();
 
+    // Footer'daki telif yılını otomatik güncelle (site 2025'te açıldı, bugünün
+    // yılı farklıysa "2025-2026" gibi bir aralık gösterir; her yıl elle değiştirmeye gerek kalmaz)
+    const telifYiliEl = document.getElementById('telif-yili');
+    if (telifYiliEl) {
+        const baslangicYili = 2025;
+        const guncelYil = new Date().getFullYear();
+        telifYiliEl.textContent = guncelYil > baslangicYili ? `${baslangicYili}-${guncelYil}` : `${baslangicYili}`;
+    }
+
     const harfNotuFormu = document.getElementById('grade-calculator-form');
     const gerekliNotFormu = document.getElementById('required-grade-form');
     const senaryoFormu = document.getElementById('scenario-form');
