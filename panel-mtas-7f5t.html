@@ -10,74 +10,84 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f6f8fa; --surface: #ffffff; --surface2: #f0f2f5;
-            --border: #d0d7de; --text: #1f2328; --muted: #57606a;
-            --accent: #0969da; --accent-hover: #0550ae;
-            --green: #1a7f37; --red: #cf222e; --orange: #9a6700;
-            --purple: #8250df; --radius: 8px;
+            /* HeroUI (v2) esinli tasarım dili — Primary #006FEE ailesi, zinc nötrleri,
+               tabaka gölgeleri (border yerine derinlik) ve pill rozetler. */
+            --bg: #fafafa; --surface: #ffffff; --surface2: #f4f4f5;
+            --border: #e4e4e7; --text: #18181b; --muted: #71717a;
+            --accent: #006FEE; --accent-hover: #005bc4;
+            --green: #17c964; --red: #f31260; --orange: #f5a524;
+            --purple: #7828c8;
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 14px; --radius: var(--radius-lg);
+            --shadow-sm: 0px 0px 5px rgb(0 0 0/0.02), 0px 2px 10px rgb(0 0 0/0.06), 0px 0px 1px rgb(0 0 0/0.3);
+            --shadow-md: 0px 0px 15px rgb(0 0 0/0.03), 0px 2px 30px rgb(0 0 0/0.08), 0px 0px 1px rgb(0 0 0/0.3);
+            --shadow-lg: 0px 0px 30px rgb(0 0 0/0.04), 0px 30px 60px rgb(0 0 0/0.12), 0px 0px 1px rgb(0 0 0/0.3);
+            --focus-ring: 0 0 0 3px rgba(0,111,238,0.16);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
         #giris-ekrani { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .giris-kutu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+        .giris-kutu { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
         .giris-kutu h1 { font-size: 1.3em; color: var(--accent); margin-bottom: 6px; }
         .giris-kutu p { font-size: 0.85em; color: var(--muted); margin-bottom: 24px; }
-        .giris-input { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 1em; margin-bottom: 12px; }
-        .giris-input:focus { outline: none; border-color: var(--accent); }
-        .giris-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 1em; font-weight: 600; cursor: pointer; }
-        .giris-btn:hover { background: var(--accent-hover); }
+        .giris-input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-md); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 1em; margin-bottom: 12px; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+        .giris-input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); background: var(--surface); }
+        .giris-btn { width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-family: 'Poppins', sans-serif; font-size: 1em; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+        .giris-btn:hover { opacity: 0.85; }
+        .giris-btn:active { transform: scale(0.97); }
         .giris-hata { color: var(--red); font-size: 0.85em; margin-top: 10px; }
 
         #admin-panel { display: none; }
         .admin-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-        .admin-header h1 { font-size: 1.1em; color: var(--accent); }
-        .cikis-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85em; transition: all 0.2s; }
-        .cikis-btn:hover { color: var(--red); border-color: var(--red); }
+        .admin-header h1 { font-size: 1.1em; color: var(--accent); font-weight: 700; }
+        .cikis-btn { background: var(--surface2); border: none; color: var(--muted); padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85em; font-weight: 600; transition: opacity 0.2s, color 0.2s, transform 0.15s; }
+        .cikis-btn:hover { color: var(--red); opacity: 0.8; }
+        .cikis-btn:active { transform: scale(0.97); }
 
         .admin-nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
-        .nav-btn { position: relative; padding: 12px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 0.88em; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .nav-btn { position: relative; padding: 13px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 0.88em; font-weight: 600; cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s; }
         .nav-btn:hover { color: var(--text); }
         .nav-btn.aktif { color: var(--accent); border-bottom-color: var(--accent); }
-        .nav-badge { position: absolute; top: 8px; right: 6px; background: var(--red); color: #fff; border-radius: 10px; font-size: 0.65em; padding: 1px 6px; font-weight: 700; }
+        .nav-badge { position: absolute; top: 8px; right: 6px; background: var(--red); color: #fff; border-radius: 9999px; font-size: 0.65em; padding: 1px 6px; font-weight: 700; }
 
         .admin-icerik { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
         .panel-bolum { display: none; }
         .panel-bolum.aktif { display: block; }
         .bolum-baslik { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; color: var(--text); }
 
-        .stat-karti-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-karti { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-        .stat-karti-baslik { font-size: 0.73em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-karti-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-karti { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 16px; transition: box-shadow 0.2s, transform 0.2s; }
+        .stat-karti:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .stat-karti-baslik { font-size: 0.73em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
         .stat-karti-deger { font-size: 1.9em; font-weight: 700; color: var(--accent); line-height: 1; }
         .stat-karti-alt { font-size: 0.78em; color: var(--muted); margin-top: 4px; }
 
         .grafik-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .grafik-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow: hidden; }
+        .grafik-wrapper { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 20px; overflow: hidden; }
         .grafik-wrapper canvas { max-height: 250px; }
         .grafik-baslik { font-size: 0.82em; font-weight: 700; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
         .cihaz-pasta { display: flex; align-items: center; gap: 20px; }
         .cihaz-pasta-canvas { width: 120px; height: 120px; flex-shrink: 0; }
         .cihaz-legend { display: flex; flex-direction: column; gap: 8px; }
         .cihaz-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
-        .cihaz-legend-renk { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .cihaz-legend-renk { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
 
         .filtre-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-        .filtre-select, .filtre-input { padding: 7px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; }
+        .filtre-select, .filtre-input { padding: 8px 12px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; transition: border-color 0.15s, box-shadow 0.15s; }
         .filtre-tarih-ozel { display: none; gap: 8px; align-items: center; flex-wrap: wrap; }
         .filtre-tarih-ozel.aktif { display: flex; }
-        .filtre-tarih-ozel input[type="date"] { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; }
-        .filtre-tarih-ozel input[type="date"]:focus { outline: none; border-color: var(--accent); }
+        .filtre-tarih-ozel input[type="date"] { padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.85em; transition: border-color 0.15s, box-shadow 0.15s; }
+        .filtre-tarih-ozel input[type="date"]:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
         .filtre-tarih-ozel span { font-size: 0.82em; color: var(--muted); }
-        .filtre-select:focus, .filtre-input:focus { outline: none; border-color: var(--accent); }
+        .filtre-select:focus, .filtre-input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
         .filtre-etiket { font-size: 0.8em; color: var(--muted); }
 
-        .gorunum-toggle-grup { display: flex; gap: 6px; margin-bottom: 14px; }
-        .gorunum-toggle-btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 0.83em; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .gorunum-toggle-btn:hover { color: var(--text); border-color: var(--accent); }
-        .gorunum-toggle-btn.aktif { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .gorunum-toggle-grup { display: flex; gap: 2px; margin-bottom: 14px; background: var(--surface2); padding: 4px; border-radius: var(--radius-sm); width: fit-content; }
+        .gorunum-toggle-btn { padding: 7px 14px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 0.83em; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .gorunum-toggle-btn:hover { color: var(--text); }
+        .gorunum-toggle-btn.aktif { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); }
 
-        .admin-tablo-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; overflow-x: auto; }
+        .admin-tablo-wrapper { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; margin-bottom: 20px; overflow-x: auto; }
         .admin-tablo-baslik { padding: 14px 18px; font-weight: 700; font-size: 0.95em; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
         .admin-tablo-wrapper table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 500px; }
         .admin-tablo-wrapper th { background: var(--surface2); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); white-space: nowrap; }
@@ -85,41 +95,42 @@
         .admin-tablo-wrapper tr:last-child td { border-bottom: none; }
         .admin-tablo-wrapper tr:hover td { background: var(--surface2); }
 
-        .btn { padding: 6px 14px; border-radius: 5px; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.82em; font-weight: 600; transition: all 0.15s; white-space: nowrap; }
+        .btn { padding: 7px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.82em; font-weight: 600; transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s; white-space: nowrap; }
+        .btn:active { transform: scale(0.97); }
         .btn-yesil { background: var(--green); color: #fff; } .btn-yesil:hover { opacity: 0.85; }
         .btn-kirmizi { background: var(--red); color: #fff; } .btn-kirmizi:hover { opacity: 0.85; }
         .btn-turuncu { background: var(--orange); color: #fff; } .btn-turuncu:hover { opacity: 0.85; }
-        .btn-mavi { background: var(--accent); color: #fff; } .btn-mavi:hover { background: var(--accent-hover); }
-        .btn-gri { background: var(--surface2); color: var(--text); border: 1px solid var(--border); } .btn-gri:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-mavi { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(0,111,238,0.28); } .btn-mavi:hover { opacity: 0.85; }
+        .btn-gri { background: var(--surface2); color: var(--text); } .btn-gri:hover { color: var(--accent); opacity: 0.85; }
         .btn-mor { background: var(--purple); color: #fff; } .btn-mor:hover { opacity: 0.85; }
         .btn-grup { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        .rozet { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 700; }
-        .rozet-yesil { background: rgba(63,185,80,0.15); color: var(--green); }
-        .rozet-sari { background: rgba(210,153,34,0.15); color: var(--orange); }
-        .rozet-mavi { background: rgba(88,166,255,0.15); color: var(--accent); }
-        .rozet-turuncu { background: rgba(210,153,34,0.15); color: var(--orange); }
+        .rozet { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 0.75em; font-weight: 700; }
+        .rozet-yesil { background: rgba(23,201,100,0.15); color: #128a48; }
+        .rozet-sari { background: rgba(245,165,36,0.18); color: #92600b; }
+        .rozet-mavi { background: rgba(0,111,238,0.13); color: var(--accent); }
+        .rozet-turuncu { background: rgba(245,165,36,0.18); color: #92600b; }
 
-        .admin-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
-        .admin-form h3 { font-size: 0.95em; margin-bottom: 14px; color: var(--accent); }
+        .admin-form { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 20px; margin-bottom: 20px; }
+        .admin-form h3 { font-size: 0.95em; margin-bottom: 14px; color: var(--accent); font-weight: 700; }
         .form-row-admin { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
         .form-group-admin { flex: 1; min-width: 180px; }
         .form-group-admin label { display: block; font-size: 0.8em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-        .form-group-admin input, .form-group-admin textarea, .form-group-admin select { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; }
+        .form-group-admin input, .form-group-admin textarea, .form-group-admin select { width: 100%; padding: 9px 12px; background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-sm); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
         .form-group-admin textarea { resize: vertical; min-height: 80px; }
-        .form-group-admin input:focus, .form-group-admin textarea:focus, .form-group-admin select:focus { outline: none; border-color: var(--accent); }
+        .form-group-admin input:focus, .form-group-admin textarea:focus, .form-group-admin select:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); background: var(--surface); }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(24,24,27,0.55); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.aktif { display: flex; }
-        .modal-kutu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 480px; padding: 24px; }
+        .modal-kutu { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); width: 100%; max-width: 480px; padding: 24px; }
         .modal-baslik { font-size: 1em; font-weight: 700; color: var(--accent); margin-bottom: 16px; }
         .modal-form-grup { margin-bottom: 12px; }
         .modal-form-grup label { display: block; font-size: 0.8em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-        .modal-form-grup input { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; }
-        .modal-form-grup input:focus { outline: none; border-color: var(--accent); }
+        .modal-form-grup input { width: 100%; padding: 9px 12px; background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-sm); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9em; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+        .modal-form-grup input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); background: var(--surface); }
         .modal-btn-grup { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 
-        .bildirim { position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; border-radius: 6px; font-size: 0.88em; font-weight: 600; z-index: 9999; animation: bildirimGir 0.3s ease; max-width: 300px; }
+        .bildirim { position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); font-size: 0.88em; font-weight: 600; z-index: 9999; animation: bildirimGir 0.3s ease; max-width: 300px; }
         .bildirim-basari { background: var(--green); color: #fff; }
         .bildirim-hata { background: var(--red); color: #fff; }
         @keyframes bildirimGir { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -129,8 +140,9 @@
         .bolum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
         /* Duyuru zengin içerik kutuları (admin form) */
-        .duyuru-kutu-row { border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; background: var(--bg); }
-        /* Duyuru canlı önizleme — sitedeki duyuru bandı görünümünü taklit eder */
+        .duyuru-kutu-row { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; background: var(--surface2); }
+        /* Duyuru canlı önizleme — sitedeki duyuru bandı görünümünü taklit eder (bilinçli olarak admin
+           paletinden bağımsızdır: kullanıcı burada sitede gerçekte göreceği hali görsün diye) */
         .duyuru-onizleme-kutu { background: linear-gradient(135deg, #1a56db 0%, #0B4C8C 100%); color: #fff; border-radius: 8px; padding: 14px 16px; font-size: 0.88em; line-height: 1.5; }
         .duyuru-onizleme-kutu .don-baslik { font-weight: 700; margin-bottom: 10px; font-size: 1.02em; }
         .duyuru-onizleme-kutu p { margin: 0 0 10px 0; color: rgba(255,255,255,0.92); }
@@ -799,7 +811,7 @@ async function istatistikleriYukle() {
 
         // ── KARTLAR ──
         kartlar.innerHTML = `
-            ${bitisTarihiUyarisi ? `<div style="grid-column:1/-1;background:#fff3cd;color:#664d03;border:1px solid #f0ad4e;border-radius:6px;padding:8px 12px;font-size:0.85em;">⚠️ Veritabanındaki <code>istatistik_ozet</code> fonksiyonu henüz bitiş tarihini kabul etmiyor; aşağıdaki ortalama/dağılım kartları (ziyaretçi ve hesaplama sayıları hariç) yalnızca başlangıç tarihine göre hesaplandı. Fonksiyonun güncellenmesi gerekiyor.</div>` : ''}
+            ${bitisTarihiUyarisi ? `<div style="grid-column:1/-1;background:rgba(245,165,36,0.16);color:#92600b;border:1px solid #f5a524;border-radius:6px;padding:8px 12px;font-size:0.85em;">⚠️ Veritabanındaki <code>istatistik_ozet</code> fonksiyonu henüz bitiş tarihini kabul etmiyor; aşağıdaki ortalama/dağılım kartları (ziyaretçi ve hesaplama sayıları hariç) yalnızca başlangıç tarihine göre hesaplandı. Fonksiyonun güncellenmesi gerekiyor.</div>` : ''}
             <div class="stat-karti"><div class="stat-karti-baslik">👥 Toplam Ziyaretçi</div>
                 <div class="stat-karti-deger">${ziyaretciToplam.toLocaleString('tr-TR')}</div>
                 <div class="stat-karti-alt">📱 ${ziyaretciMobil.toLocaleString('tr-TR')} mobil · 🖥️ ${ziyaretciMasaustuSayisi.toLocaleString('tr-TR')} masaüstü</div>
@@ -864,9 +876,9 @@ async function istatistikleriYukle() {
             type: 'bar',
             data: { labels: ['Harf Notu','Gerekli Final','Senaryo','Dönem Ort.'],
                 datasets: [{ label:'Hesaplama', data: [sekmeler.harf,sekmeler.gerekli,sekmeler.senaryo,sekmeler.ano],
-                    backgroundColor: ['#58a6ff','#3fb950','#d29922','#bc8cff'], borderRadius: 5 }] },
+                    backgroundColor: ['#006FEE','#17c964','#f5a524','#7828c8'], borderRadius: 5 }] },
             options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
-                scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
         });
 
         const harfEtiket = HARF_LISTESI.filter(h=>harfSayac[h]);
@@ -875,7 +887,7 @@ async function istatistikleriYukle() {
             data: { labels: harfEtiket, datasets: [{ data: harfEtiket.map(h=>harfSayac[h]),
                 backgroundColor: harfEtiket.map(h=>HARF_CLR[h]), borderWidth: 2, borderColor: '#ffffff' }] },
             options: { responsive:true, maintainAspectRatio:true,
-                plugins:{ legend:{ position:'right', labels:{ color:'#1f2328', font:{family:'Poppins'}, boxWidth:12 } },
+                plugins:{ legend:{ position:'right', labels:{ color:'#18181b', font:{family:'Poppins'}, boxWidth:12 } },
                 tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')} hesaplama` } } } }
         });
 
@@ -883,15 +895,15 @@ async function istatistikleriYukle() {
             type: 'doughnut',
             data: { labels: ['Mobil','Masaüstü','Bilinmiyor'],
                 datasets: [{ data: [mobilSayisi,masaustuSayisi,mobilBilinmiyor],
-                    backgroundColor: ['#58a6ff','#3fb950','#adb5bd'], borderWidth:2, borderColor:'#ffffff' }] },
+                    backgroundColor: ['#006FEE','#17c964','#a1a1aa'], borderWidth:2, borderColor:'#ffffff' }] },
             options: { responsive:true, maintainAspectRatio:true,
                 plugins:{ legend:{display:false},
                 tooltip:{ callbacks:{ label: i => ` ${i.label}: ${i.raw.toLocaleString('tr-TR')}` } } } }
         });
         document.getElementById('cihaz-legend').innerHTML = [
-            {label:'Mobil',sayi:mobilSayisi,renk:'#58a6ff'},
-            {label:'Masaüstü',sayi:masaustuSayisi,renk:'#3fb950'},
-            {label:'Bilinmiyor',sayi:mobilBilinmiyor,renk:'#adb5bd'}
+            {label:'Mobil',sayi:mobilSayisi,renk:'#006FEE'},
+            {label:'Masaüstü',sayi:masaustuSayisi,renk:'#17c964'},
+            {label:'Bilinmiyor',sayi:mobilBilinmiyor,renk:'#a1a1aa'}
         ].map(c=>`<div class="cihaz-legend-item"><span class="cihaz-legend-renk" style="background:${c.renk}"></span><span>${c.label}: <strong>${c.sayi.toLocaleString('tr-TR')}</strong></span></div>`).join('');
 
         // Günlük trend — DD.MM formatı
@@ -903,9 +915,9 @@ async function istatistikleriYukle() {
         chartInstances['gunlukChart'] = new Chart(document.getElementById('gunlukChart'), {
             type: 'line',
             data: { labels: gunlukEtiketler,
-                datasets: [{ label:'Hesaplama', data:Object.values(gunSayac), borderColor:'#58a6ff', backgroundColor:'rgba(88,166,255,0.1)', fill:true, tension:0.4, pointRadius:3 }] },
+                datasets: [{ label:'Hesaplama', data:Object.values(gunSayac), borderColor:'#006FEE', backgroundColor:'rgba(0,111,238,0.1)', fill:true, tension:0.4, pointRadius:3 }] },
             options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
-                scales:{ x:{ticks:{color:'#57606a',maxTicksLimit:10},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                scales:{ x:{ticks:{color:'#71717a',maxTicksLimit:10},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
         });
 
         chartInstances['saatChart'] = new Chart(document.getElementById('saatChart'), {
@@ -913,9 +925,9 @@ async function istatistikleriYukle() {
             data: { labels: Array.from({length:24},(_,i)=>`${i}:00`),
                 datasets: [{ label:'Hesaplama', data:saatBantlar, backgroundColor:'rgba(88,166,255,0.7)', borderRadius:3 }] },
             options: { plugins:{ legend:{display:false},
-                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
+                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#71717a', font:{size:11}, padding:{bottom:8} },
                 tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
-                scales:{ x:{ticks:{color:'#57606a',maxTicksLimit:12},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                scales:{ x:{ticks:{color:'#71717a',maxTicksLimit:12},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
         });
 
         chartInstances['haftaChart'] = new Chart(document.getElementById('haftaChart'), {
@@ -923,9 +935,9 @@ async function istatistikleriYukle() {
             data: { labels: gunAdlar,
                 datasets: [{ label:'Hesaplama', data:haftaBantlar, backgroundColor:'rgba(63,185,80,0.7)', borderRadius:4 }] },
             options: { plugins:{ legend:{display:false},
-                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#57606a', font:{size:11}, padding:{bottom:8} },
+                subtitle:{ display:true, text:`Türkiye saatiyle (UTC+3) — ${saatAralikMetin}`, color:'#71717a', font:{size:11}, padding:{bottom:8} },
                 tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
-                scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
         });
 
         const hedefEtiket2 = Object.keys(hedefSayac).sort((a,b)=>(hedefSayac[b]||0)-(hedefSayac[a]||0));
@@ -933,9 +945,9 @@ async function istatistikleriYukle() {
             chartInstances['hedefChart'] = new Chart(document.getElementById('hedefChart'), {
                 type: 'bar',
                 data: { labels:hedefEtiket2, datasets:[{ label:'Kişi', data:hedefEtiket2.map(h=>hedefSayac[h]),
-                    backgroundColor:hedefEtiket2.map(h=>HARF_CLR[h]||'#57606a'), borderRadius:5 }] },
+                    backgroundColor:hedefEtiket2.map(h=>HARF_CLR[h]||'#71717a'), borderRadius:5 }] },
                 options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} kişi bu notu hedefledi` } } },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                    scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
             });
         }
 
@@ -943,9 +955,9 @@ async function istatistikleriYukle() {
         if(ortBantValues.some(v=>v>0)) {
             chartInstances['ortChart'] = new Chart(document.getElementById('ortChart'), {
                 type: 'bar',
-                data: { labels:ortBantSira, datasets:[{ label:'Hesaplama', data:ortBantValues, backgroundColor:'#58a6ff', borderRadius:5 }] },
+                data: { labels:ortBantSira, datasets:[{ label:'Hesaplama', data:ortBantValues, backgroundColor:'#006FEE', borderRadius:5 }] },
                 options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} hesaplama` } } },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                    scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
             });
         }
 
@@ -955,9 +967,9 @@ async function istatistikleriYukle() {
             chartInstances['vizeHedefChart'] = new Chart(document.getElementById('vizeHedefChart'), {
                 type: 'bar',
                 data: { labels:vizeHedefNotlar, datasets:[{ label:'Ort. Vize', data:vizeHedefNotlar.map(h=>parseFloat(vizeHedefOrt[h])),
-                    backgroundColor:vizeHedefNotlar.map(h=>HARF_CLR[h]||'#57606a'), borderRadius:5 }] },
+                    backgroundColor:vizeHedefNotlar.map(h=>HARF_CLR[h]||'#71717a'), borderRadius:5 }] },
                 options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` Ort. vize: ${i.raw}` } } },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true,max:100} } }
+                    scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true,max:100} } }
             });
         }
 
@@ -965,9 +977,9 @@ async function istatistikleriYukle() {
             chartInstances['referrerChart'] = new Chart(document.getElementById('referrerChart'), {
                 type: 'bar',
                 data: { labels:topReferrerler.map(r=>r[0]), datasets:[{ label:'Ziyaret', data:topReferrerler.map(r=>r[1]),
-                    backgroundColor:['#58a6ff','#3fb950','#d29922','#bc8cff','#f78166'], borderRadius:5 }] },
+                    backgroundColor:['#006FEE','#17c964','#f5a524','#7828c8','#f31260'], borderRadius:5 }] },
                 options: { indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} ziyaret` } } },
-                    scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}, y:{ticks:{color:'#1f2328'},grid:{color:'#e8ecef'}} } }
+                    scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true}, y:{ticks:{color:'#18181b'},grid:{color:'#e4e4e7'}} } }
             });
         }
 
@@ -995,9 +1007,9 @@ async function istatistikleriYukle() {
                 chartInstances['ziyaretciTrendChart'] = new Chart(document.getElementById('ziyaretciTrendChart'), {
                     type: 'line',
                     data: { labels: zEtiketler,
-                        datasets: [{ label:'Ziyaretçi', data:Object.values(zGunSayac), borderColor:'#3fb950', backgroundColor:'rgba(63,185,80,0.1)', fill:true, tension:0.4, pointRadius:3 }] },
+                        datasets: [{ label:'Ziyaretçi', data:Object.values(zGunSayac), borderColor:'#17c964', backgroundColor:'rgba(23,201,100,0.1)', fill:true, tension:0.4, pointRadius:3 }] },
                     options: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw.toLocaleString('tr-TR')} ziyaretçi` } } },
-                        scales:{ x:{ticks:{color:'#57606a',maxTicksLimit:10},grid:{color:'#e8ecef'}}, y:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true} } }
+                        scales:{ x:{ticks:{color:'#71717a',maxTicksLimit:10},grid:{color:'#e4e4e7'}}, y:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true} } }
                 });
             }
         } catch(e) {}
@@ -2066,9 +2078,9 @@ function anoDersGrafik() {
     if (chartInstances['anoDersChart']) chartInstances['anoDersChart'].destroy();
     chartInstances['anoDersChart'] = new Chart(document.getElementById('anoDersChart'), {
         type: 'bar',
-        data: { labels: sirali.map(d=>d.goruntu), datasets: [{ label:'Kullanım', data: sirali.map(d=>d.sayi), backgroundColor:'#0969da', borderRadius:4 }] },
+        data: { labels: sirali.map(d=>d.goruntu), datasets: [{ label:'Kullanım', data: sirali.map(d=>d.sayi), backgroundColor:'#006FEE', borderRadius:4 }] },
         options: { indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: i => ` ${i.raw} kez girildi` } } },
-            scales:{ x:{ticks:{color:'#57606a'},grid:{color:'#e8ecef'},beginAtZero:true}, y:{ticks:{color:'#1f2328',font:{size:11}},grid:{display:false}} } }
+            scales:{ x:{ticks:{color:'#71717a'},grid:{color:'#e4e4e7'},beginAtZero:true}, y:{ticks:{color:'#18181b',font:{size:11}},grid:{display:false}} } }
     });
 }
 function anoDersTablo(veri) {
