@@ -3147,8 +3147,12 @@ function nyOyunBitti() {
 // Giriş yapmamış (misafir) oyuncuların oynayışını, istatistik amaçlı
 // olarak arka planda loglar. Skor kaydetmez, hataları sessizce yutar —
 // bu bir "nice to have" sayaçtır, oyun deneyimini asla engellememeli.
-function nyMisafirOyunKaydet(skor) {
-    getSupabase().rpc('ny_misafir_oyun_kaydet', { p_skor: skor }).catch(() => {});
+async function nyMisafirOyunKaydet(skor) {
+    try {
+        await getSupabase().rpc('ny_misafir_oyun_kaydet', { p_skor: skor });
+    } catch (e) {
+        // sessizce yut — bu bir "nice to have" sayaç, oyun deneyimini engellememeli
+    }
 }
 
 // ------------------------------------------------------------
