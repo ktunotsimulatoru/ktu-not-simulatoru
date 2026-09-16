@@ -3087,6 +3087,20 @@ function nyCanGuncelle() {
     document.getElementById('nyCanGosterge').textContent = '❤️'.repeat(Math.max(0, nyCan)) + '🖤'.repeat(3 - Math.max(0, nyCan));
 }
 
+// Her 5 oyunda bir, oyuncuya derslerini de unutmamasını hatırlatan
+// eğlenceli/farklı bir not gösteriyoruz — site bir not/ders aracı
+// olduğu için oyunun "asıl işten" tamamen koparmaması amaçlanıyor.
+const NY_OYUN_SAYAC_ANAHTARI = 'ktuNotYakalaOyunSayaci';
+const NY_DERS_HATIRLATMALARI = [
+    '📚 Güzel bir mola oldu, umarım dersleri de unutmamışsındır 🙂',
+    '⏰ Mola bitti sayılır, vizeler de bir yerlerde bekliyor olabilir 😊',
+    '🧠 Reflekslerin gayet iyi, umarım ders çalışmayı da ihmal etmemişsindir.',
+    '📖 Beş oyun oldu, küçük bir göz atma molası da not çalışmaya iyi gelebilir.',
+    '☕ Dinlendiysen, kaldığın yerden derslere devam edebilirsin 🙂',
+    '📝 Skorun güzel, umarım ders çalışmak da bu kadar keyifli geçiyordur.',
+    '🔔 Küçük bir hatırlatma: ara verdiysen bile dersi tamamen unutma 😊'
+];
+
 function nyOyunBitti() {
     nyOyunuDurdur();
 
@@ -3105,6 +3119,20 @@ function nyOyunBitti() {
     document.getElementById('nySonucMesaji').textContent = mesaj;
     document.getElementById('nySonPuan').textContent = nyPuan;
     document.getElementById('nyEnYuksekGosterge').textContent = enYuksek;
+
+    const oynananSayi = parseInt(localStorage.getItem(NY_OYUN_SAYAC_ANAHTARI) || '0', 10) + 1;
+    localStorage.setItem(NY_OYUN_SAYAC_ANAHTARI, oynananSayi);
+    const hatirlatmaEl = document.getElementById('nyDersHatirlatma');
+    if (hatirlatmaEl) {
+        if (oynananSayi % 5 === 0) {
+            const secilen = NY_DERS_HATIRLATMALARI[Math.floor(Math.random() * NY_DERS_HATIRLATMALARI.length)];
+            hatirlatmaEl.textContent = secilen;
+            hatirlatmaEl.style.display = 'block';
+        } else {
+            hatirlatmaEl.style.display = 'none';
+        }
+    }
+
     nyEkranGoster('bitti');
 
     const kayitAlani = document.getElementById('nySkorKayitAlani');
@@ -3113,7 +3141,15 @@ function nyOyunBitti() {
         nySkorGonder(nyPuan);
     } else {
         kayitAlani.innerHTML = '<p class="ny-ipucu">Skorunu liderlik tablosuna kaydetmek için <a href="#" onclick="nyGirisIsteBitti(event)">giriş yap</a></p>';
+        nyMisafirOyunKaydet(nyPuan);
     }
+}
+
+// Giriş yapmamış (misafir) oyuncuların oynayışını, istatistik amaçlı
+// olarak arka planda loglar. Skor kaydetmez, hataları sessizce yutar —
+// bu bir "nice to have" sayaçtır, oyun deneyimini asla engellememeli.
+function nyMisafirOyunKaydet(skor) {
+    getSupabase().rpc('ny_misafir_oyun_kaydet', { p_skor: skor }).catch(() => {});
 }
 
 // ------------------------------------------------------------
