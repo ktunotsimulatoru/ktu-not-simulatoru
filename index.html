@@ -662,6 +662,82 @@
         </div>
     </div>
 
+    <!-- Not Yakala mini oyunu -->
+    <div class="modal-overlay" id="nyModal" onclick="nyModalKapat(event)">
+        <div class="modal-kutu" style="max-width:420px;">
+            <div class="modal-baslik">
+                <span>🎮 Not Yakala</span>
+                <button class="modal-kapat-btn" onclick="nyModalKapat(null)">✕</button>
+            </div>
+            <div class="modal-icerik" style="padding:0;">
+                <div id="nyOyunAlani" class="ny-oyun-alani">
+                    <div class="ny-hud">
+                        <span id="nyPuanGosterge">Puan: 0</span>
+                        <span id="nyCanGosterge">❤️❤️❤️</span>
+                    </div>
+                    <div id="nyBasket" class="ny-basket">🧺</div>
+
+                    <div id="nyBaslangicEkrani" class="ny-overlay-ekran">
+                        <h3>Not Yakala</h3>
+                        <p>İyi notları (AA, BA, BB, CB, CC) yakala, kötü notlardan (DD, FD, FF) kaç!</p>
+                        <p class="ny-ipucu">⌨️ ← → ok tuşları &nbsp;•&nbsp; 📱 sürükleyerek oynat</p>
+                        <div id="nyHesapDurumu" class="ny-hesap-durumu"></div>
+                        <button type="button" class="ny-baslat-btn" onclick="nyOyunuBaslat()">Başla</button>
+                        <div class="ny-alt-linkler">
+                            <a href="#" onclick="nyLiderlikGoster(event)">🏆 Liderlik Tablosu</a>
+                        </div>
+                    </div>
+
+                    <div id="nyGirisEkrani" class="ny-overlay-ekran" style="display:none;">
+                        <h3>Giriş Yap</h3>
+                        <form class="ny-form" onsubmit="nyGirisGonder(event)">
+                            <input type="text" id="nyGirisAd" class="ny-input" placeholder="Kullanıcı adı" maxlength="20" autocomplete="username" required>
+                            <input type="password" id="nyGirisSifre" class="ny-input" placeholder="Şifre" autocomplete="current-password" required>
+                            <label class="ny-checkbox-satir"><input type="checkbox" id="nyGirisBeniHatirla" checked> Beni hatırla</label>
+                            <div id="nyGirisHata" class="ny-form-hata"></div>
+                            <button type="submit" class="ny-baslat-btn">Giriş Yap</button>
+                        </form>
+                        <p class="ny-alt-metin">Hesabın yok mu? <a href="#" onclick="nyEkranGoster('kayit', event)">Kayıt ol</a></p>
+                        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
+                    </div>
+
+                    <div id="nyKayitEkrani" class="ny-overlay-ekran" style="display:none;">
+                        <h3>Kayıt Ol</h3>
+                        <form class="ny-form" onsubmit="nyKayitGonder(event)">
+                            <input type="text" id="nyKayitAd" class="ny-input" placeholder="Kullanıcı adı (3-20 karakter)" maxlength="20" autocomplete="username" required>
+                            <input type="password" id="nyKayitSifre" class="ny-input" placeholder="Şifre (en az 4 karakter)" autocomplete="new-password" required>
+                            <input type="password" id="nyKayitSifreTekrar" class="ny-input" placeholder="Şifre (tekrar)" autocomplete="new-password" required>
+                            <label class="ny-checkbox-satir"><input type="checkbox" id="nyKayitBeniHatirla" checked> Beni hatırla</label>
+                            <div id="nyKayitHata" class="ny-form-hata"></div>
+                            <button type="submit" class="ny-baslat-btn">Kayıt Ol</button>
+                        </form>
+                        <p class="ny-alt-metin">Zaten hesabın var mı? <a href="#" onclick="nyEkranGoster('giris', event)">Giriş yap</a></p>
+                        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
+                    </div>
+
+                    <div id="nyLiderlikEkrani" class="ny-overlay-ekran" style="display:none;">
+                        <h3>🏆 Liderlik Tablosu</h3>
+                        <div id="nyLiderlikListesi" class="ny-liderlik-listesi">
+                            <p class="ny-ipucu">Yükleniyor...</p>
+                        </div>
+                        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
+                    </div>
+
+                    <div id="nyBittiEkrani" class="ny-overlay-ekran" style="display:none;">
+                        <h3>Oyun Bitti!</h3>
+                        <p id="nySonucMesaji"></p>
+                        <p>Puan: <strong id="nySonPuan">0</strong> &nbsp;•&nbsp; Cihazdaki En Yüksek: <strong id="nyEnYuksekGosterge">0</strong></p>
+                        <div id="nySkorKayitAlani" class="ny-skor-kayit-alani"></div>
+                        <button type="button" class="ny-baslat-btn" onclick="nyOyunuBaslat()">Tekrar Oyna</button>
+                        <div class="ny-alt-linkler">
+                            <a href="#" onclick="nyLiderlikGoster(event)">🏆 Liderlik Tablosu</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="dersVeriModal" onclick="modalKapat(event)">
         <div class="modal-kutu">
             <div class="modal-baslik">
@@ -714,6 +790,7 @@
     <div id="anket-pill-wrapper"></div>
 
     <footer>
+         <p class="footer-oyun-satiri"><a href="#" class="footer-oyun-link" onclick="nyModalAc(event)">🎮 Sıkıldıysan bir mola ver</a></p>
          <div class="footer-logo">
              <img class="logo-light" src="footer-logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
              <img class="logo-dark" src="footer-logo-dark.png" alt="KTÜ Not Simülatörü" width="150" height="50">

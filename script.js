@@ -2600,6 +2600,9 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         document.getElementById('dersVeriModal')?.classList.remove('aktif');
         document.getElementById('sistemBilgiModal')?.classList.remove('aktif');
+        if (document.getElementById('nyModal')?.classList.contains('aktif')) {
+            nyModalKapat(null);
+        }
         document.body.style.overflow = '';
     }
 });
@@ -2892,5 +2895,454 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                 }
             });
         }, 100);
+    }
+}
+// ============================================================
+// NOT YAKALA — Mini Oyun (footer easter-egg)
+// ============================================================
+const NY_IYI_NOTLAR = ['AA', 'BA', 'BB', 'CB', 'CC'];
+const NY_KOTU_NOTLAR = ['DD', 'FD', 'FF'];
+const NY_NOT_RENKLERI = {
+    AA: '#28a745', BA: '#5cb85c', BB: '#82ca9c', CB: '#007bff', CC: '#17a2b8',
+    DD: '#ffc107', FD: '#dc3545', FF: '#a21427'
+};
+const NY_YUKSEK_SKOR_ANAHTARI = 'ktuNotYakalaEnYuksekSkor';
+
+let nyAktif = false;
+let nyRafId = null;
+let nySpawnTimeout = null;
+let nyPuan = 0;
+let nyCan = 3;
+let nyBasketX = 0.5; // 0-1 arası, alanın genişliğine oranla
+let nyHedefX = 0.5;  // sürükleme ile hedeflenen konum
+let nyKlavyeSol = false;
+let nyKlavyeSag = false;
+let nyOgeler = [];   // { el, x(0-1), y(px), harf, iyi }
+let nyBaslangicZamani = 0;
+let nySonKareZamani = 0;
+
+function nyModalAc(event) {
+    if (event) event.preventDefault();
+    document.body.style.overflow = 'hidden';
+    const modal = document.getElementById('nyModal');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('aktif'));
+    nyEkranGoster('baslangic');
+    const enYuksek = localStorage.getItem(NY_YUKSEK_SKOR_ANAHTARI) || 0;
+    document.getElementById('nyEnYuksekGosterge').textContent = enYuksek;
+    nyOturumKontrol();
+}
+
+function nyModalKapat(event) {
+    if (event && event.target !== document.getElementById('nyModal')) return;
+    nyOyunuDurdur();
+    document.getElementById('nyModal')?.classList.remove('aktif');
+    document.body.style.overflow = '';
+}
+
+function nyOyunuBaslat() {
+    nyOyunuDurdur(); // önceki oyundan kalan varsa temizle
+
+    nyAktif = true;
+    nyPuan = 0;
+    nyCan = 3;
+    nyBasketX = 0.5;
+    nyHedefX = 0.5;
+    nyOgeler = [];
+    nyBaslangicZamani = performance.now();
+    nySonKareZamani = nyBaslangicZamani;
+
+    nyEkranGoster('oyun');
+    nyPuanGuncelle();
+    nyCanGuncelle();
+
+    const alan = document.getElementById('nyOyunAlani');
+    alan.querySelectorAll('.ny-item').forEach(el => el.remove());
+
+    document.addEventListener('keydown', nyKlavyeBasildi);
+    document.addEventListener('keyup', nyKlavyeBirakildi);
+    alan.addEventListener('pointermove', nyPointerHareket);
+    alan.addEventListener('pointerdown', nyPointerHareket);
+
+    nyOgeSpawnDongusu();
+    nyRafId = requestAnimationFrame(nyOyunDongusu);
+}
+
+function nyOyunuDurdur() {
+    nyAktif = false;
+    if (nyRafId) { cancelAnimationFrame(nyRafId); nyRafId = null; }
+    if (nySpawnTimeout) { clearTimeout(nySpawnTimeout); nySpawnTimeout = null; }
+    document.removeEventListener('keydown', nyKlavyeBasildi);
+    document.removeEventListener('keyup', nyKlavyeBirakildi);
+    const alan = document.getElementById('nyOyunAlani');
+    if (alan) {
+        alan.removeEventListener('pointermove', nyPointerHareket);
+        alan.removeEventListener('pointerdown', nyPointerHareket);
+        alan.querySelectorAll('.ny-item').forEach(el => el.remove());
+    }
+    nyOgeler = [];
+}
+
+function nyKlavyeBasildi(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') nyKlavyeSol = true;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') nyKlavyeSag = true;
+}
+function nyKlavyeBirakildi(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') nyKlavyeSol = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') nyKlavyeSag = false;
+}
+function nyPointerHareket(e) {
+    const alan = document.getElementById('nyOyunAlani');
+    const rect = alan.getBoundingClientRect();
+    nyHedefX = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+}
+
+function nyOgeSpawnDongusu() {
+    if (!nyAktif) return;
+    nyOgeOlustur();
+
+    const gecenSaniye = (performance.now() - nyBaslangicZamani) / 1000;
+    const araGecikme = Math.max(480, 1150 - gecenSaniye * 12);
+    nySpawnTimeout = setTimeout(nyOgeSpawnDongusu, araGecikme);
+}
+
+function nyOgeOlustur() {
+    const kotuMu = Math.random() < 0.38;
+    const havuz = kotuMu ? NY_KOTU_NOTLAR : NY_IYI_NOTLAR;
+    const harf = havuz[Math.floor(Math.random() * havuz.length)];
+    const alan = document.getElementById('nyOyunAlani');
+
+    const el = document.createElement('div');
+    el.className = 'ny-item' + (kotuMu ? ' ny-kotu' : '');
+    el.style.background = NY_NOT_RENKLERI[harf];
+    el.textContent = harf;
+    alan.appendChild(el);
+
+    nyOgeler.push({
+        el,
+        x: 0.12 + Math.random() * 0.76,
+        y: -30,
+        harf,
+        iyi: !kotuMu
+    });
+}
+
+function nyOyunDongusu(zaman) {
+    if (!nyAktif) return;
+    const dt = Math.min(0.05, (zaman - nySonKareZamani) / 1000);
+    nySonKareZamani = zaman;
+    const gecenSaniye = (zaman - nyBaslangicZamani) / 1000;
+    const hiz = 90 + gecenSaniye * 4.5; // piksel/saniye, zamanla hızlanır
+
+    const alan = document.getElementById('nyOyunAlani');
+    const alanGenislik = alan.clientWidth;
+    const alanYukseklik = alan.clientHeight;
+
+    // Sepeti hedefe doğru yumuşakça hareket ettir (klavye veya sürükleme)
+    if (nyKlavyeSol) nyHedefX = Math.max(0, nyHedefX - dt * 1.6);
+    if (nyKlavyeSag) nyHedefX = Math.min(1, nyHedefX + dt * 1.6);
+    nyBasketX += (nyHedefX - nyBasketX) * Math.min(1, dt * 12);
+
+    const basketEl = document.getElementById('nyBasket');
+    const basketPx = nyBasketX * alanGenislik;
+    basketEl.style.left = basketPx + 'px';
+    const basketYariGenislik = 30;
+    const basketUstY = alanYukseklik - 34;
+
+    for (let i = nyOgeler.length - 1; i >= 0; i--) {
+        const oge = nyOgeler[i];
+        oge.y += hiz * dt;
+        oge.el.style.transform = `translate(${oge.x * alanGenislik}px, ${oge.y}px) translate(-50%, -50%)`;
+
+        const ogePx = oge.x * alanGenislik;
+        const carpisti = oge.y >= basketUstY - 10 && oge.y <= basketUstY + 22 &&
+                          Math.abs(ogePx - basketPx) < basketYariGenislik;
+
+        if (carpisti) {
+            if (oge.iyi) {
+                nyPuan++;
+                nyPuanGuncelle();
+            } else {
+                nyCan--;
+                nyCanGuncelle();
+            }
+            oge.el.remove();
+            nyOgeler.splice(i, 1);
+            if (nyCan <= 0) { nyOyunBitti(); return; }
+            continue;
+        }
+
+        if (oge.y > alanYukseklik + 30) {
+            oge.el.remove();
+            nyOgeler.splice(i, 1);
+        }
+    }
+
+    nyRafId = requestAnimationFrame(nyOyunDongusu);
+}
+
+function nyPuanGuncelle() {
+    document.getElementById('nyPuanGosterge').textContent = `Puan: ${nyPuan}`;
+}
+function nyCanGuncelle() {
+    document.getElementById('nyCanGosterge').textContent = '❤️'.repeat(Math.max(0, nyCan)) + '🖤'.repeat(3 - Math.max(0, nyCan));
+}
+
+function nyOyunBitti() {
+    nyOyunuDurdur();
+
+    const enYuksekMevcut = parseInt(localStorage.getItem(NY_YUKSEK_SKOR_ANAHTARI) || '0', 10);
+    if (nyPuan > enYuksekMevcut) {
+        localStorage.setItem(NY_YUKSEK_SKOR_ANAHTARI, nyPuan);
+    }
+    const enYuksek = Math.max(nyPuan, enYuksekMevcut);
+
+    let mesaj;
+    if (nyPuan >= 15) mesaj = 'Bölüm birincisi gibisin! 🏆';
+    else if (nyPuan >= 10) mesaj = 'Gayet iyi, bu gidişle burs alırsın 👏';
+    else if (nyPuan >= 5) mesaj = 'Fena değil, ortalamayı tutturdun 🙂';
+    else mesaj = 'Bütünlemeye kalmış gibisin 😅 Tekrar dene!';
+
+    document.getElementById('nySonucMesaji').textContent = mesaj;
+    document.getElementById('nySonPuan').textContent = nyPuan;
+    document.getElementById('nyEnYuksekGosterge').textContent = enYuksek;
+    nyEkranGoster('bitti');
+
+    const kayitAlani = document.getElementById('nySkorKayitAlani');
+    if (nyGirisliMi) {
+        kayitAlani.innerHTML = '<p class="ny-ipucu">Skor kaydediliyor...</p>';
+        nySkorGonder(nyPuan);
+    } else {
+        kayitAlani.innerHTML = '<p class="ny-ipucu">Skorunu liderlik tablosuna kaydetmek için <a href="#" onclick="nyGirisIsteBitti(event)">giriş yap</a></p>';
+    }
+}
+
+// ------------------------------------------------------------
+// Hesap sistemi ve liderlik tablosu
+// ------------------------------------------------------------
+const NY_HESAP_ANAHTARI = 'ktuNotYakalaHesap';
+const NY_EKRAN_ID = {
+    baslangic: 'nyBaslangicEkrani',
+    giris: 'nyGirisEkrani',
+    kayit: 'nyKayitEkrani',
+    liderlik: 'nyLiderlikEkrani',
+    bitti: 'nyBittiEkrani'
+};
+
+let nyGirisliMi = false;
+let nyKullaniciAdi = null;
+let nyKullaniciSifre = null;
+let nyBekleyenSkor = null;
+
+function nyEkranGoster(ad, event) {
+    if (event) event.preventDefault();
+    Object.values(NY_EKRAN_ID).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const hedefId = NY_EKRAN_ID[ad];
+    if (hedefId) {
+        const hedef = document.getElementById(hedefId);
+        if (hedef) hedef.style.display = 'flex';
+    }
+    if (ad === 'baslangic') nyHesapDurumuGuncelle();
+}
+
+function nyEscapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function nyHesapDurumuGuncelle() {
+    const el = document.getElementById('nyHesapDurumu');
+    if (!el) return;
+    el.innerHTML = nyGirisliMi
+        ? `Merhaba, <strong>${nyEscapeHtml(nyKullaniciAdi)}</strong> &nbsp;·&nbsp; <a href="#" onclick="nyCikisYap(event)">Çıkış</a>`
+        : `<a href="#" onclick="nyEkranGoster('giris', event)">Giriş Yap</a> &nbsp;·&nbsp; <a href="#" onclick="nyEkranGoster('kayit', event)">Kayıt Ol</a>`;
+}
+
+function nyOturumAyarla(ad, sifre, beniHatirla) {
+    nyGirisliMi = true;
+    nyKullaniciAdi = ad;
+    nyKullaniciSifre = sifre;
+    if (beniHatirla) {
+        localStorage.setItem(NY_HESAP_ANAHTARI, JSON.stringify({ ad, sifre }));
+    } else {
+        localStorage.removeItem(NY_HESAP_ANAHTARI);
+    }
+    nyHesapDurumuGuncelle();
+}
+
+async function nyOturumKontrol() {
+    if (nyGirisliMi) { nyHesapDurumuGuncelle(); return; }
+    const kayitli = localStorage.getItem(NY_HESAP_ANAHTARI);
+    if (!kayitli) { nyHesapDurumuGuncelle(); return; }
+    try {
+        const { ad, sifre } = JSON.parse(kayitli);
+        const { data, error } = await getSupabase().rpc('ny_giris_yap', { p_kullanici_adi: ad, p_sifre: sifre });
+        if (!error && data && data.basarili) {
+            nyGirisliMi = true;
+            nyKullaniciAdi = data.kullanici_adi;
+            nyKullaniciSifre = sifre;
+        } else {
+            localStorage.removeItem(NY_HESAP_ANAHTARI);
+        }
+    } catch (e) {
+        localStorage.removeItem(NY_HESAP_ANAHTARI);
+    }
+    nyHesapDurumuGuncelle();
+}
+
+function nyCikisYap(event) {
+    if (event) event.preventDefault();
+    nyGirisliMi = false;
+    nyKullaniciAdi = null;
+    nyKullaniciSifre = null;
+    localStorage.removeItem(NY_HESAP_ANAHTARI);
+    nyHesapDurumuGuncelle();
+}
+
+async function nyGirisSonrasiIslemler() {
+    if (nyBekleyenSkor !== null) {
+        const skor = nyBekleyenSkor;
+        nyBekleyenSkor = null;
+        nyEkranGoster('bitti');
+        const kayitAlani = document.getElementById('nySkorKayitAlani');
+        kayitAlani.innerHTML = '<p class="ny-ipucu">Skor kaydediliyor...</p>';
+        await nySkorGonder(skor);
+    } else {
+        nyEkranGoster('baslangic');
+    }
+}
+
+function nyGirisIsteBitti(event) {
+    if (event) event.preventDefault();
+    nyBekleyenSkor = nyPuan;
+    nyEkranGoster('giris');
+}
+
+async function nyGirisGonder(event) {
+    event.preventDefault();
+    const ad = document.getElementById('nyGirisAd').value.trim();
+    const sifre = document.getElementById('nyGirisSifre').value;
+    const beniHatirla = document.getElementById('nyGirisBeniHatirla').checked;
+    const hataEl = document.getElementById('nyGirisHata');
+    const btn = event.target.querySelector('button[type="submit"]');
+    hataEl.textContent = '';
+    btn.disabled = true;
+    const oncekiMetin = btn.textContent;
+    btn.textContent = 'Giriş yapılıyor...';
+    try {
+        const { data, error } = await getSupabase().rpc('ny_giris_yap', { p_kullanici_adi: ad, p_sifre: sifre });
+        if (error) throw error;
+        if (!data || !data.basarili) {
+            hataEl.textContent = data && data.hata === 'sifre_yanlis' ? 'Şifre yanlış.' : 'Böyle bir kullanıcı bulunamadı.';
+            return;
+        }
+        nyOturumAyarla(data.kullanici_adi, sifre, beniHatirla);
+        document.getElementById('nyGirisAd').value = '';
+        document.getElementById('nyGirisSifre').value = '';
+        await nyGirisSonrasiIslemler();
+    } catch (e) {
+        hataEl.textContent = 'Bağlantı hatası, tekrar dene.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = oncekiMetin;
+    }
+}
+
+async function nyKayitGonder(event) {
+    event.preventDefault();
+    const ad = document.getElementById('nyKayitAd').value.trim();
+    const sifre = document.getElementById('nyKayitSifre').value;
+    const sifreTekrar = document.getElementById('nyKayitSifreTekrar').value;
+    const beniHatirla = document.getElementById('nyKayitBeniHatirla').checked;
+    const hataEl = document.getElementById('nyKayitHata');
+    hataEl.textContent = '';
+
+    if (sifre !== sifreTekrar) {
+        hataEl.textContent = 'Şifreler eşleşmiyor.';
+        return;
+    }
+
+    const btn = event.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    const oncekiMetin = btn.textContent;
+    btn.textContent = 'Kayıt olunuyor...';
+    try {
+        const { data, error } = await getSupabase().rpc('ny_kayit_ol', { p_kullanici_adi: ad, p_sifre: sifre });
+        if (error) throw error;
+        if (data === 'ad_alinmis') {
+            hataEl.textContent = 'Bu kullanıcı adı alınmış.';
+            return;
+        } else if (data === 'gecersiz_ad') {
+            hataEl.textContent = 'Kullanıcı adı 3-20 karakter olmalı (harf, rakam, alt çizgi).';
+            return;
+        } else if (data === 'gecersiz_sifre') {
+            hataEl.textContent = 'Şifre en az 4 karakter olmalı.';
+            return;
+        } else if (data === 'yasakli_kelime') {
+            hataEl.textContent = 'Kullanıcı adında uygunsuz bir ifade var, farklı bir ad dene.';
+            return;
+        } else if (data !== 'basarili') {
+            hataEl.textContent = 'Kayıt başarısız, tekrar dene.';
+            return;
+        }
+        nyOturumAyarla(ad, sifre, beniHatirla);
+        document.getElementById('nyKayitAd').value = '';
+        document.getElementById('nyKayitSifre').value = '';
+        document.getElementById('nyKayitSifreTekrar').value = '';
+        await nyGirisSonrasiIslemler();
+    } catch (e) {
+        hataEl.textContent = 'Bağlantı hatası, tekrar dene.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = oncekiMetin;
+    }
+}
+
+async function nySkorGonder(skor) {
+    const kayitAlani = document.getElementById('nySkorKayitAlani');
+    if (!nyGirisliMi) { nyBekleyenSkor = skor; return; }
+    try {
+        const { data, error } = await getSupabase().rpc('ny_skor_gonder', {
+            p_kullanici_adi: nyKullaniciAdi,
+            p_sifre: nyKullaniciSifre,
+            p_skor: skor
+        });
+        if (error || !data || !data.basarili) {
+            kayitAlani.innerHTML = '<p class="ny-form-hata">Skor kaydedilemedi, bağlantını kontrol et.</p>';
+            return;
+        }
+        kayitAlani.innerHTML = data.yeni_rekor
+            ? '<p class="ny-basarili">🎉 Yeni kişisel rekor! Skorun kaydedildi.</p>'
+            : '<p class="ny-basarili">✅ Skorun kaydedildi.</p>';
+    } catch (e) {
+        kayitAlani.innerHTML = '<p class="ny-form-hata">Skor kaydedilemedi, bağlantını kontrol et.</p>';
+    }
+}
+
+async function nyLiderlikGoster(event) {
+    if (event) event.preventDefault();
+    nyEkranGoster('liderlik');
+    const el = document.getElementById('nyLiderlikListesi');
+    el.innerHTML = '<p class="ny-ipucu">Yükleniyor...</p>';
+    try {
+        const { data, error } = await getSupabase().rpc('ny_liderlik_tablosu', { p_limit: 10 });
+        if (error) throw error;
+        if (!data || !data.length) {
+            el.innerHTML = '<p class="ny-ipucu">Henüz kimse skor göndermemiş. İlk sen ol!</p>';
+            return;
+        }
+        el.innerHTML = data.map((satir, i) => `
+            <div class="ny-liderlik-satir${nyGirisliMi && satir.kullanici_adi === nyKullaniciAdi ? ' ny-liderlik-ben' : ''}">
+                <span class="ny-liderlik-sira">${i + 1}.</span>
+                <span class="ny-liderlik-ad">${nyEscapeHtml(satir.kullanici_adi)}</span>
+                <span class="ny-liderlik-skor">${satir.en_yuksek_skor}</span>
+            </div>
+        `).join('');
+    } catch (e) {
+        el.innerHTML = '<p class="ny-form-hata">Liderlik tablosu yüklenemedi.</p>';
     }
 }
