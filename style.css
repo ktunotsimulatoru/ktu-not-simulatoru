@@ -336,6 +336,39 @@ main {
 .oyun-cta-baslik { margin: 0 0 4px 0; font-size: 1.15em; font-weight: 700; color: var(--content-title); }
 .oyun-cta-aciklama { margin: 0 0 16px 0; font-size: 0.9em; color: var(--small-text); }
 
+/* İlgili hesaplama araçları */
+.ilgili-araclar-section {
+    max-width: 700px;
+    margin: 0 auto 2rem auto;
+    padding: 1.5rem 1.75rem;
+    background-color: var(--main-bg);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+.ilgili-araclar-baslik { margin: 0 0 14px 0; font-size: 1.05em; font-weight: 700; color: var(--content-title); }
+.ilgili-araclar-listesi { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.ilgili-araclar-listesi a, .ilgili-araclar-listesi span {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.88em;
+    font-weight: 600;
+    text-decoration: none;
+}
+.ilgili-araclar-listesi a {
+    color: var(--button-bg);
+    background-color: var(--input-bg, transparent);
+    border: 1.5px solid var(--button-bg);
+    transition: background-color 0.15s, color 0.15s;
+}
+.ilgili-araclar-listesi a:hover { background-color: var(--button-bg); color: #fff; }
+.ilgili-araclar-listesi span.ilgili-arac-aktif {
+    color: var(--button-text);
+    background-color: var(--button-bg);
+    border: 1.5px solid var(--button-bg);
+}
+
 /* Sıkça Sorulan Sorular */
 .sss-section {
     max-width: 700px;
