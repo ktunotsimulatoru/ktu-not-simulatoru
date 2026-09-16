@@ -492,6 +492,7 @@ function buildHesaplamaMantigiHTML(baslik, adimlar, uyariHTML) {
 
 // --- Arayüz Fonksiyonları ---
 function openTab(evt, tabName) {
+    if (evt) evt.preventDefault();
     let i, tabcontent, tabbuttons;
     tabcontent = document.getElementsByClassName("tab-content");
     for (i = 0; i < tabcontent.length; i++) {
