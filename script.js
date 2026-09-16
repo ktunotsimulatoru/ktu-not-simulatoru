@@ -2925,8 +2925,7 @@ function nyModalAc(event) {
     if (event) event.preventDefault();
     document.body.style.overflow = 'hidden';
     const modal = document.getElementById('nyModal');
-    modal.style.display = 'flex';
-    requestAnimationFrame(() => modal.classList.add('aktif'));
+    modal.classList.add('aktif');
     nyEkranGoster('baslangic');
     const enYuksek = localStorage.getItem(NY_YUKSEK_SKOR_ANAHTARI) || 0;
     document.getElementById('nyEnYuksekGosterge').textContent = enYuksek;
