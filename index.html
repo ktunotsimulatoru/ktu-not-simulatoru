@@ -85,7 +85,7 @@
                 "name": "Final sınavından kaç almam gerekiyor?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Bu sayı; vize notunuza, dersin vize/final ağırlıklarına ve hedeflediğiniz harf notuna göre değişir. KTÜ Not Simülatörü'ndeki Gerekli Final Notu Hesaplama aracına kendi notlarınızı ve hedefinizi girerek bu hesaplamayı anında yapabilirsiniz."
+                    "text": "Yarıyıl içi notunuz ne olursa olsun, bir dersten başarılı sayılabilmeniz için final (veya bütünleme) sınavından 100 üzerinden en az 45 almanız şarttır. Bu taban, Sağlık Bilimleri Fakültesi'nde 50, Eczacılık Fakültesi'nde 60'tır. Bu tabanı geçtikten sonra, hedeflediğiniz belirli bir harf notuna ulaşmak için gereken tam puan ise vize notunuza, dersin vize/final ağırlığına ve sınıfın bağıl değerlendirme sonucuna göre değişir. KTÜ Not Simülatörü'ndeki Gerekli Final Notu Hesaplama aracına kendi notlarınızı ve hedefinizi girerek bu hesaplamayı anında yapabilirsiniz."
                 }
             },
             {
@@ -110,6 +110,14 @@
                 "acceptedAnswer": {
                     "@type": "Answer",
                     "text": "Evet, site tamamen ücretsizdir ve hesaplama araçlarını kullanmak için herhangi bir üyelik ya da giriş gerekmez. Hesap sistemi yalnızca isteğe bağlı olarak mini oyundaki liderlik tablosu için kullanılır."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Yeni yönetmelikle eski yönetmelik arasında ne değişti?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "KTÜ Senatosu 24.03.2026 tarihinde, 2012'den beri (en son 2019'da güncellenerek) yürürlükte olan usul ve esasları kaldırıp yeni bir düzenleme kabul etti; yeni sistem 2026-2027 eğitim öğretim yılından itibaren geçerli. Başlıca değişiklikler: (1) Eskiden 1-10 öğrencili derslerde doğrudan mutlak sistem uygulanırken, artık 1-29 öğrencili tüm derslerde yüzdelik dilim yöntemi kullanılıyor. (2) Mutlak sistemdeki puan aralıkları öğrenci lehine güncellendi; örneğin AA için eskiden en az 90 puan gerekirken şimdi 86 yeterli, CC aralığı eskiden 60-69 iken şimdi 50-59'a çekildi. (3) Seminer, bitirme çalışması gibi derslerde artık en az 50 (CC) alma şartı açıkça belirtiliyor, bu sınırın altındaki notlar doğrudan FF sayılıyor. (4) Süren Çalışma (S) notu artık not ortalamasına dahil ediliyor. Final/bütünlemeden alınması gereken en az puan (45, Sağlık Bilimleri'nde 50, Eczacılık'ta 60) ise değişmedi. Bu site güncel (yeni) yönetmeliğe göre hesaplama yapar."
                 }
             }
         ]
@@ -730,6 +738,12 @@
         </div>
     </main>
 
+    <section class="oyun-cta-section">
+        <p class="oyun-cta-baslik">🎮 Biraz mola vermek ister misin?</p>
+        <p class="oyun-cta-aciklama">Not Yakala'yı oyna, skorunu liderlik tablosuna kaydet.</p>
+        <a href="#" class="footer-oyun-link" onclick="nyModalAc(event)">🎮 Sıkıldıysan bir mola ver</a>
+    </section>
+
     <section class="sss-section" aria-labelledby="sss-baslik">
         <h2 id="sss-baslik">Sıkça Sorulan Sorular</h2>
 
@@ -745,7 +759,7 @@
 
         <details class="sss-item">
             <summary>Final sınavından kaç almam gerekiyor?</summary>
-            <p>Bu sayı; vize notunuza, dersin vize/final ağırlıklarına ve hedeflediğiniz harf notuna göre değişir, bu yüzden herkes için tek bir sabit rakam vermek doğru olmaz. Bu sitedeki "Gerekli Final Notu Hesaplama" aracına kendi notlarınızı ve hedefinizi girerek, o hedefe ulaşmak için finalden en az kaç almanız gerektiğini anında görebilirsiniz.</p>
+            <p>Yarıyıl içi notunuz ne olursa olsun, bir dersten başarılı sayılabilmeniz için final (veya bütünleme) sınavından 100 üzerinden <strong>en az 45</strong> almanız şarttır. Bu taban, <strong>Sağlık Bilimleri Fakültesi'nde 50</strong>, <strong>Eczacılık Fakültesi'nde 60</strong>'tır — bu sınırın altında kalırsanız vize notunuz ne olursa olsun dersten başarısız olursunuz. Bu tabanı geçtikten sonra, hedeflediğiniz belirli bir harf notuna (örneğin CB ya da BB) ulaşmak için gereken tam puan ise vize notunuza, dersin vize/final ağırlığına ve sınıfın bağıl değerlendirme sonucuna göre değişir. Bu sitedeki "Gerekli Final Notu Hesaplama" aracına kendi notlarınızı ve hedefinizi girerek, size özel bu hesaplamayı anında görebilirsiniz.</p>
         </details>
 
         <details class="sss-item">
@@ -761,6 +775,11 @@
         <details class="sss-item">
             <summary>KTÜ Not Simülatörü ücretsiz mi, üyelik gerekiyor mu?</summary>
             <p>Evet, site tamamen ücretsizdir ve hesaplama araçlarını kullanmak için herhangi bir üyelik ya da giriş gerekmez. Hesap sistemi yalnızca isteğe bağlı olarak mini oyundaki liderlik tablosu için kullanılır.</p>
+        </details>
+
+        <details class="sss-item">
+            <summary>Yeni yönetmelikle eski yönetmelik arasında ne değişti?</summary>
+            <p>KTÜ Senatosu 24.03.2026 tarihinde, 2012'den beri (en son 2019'da güncellenerek) yürürlükte olan usul ve esasları kaldırıp yeni bir düzenleme kabul etti; yeni sistem 2026-2027 eğitim öğretim yılından itibaren geçerli. Başlıca değişiklikler: <strong>(1)</strong> Eskiden 1-10 öğrencili derslerde doğrudan mutlak sistem uygulanırken, artık 1-29 öğrencili tüm derslerde yüzdelik dilim yöntemi kullanılıyor. <strong>(2)</strong> Mutlak sistemdeki puan aralıkları öğrenci lehine güncellendi — örneğin AA için eskiden en az 90 puan gerekirken şimdi 86 yeterli, CC aralığı eskiden 60-69 iken şimdi 50-59'a çekildi. <strong>(3)</strong> Seminer, bitirme çalışması gibi derslerde artık en az 50 (CC) alma şartı açıkça belirtiliyor, bu sınırın altındaki notlar doğrudan FF sayılıyor. <strong>(4)</strong> "Süren Çalışma (S)" notu artık not ortalamasına dahil ediliyor. Final/bütünlemeden alınması gereken en az puan (45, Sağlık Bilimleri'nde 50, Eczacılık'ta 60) ise değişmedi. Bu site güncel (yeni) yönetmeliğe göre hesaplama yapar.</p>
         </details>
     </section>
 
@@ -909,7 +928,6 @@
     <div id="anket-pill-wrapper"></div>
 
     <footer>
-         <p class="footer-oyun-satiri"><a href="#" class="footer-oyun-link" onclick="nyModalAc(event)">🎮 Sıkıldıysan bir mola ver</a></p>
          <div class="footer-logo">
              <img class="logo-light" src="footer-logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
              <img class="logo-dark" src="footer-logo-dark.png" alt="KTÜ Not Simülatörü" width="150" height="50">

@@ -321,6 +321,21 @@ main {
     z-index: 1;
 }
 
+/* Oyun daveti kutusu */
+.oyun-cta-section {
+    max-width: 700px;
+    margin: 0 auto 2rem auto;
+    padding: 1.75rem;
+    background-color: var(--main-bg);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+.oyun-cta-baslik { margin: 0 0 4px 0; font-size: 1.15em; font-weight: 700; color: var(--content-title); }
+.oyun-cta-aciklama { margin: 0 0 16px 0; font-size: 0.9em; color: var(--small-text); }
+
 /* Sıkça Sorulan Sorular */
 .sss-section {
     max-width: 700px;
@@ -683,7 +698,6 @@ footer a { color: var(--header-text); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 .footer-logo { margin-bottom: 14px; }
 .footer-logo img { height: 34px; width: auto; }
-.footer-oyun-satiri { margin: 0 0 16px 0 !important; }
 .footer-oyun-link {
     display: inline-flex;
     align-items: center;
