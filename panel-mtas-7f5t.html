@@ -190,6 +190,7 @@
         <button class="nav-btn" onclick="sekmeDegistir('anketler', this)">📊 Anketler</button>
         <button class="nav-btn" onclick="sekmeDegistir('fakulteler', this)">🏫 Fakülte & Bölüm</button>
         <button class="nav-btn" onclick="sekmeDegistir('anodersler', this)">🎓 ANO Ders Analizi</button>
+        <button class="nav-btn" onclick="sekmeDegistir('oyun', this)">🎮 Not Yakala</button>
         <button class="nav-btn" onclick="sekmeDegistir('ayarlar', this)">⚙️ Ayarlar</button>
     </div>
 
@@ -451,6 +452,23 @@
             </div>
         </div>
 
+        <!-- NOT YAKALA (OYUN) İSTATİSTİKLERİ -->
+        <div id="bolum-oyun" class="panel-bolum">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div class="bolum-baslik" style="margin-bottom:0;">🎮 Not Yakala İstatistikleri</div>
+                <button class="btn btn-gri" onclick="oyunIstatistikYukle()">↻ Yenile</button>
+            </div>
+            <div class="stat-karti-grid" id="oyun-stat-kartlar" style="margin-bottom:20px;">
+                <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>🏆 En Çok Oynayan Kayıtlı Oyuncular</span>
+                </div>
+                <div id="oyun-oyuncu-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
         <!-- AYARLAR -->
         <div id="bolum-ayarlar" class="panel-bolum">
             <div class="bolum-baslik">⚙️ Ayarlar</div>
@@ -558,6 +576,7 @@ function sekmeDegistir(bolum, btn) {
     else if (bolum === 'fakulteler') { fakulteleriYukle(); bolumleriYukle(); fakulteSelectDoldur(); }
     else if (bolum === 'istatistik') istatistikleriYukle();
     else if (bolum === 'anodersler') anoDersAnalizYukle();
+    else if (bolum === 'oyun') oyunIstatistikYukle();
 }
 
 async function onayBekleyenSayisiGoster() {
@@ -2070,6 +2089,42 @@ async function anoDersAnalizYukle() {
             : `Hata: ${e.message}`;
         document.getElementById('ano-ders-stat-kartlar').innerHTML = '';
         document.getElementById('ano-ders-tablo-icerik').innerHTML = `<div class="bos-mesaj">${mesaj}</div>`;
+    }
+}
+
+// ── NOT YAKALA (OYUN) İSTATİSTİKLERİ ──
+function oyunEscapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+}
+async function oyunIstatistikYukle() {
+    document.getElementById('oyun-stat-kartlar').innerHTML = '<div style="color:var(--muted);font-size:0.9em;padding:8px;">Yükleniyor...</div>';
+    document.getElementById('oyun-oyuncu-tablo-icerik').innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    try {
+        const { data, error } = await sb.rpc('ny_admin_istatistik');
+        if (error) throw error;
+
+        const toplamOyun = (data && data.toplam_oyun) || 0;
+        const kayitliOyuncu = (data && data.kayitli_oyuncu_sayisi) || 0;
+        const misafirOyun = (data && data.misafir_oyun_sayisi) || 0;
+        const oyuncular = (data && data.oyuncular) || [];
+
+        document.getElementById('oyun-stat-kartlar').innerHTML = `
+            <div class="stat-karti"><div class="stat-karti-baslik">🎮 Toplam Oynanma</div><div class="stat-karti-deger">${toplamOyun.toLocaleString('tr-TR')}</div><div class="stat-karti-alt">kayıtlı + misafir, tüm oynanışlar</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">👤 Kayıtlı Oyuncu</div><div class="stat-karti-deger">${kayitliOyuncu.toLocaleString('tr-TR')}</div><div class="stat-karti-alt">hesap açmış oyuncu sayısı</div></div>
+            <div class="stat-karti"><div class="stat-karti-baslik">🕶️ Misafir Oynanma</div><div class="stat-karti-deger">${misafirOyun.toLocaleString('tr-TR')}</div><div class="stat-karti-alt">giriş yapmadan oynanan oyunlar</div></div>`;
+
+        if (!oyuncular.length) {
+            document.getElementById('oyun-oyuncu-tablo-icerik').innerHTML = '<div class="bos-mesaj">Henüz kayıtlı bir oyuncu skor göndermemiş.</div>';
+            return;
+        }
+        const satirlar = oyuncular.map(o => `<tr><td>${oyunEscapeHtml(o.kullanici_adi)}</td><td>${(o.oyun_sayisi||0).toLocaleString('tr-TR')}</td><td>${(o.en_yuksek_skor||0).toLocaleString('tr-TR')}</td></tr>`).join('');
+        document.getElementById('oyun-oyuncu-tablo-icerik').innerHTML =
+            `<table><thead><tr><th>Kullanıcı Adı</th><th>Oynama Sayısı</th><th>En Yüksek Skor</th></tr></thead><tbody>${satirlar}</tbody></table>`;
+    } catch (e) {
+        document.getElementById('oyun-stat-kartlar').innerHTML = '';
+        document.getElementById('oyun-oyuncu-tablo-icerik').innerHTML = `<div class="bos-mesaj">Hata: ${oyunEscapeHtml(e.message)}</div>`;
     }
 }
 function anoDersStat() {
