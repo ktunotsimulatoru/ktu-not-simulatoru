@@ -402,9 +402,6 @@ main {
     overflow: hidden;
     text-overflow: ellipsis;
     text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 .tab-button:hover { background-color: var(--tab-hover-bg); color: var(--tab-active-text); }
 .tab-button.active { font-weight: 700; color: var(--tab-active-text); border-bottom: 2px solid var(--tab-active-border); }
