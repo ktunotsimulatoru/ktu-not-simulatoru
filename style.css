@@ -766,6 +766,22 @@ footer a:hover { text-decoration: underline; }
 .ny-baslat-btn:hover { background: var(--button-hover-bg); }
 .ny-baslat-btn:active { transform: scale(0.97); }
 
+.ny-giris-cta-btn {
+    margin-top: 2px;
+    background: transparent;
+    color: var(--button-bg);
+    border: 2px solid var(--button-bg);
+    border-radius: var(--radius-md);
+    padding: 8px 20px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.92em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+.ny-giris-cta-btn:hover { background: var(--button-bg); color: var(--button-text); }
+.ny-giris-cta-btn:active { transform: scale(0.97); }
+
 .ny-hesap-durumu { font-size: 0.85em; color: var(--small-text); }
 .ny-hesap-durumu a, .ny-alt-linkler a, .ny-alt-metin a { color: var(--button-bg); text-decoration: none; cursor: pointer; }
 .ny-hesap-durumu a:hover, .ny-alt-linkler a:hover, .ny-alt-metin a:hover { text-decoration: underline; }
@@ -799,6 +815,22 @@ footer a:hover { text-decoration: underline; }
     display: flex; align-items: center; gap: 10px; padding: 7px 12px;
     background: var(--tab-bg); border-radius: var(--radius-sm); font-size: 0.9em;
 }
+.ny-liderlik-sekmeler { display: flex; gap: 8px; width: 100%; max-width: 300px; }
+.ny-liderlik-sekme {
+    flex: 1;
+    background: none;
+    border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.ny-liderlik-sekme:hover { border-color: var(--button-bg); }
+.ny-liderlik-sekme.aktif { background: var(--button-bg); color: var(--button-text); border-color: var(--button-bg); }
 .ny-liderlik-satir.ny-liderlik-ben { background: var(--input-focus-shadow); border: 1px solid var(--button-bg); }
 .ny-liderlik-sira { font-weight: 700; color: var(--small-text); width: 22px; flex-shrink: 0; }
 .ny-liderlik-ad { flex: 1; text-align: left; color: var(--text-color); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

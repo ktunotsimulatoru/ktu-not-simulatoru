@@ -3092,13 +3092,13 @@ function nyCanGuncelle() {
 // olduğu için oyunun "asıl işten" tamamen koparmaması amaçlanıyor.
 const NY_OYUN_SAYAC_ANAHTARI = 'ktuNotYakalaOyunSayaci';
 const NY_DERS_HATIRLATMALARI = [
-    '📚 Güzel bir mola oldu, umarım dersleri de unutmamışsındır 🙂',
-    '⏰ Mola bitti sayılır, vizeler de bir yerlerde bekliyor olabilir 😊',
-    '🧠 Reflekslerin gayet iyi, umarım ders çalışmayı da ihmal etmemişsindir.',
-    '📖 Beş oyun oldu, küçük bir göz atma molası da not çalışmaya iyi gelebilir.',
-    '☕ Dinlendiysen, kaldığın yerden derslere devam edebilirsin 🙂',
-    '📝 Skorun güzel, umarım ders çalışmak da bu kadar keyifli geçiyordur.',
-    '🔔 Küçük bir hatırlatma: ara verdiysen bile dersi tamamen unutma 😊'
+    '📚 Güzel bir ara verdik, şimdi kaldığımız yerden derse dönebiliriz 🙂',
+    '⏰ Küçük bir mola bitti, ders de bir yerlerde bizi bekliyor olabilir.',
+    '📖 Ara vermek iyi gelir, yeter ki dersi de aklımızın bir köşesinde tutalım.',
+    '☕ Bu mola güzeldi, sırada ders çalışmak da olabilir 🙂',
+    '🔔 Ara verdik, dersi de unutmayalım.',
+    '🧠 Biraz dinlendik, şimdi derse dönmek için iyi bir zaman olabilir.',
+    '📝 Küçük bir mola sonrası, kaldığımız yerden derse devam edebiliriz.'
 ];
 
 function nyOyunBitti() {
@@ -3111,8 +3111,7 @@ function nyOyunBitti() {
     const enYuksek = Math.max(nyPuan, enYuksekMevcut);
 
     let mesaj;
-    if (nyPuan >= 15) mesaj = 'Bölüm birincisi gibisin! 🏆';
-    else if (nyPuan >= 10) mesaj = 'Gayet iyi, bu gidişle burs alırsın 👏';
+    if (nyPuan >= 10) mesaj = 'Gayet iyi, bu gidişle burs alırsın 👏';
     else if (nyPuan >= 5) mesaj = 'Fena değil, ortalamayı tutturdun 🙂';
     else mesaj = 'Bütünlemeye kalmış gibisin 😅 Tekrar dene!';
 
@@ -3140,7 +3139,7 @@ function nyOyunBitti() {
         kayitAlani.innerHTML = '<p class="ny-ipucu">Skor kaydediliyor...</p>';
         nySkorGonder(nyPuan);
     } else {
-        kayitAlani.innerHTML = '<p class="ny-ipucu">Skorunu liderlik tablosuna kaydetmek için <a href="#" onclick="nyGirisIsteBitti(event)">giriş yap</a></p>';
+        kayitAlani.innerHTML = '<p class="ny-ipucu">Skorunu liderlik tablosuna kaydetmek için:</p><button type="button" class="ny-giris-cta-btn" onclick="nyGirisIsteBitti(event)">🔑 Giriş Yap / Kayıt Ol</button>';
         nyMisafirOyunKaydet(nyPuan);
     }
 }
@@ -3358,16 +3357,33 @@ async function nySkorGonder(skor) {
     }
 }
 
+let nyLiderlikAralik = 'haftalik';
+
 async function nyLiderlikGoster(event) {
     if (event) event.preventDefault();
     nyEkranGoster('liderlik');
+    await nyLiderlikYukle();
+}
+
+function nyLiderlikSekmeDegistir(aralik) {
+    if (aralik === nyLiderlikAralik) return;
+    nyLiderlikAralik = aralik;
+    document.getElementById('nyLiderlikSekmeHaftalik').classList.toggle('aktif', aralik === 'haftalik');
+    document.getElementById('nyLiderlikSekmeTum').classList.toggle('aktif', aralik === 'tum');
+    nyLiderlikYukle();
+}
+
+async function nyLiderlikYukle() {
     const el = document.getElementById('nyLiderlikListesi');
     el.innerHTML = '<p class="ny-ipucu">Yükleniyor...</p>';
+    const fonksiyon = nyLiderlikAralik === 'haftalik' ? 'ny_liderlik_tablosu_haftalik' : 'ny_liderlik_tablosu';
     try {
-        const { data, error } = await getSupabase().rpc('ny_liderlik_tablosu', { p_limit: 10 });
+        const { data, error } = await getSupabase().rpc(fonksiyon, { p_limit: 10 });
         if (error) throw error;
         if (!data || !data.length) {
-            el.innerHTML = '<p class="ny-ipucu">Henüz kimse skor göndermemiş. İlk sen ol!</p>';
+            el.innerHTML = nyLiderlikAralik === 'haftalik'
+                ? '<p class="ny-ipucu">Bu hafta henüz kimse skor göndermemiş. İlk sen ol!</p>'
+                : '<p class="ny-ipucu">Henüz kimse skor göndermemiş. İlk sen ol!</p>';
             return;
         }
         el.innerHTML = data.map((satir, i) => `

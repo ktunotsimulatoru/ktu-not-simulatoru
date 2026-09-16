@@ -717,6 +717,10 @@
 
                     <div id="nyLiderlikEkrani" class="ny-overlay-ekran" style="display:none;">
                         <h3>🏆 Liderlik Tablosu</h3>
+                        <div class="ny-liderlik-sekmeler">
+                            <button type="button" class="ny-liderlik-sekme aktif" id="nyLiderlikSekmeHaftalik" onclick="nyLiderlikSekmeDegistir('haftalik')">Bu Hafta</button>
+                            <button type="button" class="ny-liderlik-sekme" id="nyLiderlikSekmeTum" onclick="nyLiderlikSekmeDegistir('tum')">Tüm Zamanlar</button>
+                        </div>
                         <div id="nyLiderlikListesi" class="ny-liderlik-listesi">
                             <p class="ny-ipucu">Yükleniyor...</p>
                         </div>
