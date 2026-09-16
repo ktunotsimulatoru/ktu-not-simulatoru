@@ -321,6 +321,41 @@ main {
     z-index: 1;
 }
 
+/* Sıkça Sorulan Sorular */
+.sss-section {
+    max-width: 700px;
+    margin: 0 auto 2rem auto;
+    padding: 1.5rem 1.75rem;
+    background-color: var(--main-bg);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    position: relative;
+    z-index: 1;
+}
+.sss-section h2 { margin: 0 0 1.25rem 0; color: var(--content-title); font-size: 1.5em; font-weight: 700; text-align: center; }
+.sss-item { border-bottom: 1px solid var(--input-border); padding: 12px 0; }
+.sss-item:last-child { border-bottom: none; }
+.sss-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--label-color);
+    list-style: none;
+    position: relative;
+    padding-right: 26px;
+}
+.sss-item summary::-webkit-details-marker { display: none; }
+.sss-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: var(--button-bg);
+    font-size: 1.2em;
+    font-weight: 700;
+}
+.sss-item[open] summary::after { content: '−'; }
+.sss-item p { margin: 10px 0 0 0; color: var(--text-color); font-size: 0.92em; line-height: 1.6; }
+
 /* Sekme Butonları */
 .tab-buttons {
     display: flex;
