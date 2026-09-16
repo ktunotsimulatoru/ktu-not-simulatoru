@@ -28,6 +28,7 @@
 
         #giris-ekrani { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         .giris-kutu { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+        .giris-logo { height: 50px; width: auto; margin-bottom: 18px; }
         .giris-kutu h1 { font-size: 1.3em; color: var(--accent); margin-bottom: 6px; }
         .giris-kutu p { font-size: 0.85em; color: var(--muted); margin-bottom: 24px; }
         .giris-input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-md); color: var(--text); font-family: 'Poppins', sans-serif; font-size: 1em; margin-bottom: 12px; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
@@ -39,6 +40,8 @@
 
         #admin-panel { display: none; }
         .admin-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .admin-header-brand { display: flex; align-items: center; gap: 10px; }
+        .admin-header-brand img { height: 42px; width: auto; display: block; }
         .admin-header h1 { font-size: 1.1em; color: var(--accent); font-weight: 700; }
         .cikis-btn { background: var(--surface2); border: none; color: var(--muted); padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85em; font-weight: 600; transition: opacity 0.2s, color 0.2s, transform 0.15s; }
         .cikis-btn:hover { color: var(--red); opacity: 0.8; }
@@ -162,6 +165,7 @@
 
 <div id="giris-ekrani">
     <div class="giris-kutu">
+        <img class="giris-logo" src="logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
         <h1>🔐 Admin Paneli</h1>
         <p>KTÜ Not Simülatörü</p>
         <input type="password" id="sifre-input" class="giris-input" placeholder="Şifre" onkeydown="if(event.key==='Enter') girisYap()">
@@ -172,7 +176,10 @@
 
 <div id="admin-panel">
     <div class="admin-header">
-        <h1>⚙️ KTÜ Not Simülatörü — Admin</h1>
+        <div class="admin-header-brand">
+            <img src="logo.png" alt="KTÜ Not Simülatörü" width="126" height="42">
+            <h1>⚙️ Admin</h1>
+        </div>
         <button class="cikis-btn" onclick="cikisYap()">Çıkış Yap</button>
     </div>
     <div class="admin-nav">

@@ -995,6 +995,10 @@ document.addEventListener('DOMContentLoaded', () => {
             harfNotuSonucAlani.innerHTML = "<p>Hesaplanıyor...</p>";
             let formGecerli = true;
             const secilenYontem = harfNotuFormu.querySelector('input[name="hesaplamaYontemiHarf"]:checked').value;
+            // Sınıf çan ortalaması/standart sapma doğrulaması yalnızca Bağıl (Tablo-1/Tablo-2) sistemde
+            // anlamlıdır; bu yüzden hangi sistemin seçili olduğu, o doğrulamadan ÖNCE okunuyor (aşağıda
+            // tekrar hesaplanmıyor).
+            const sistemSeciliHarf = harfNotuFormu.querySelector('input[name="hesaplamaSistemiHarf"]:checked')?.value || 'tablo1';
 
             // --- Mezuniyet Sınavı: tamamen ayrı, sade bir hesaplama akışı ---
             // Ara sınav/final ayrımı, sınıf ortalaması ve final alt sınırı bu yöntemde hiç
@@ -1031,14 +1035,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 harfNotuSonucAlani.innerHTML = sonucMesajiMezuniyet;
-                dersiLinkGoster('ders-link-harf');
                 hesaplamaLogKaydet('harf', harfNotuMezuniyet, null, null, {
                     sistem_secimi: 'mutlak',
                     fakulte_turu: harfNotuFormu.querySelector('input[name="fakulteHarf"]:checked')?.value || 'genel',
                     giris_yontemi: 'mezuniyet',
                     sinav_notu: sinavNotu
                 });
-                sonucIndirButonuGoster('harf');
                 return;
             }
 
@@ -1054,15 +1056,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (!validateNumberField(finalGradeInput, 'Final Notu', 0, 100)) formGecerli = false;
-            if (!validateNumberField(classAvgInput, 'Sınıf Çan Ortalaması', 0, 100)) formGecerli = false;
 
             const sinifOrtalamasiVal = parseFloat(classAvgInput.value);
-            const minStdDev = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
-            if (!validateNumberField(classStdDevInput, 'Standart Sapma', minStdDev, null)) formGecerli = false;
+            if (sistemSeciliHarf !== 'mutlak') {
+                if (!validateNumberField(classAvgInput, 'Sınıf Çan Ortalaması', 0, 100)) formGecerli = false;
 
-            if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(classStdDevInput.value) === 0) {
-                 showFieldError(classStdDevInput, "Sınıf çan ortalaması 80'den düşükse standart sapma 0 olamaz.");
-                 formGecerli = false;
+                const minStdDev = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
+                if (!validateNumberField(classStdDevInput, 'Standart Sapma', minStdDev, null)) formGecerli = false;
+
+                if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(classStdDevInput.value) === 0) {
+                     showFieldError(classStdDevInput, "Sınıf çan ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                     formGecerli = false;
+                }
+            } else {
+                // Mutlak Sistem seçiliyken bu alanlar gizli ve zorunlu değildir; Bağıl sistemden kalma
+                // eski bir değer (ör. std. sapma "0") görünmeyen bir hataya takılıp formu kilitlemesin.
+                clearFieldError(classAvgInput);
+                clearFieldError(classStdDevInput);
             }
 
 
@@ -1083,7 +1093,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // adımlarının YERİNE geçmiyor, onlara EK bir adım.
             const hamBasariNotu = parseFloat((araSinavHBNKatkisi + (finalNotu * 0.50)).toFixed(2));
             const minimumFinalNotu = getMinimumFinalNotu('Harf', harfNotuFormu);
-            const sistemSeciliHarf = harfNotuFormu.querySelector('input[name="hesaplamaSistemiHarf"]:checked')?.value || 'tablo1';
             const ogrenciSayisiInputHarf = document.getElementById('ogrenci-sayisi-harf');
             const ogrenciSayisiHarfVal = (sistemSeciliHarf === 'tablo2' && ogrenciSayisiInputHarf && ogrenciSayisiInputHarf.value.trim() !== '') ? parseInt(ogrenciSayisiInputHarf.value, 10) : null;
 
@@ -1166,7 +1175,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 sonucMesaji += `<br><strong>Not:</strong> ${harfNotu} notu başarısız anlamına gelir.`;
             }
             harfNotuSonucAlani.innerHTML = sonucMesaji;
-            dersiLinkGoster('ders-link-harf');
             const vizeLogHarf = secilenYontem === 'tek'
                 ? parseFloat(document.getElementById('midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-harf').value);
@@ -1179,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fakulte_turu: harfNotuFormu.querySelector('input[name="fakulteHarf"]:checked')?.value || 'genel',
                 giris_yontemi: secilenYontem
             });
-            sonucIndirButonuGoster('harf');
         });
     }
 
@@ -1241,6 +1248,10 @@ document.addEventListener('DOMContentLoaded', () => {
             gerekliNotSonucAlani.innerHTML = "<p>Hesaplanıyor...</p>";
             let formGecerli = true;
             const secilenYontem = gerekliNotFormu.querySelector('input[name="hesaplamaYontemiGerekli"]:checked').value;
+            // Sınıf çan ortalaması/standart sapma doğrulaması yalnızca Bağıl (Tablo-1/Tablo-2) sistemde
+            // anlamlıdır; bu yüzden hangi sistemin seçili olduğu, o doğrulamadan ÖNCE okunuyor (aşağıda
+            // tekrar hesaplanmıyor).
+            const sistemSeciliGerekli = gerekliNotFormu.querySelector('input[name="hesaplamaSistemiGerekli"]:checked')?.value || 'tablo1';
 
             if (secilenYontem === 'tek') {
                 if (!validateNumberField(reqMidtermAvgInput, 'Ara Sınav Ortalaması', 0, 100)) formGecerli = false;
@@ -1254,15 +1265,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (!validateRequiredField(targetGradeSelect, 'Hedeflenen Harf Notu')) formGecerli = false;
-            if (!validateNumberField(reqClassAvgInput, 'Sınıf Çan Ortalaması', 0, 100)) formGecerli = false;
 
             const sinifOrtalamasiVal = parseFloat(reqClassAvgInput.value);
-            const minStdDevGerekli = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
-            if (!validateNumberField(reqClassStdDevInput, 'Standart Sapma', minStdDevGerekli, null)) formGecerli = false;
+            if (sistemSeciliGerekli !== 'mutlak') {
+                if (!validateNumberField(reqClassAvgInput, 'Sınıf Çan Ortalaması', 0, 100)) formGecerli = false;
 
-            if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(reqClassStdDevInput.value) === 0) {
-                 showFieldError(reqClassStdDevInput, "Sınıf çan ortalaması 80'den düşükse standart sapma 0 olamaz.");
-                 formGecerli = false;
+                const minStdDevGerekli = (formGecerli && !isNaN(sinifOrtalamasiVal) && sinifOrtalamasiVal < 80) ? 0.0001 : 0;
+                if (!validateNumberField(reqClassStdDevInput, 'Standart Sapma', minStdDevGerekli, null)) formGecerli = false;
+
+                if (formGecerli && sinifOrtalamasiVal < 80 && parseFloat(reqClassStdDevInput.value) === 0) {
+                     showFieldError(reqClassStdDevInput, "Sınıf çan ortalaması 80'den düşükse standart sapma 0 olamaz.");
+                     formGecerli = false;
+                }
+            } else {
+                // Mutlak Sistem seçiliyken bu alanlar gizli ve zorunlu değildir; Bağıl sistemden kalma
+                // eski bir değer (ör. std. sapma "0") görünmeyen bir hataya takılıp formu kilitlemesin.
+                clearFieldError(reqClassAvgInput);
+                clearFieldError(reqClassStdDevInput);
             }
 
 
@@ -1277,7 +1296,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const hedefHarfNotu = targetGradeSelect.value;
             const sinifStandartSapmaVal = parseFloat(reqClassStdDevInput.value);
             const minimumFinalNotu = getMinimumFinalNotu('Gerekli', gerekliNotFormu);
-            const sistemSeciliGerekli = gerekliNotFormu.querySelector('input[name="hesaplamaSistemiGerekli"]:checked')?.value || 'tablo1';
             const ogrenciSayisiInputGerekli = document.getElementById('ogrenci-sayisi-gerekli');
             const ogrenciSayisiGerekliVal = (sistemSeciliGerekli === 'tablo2' && ogrenciSayisiInputGerekli && ogrenciSayisiInputGerekli.value.trim() !== '') ? parseInt(ogrenciSayisiInputGerekli.value, 10) : null;
 
@@ -1348,7 +1366,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let finalSonucHTML = `Gereken Final Notu (${sistemTuru}): <strong style="font-size: 1.2em;">${sonucMetni}</strong>`;
             finalSonucHTML += buildHesaplamaMantigiHTML('Nasıl Hesaplandı?', mantikAdimlariReq, uyariHTMLReq);
             gerekliNotSonucAlani.innerHTML = finalSonucHTML;
-            dersiLinkGoster('ders-link-gerekli');
             const vizeLogGerekli = secilenYontem === 'tek'
                 ? parseFloat(document.getElementById('req-midterm-avg').value)
                 : parseFloat(document.getElementById('vize-notu-gerekli').value);
@@ -1362,7 +1379,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fakulte_turu: gerekliNotFormu.querySelector('input[name="fakulteGerekli"]:checked')?.value || 'genel',
                 giris_yontemi: secilenYontem
             });
-            sonucIndirButonuGoster('gerekli');
         });
     }
 
@@ -1702,8 +1718,6 @@ function ganoHesaplaButon() {
 function ganoSonucGecersizKil() {
     const sonucEl = document.getElementById('gano-sonuc');
     if (sonucEl) sonucEl.style.display = 'none';
-    const indirKutu = document.getElementById('ano-indir-kutu');
-    if (indirKutu) indirKutu.style.display = 'none';
 }
 
 function ganoDersSil(id) {
@@ -1805,7 +1819,6 @@ function ganoHesapla() {
 
     sonucEl.style.display = 'block';
     sonucEl.innerHTML = html;
-    sonucIndirButonuGoster('ano');
 
     // ANO hesaplamasını logla — debounced (2sn sonra, aynı değer tekrar loglanmaz)
     if (ano !== null) {
@@ -1833,630 +1846,6 @@ function ganoHesapla() {
     }
 }
 
-
-// ============================================================================
-// SONUÇ KARTI — hesaplama sonucunu Instagram Hikaye formatında (1080×1920),
-// sonucun harf notuyla/renk skalasıyla uyumlu bir gradyan arka plana sahip,
-// paylaşılabilir bir "anı kartı" olarak çizer. Kullanıcı; ders adını girebilir,
-// kartta hangi alanların görüneceğini seçebilir (Vize/Final/Sınıf Ort. vb.)
-// ve ANO sekmesinde isterse hesaba giren derslerin listesini de ekleyebilir.
-// ============================================================================
-
-// Harf notu -> tema rengi eşlemesi. style.css'teki --grade-*-bg değişkenleriyle
-// birebir aynı tutuluyor ki kartın rengi sonucun (rozetin) rengiyle her zaman
-// uyumlu olsun — ör. FF alındığında kart kırmızıya, AA alındığında yeşile döner.
-const GRADE_KART_RENK = {
-    AA: '#28a745', BA: '#5cb85c', BB: '#82ca9c', CB: '#007bff', CC: '#17a2b8',
-    DC: '#fd7e14', DD: '#ffc107', FD: '#dc3545', FF: '#a21427', D: '#a21427'
-};
-const VARSAYILAN_KART_RENK = '#6f42c1';
-
-// O an modalda önizlenen/indirilecek kartın verisi ({ sekme, veri, dersAdi, baslik }).
-let kartAktifVeri = null;
-
-// Harf notuna göre kartın tema rengini belirler. "onerilenMesaj", kullanıcının kendi
-// mesajını yazmasını kolaylaştırmak için yalnızca giriş alanının placeholder'ında
-// gösterilir — kullanıcı bir şey yazmadığı sürece kartın üzerine ASLA otomatik çizilmez.
-function harfRenkVeMesaj(harf) {
-    const renk = GRADE_KART_RENK[harf] || VARSAYILAN_KART_RENK;
-    let onerilenMesaj;
-    if (['AA', 'BA'].includes(harf)) onerilenMesaj = 'Harika bir sonuç!';
-    else if (['BB', 'CB'].includes(harf)) onerilenMesaj = 'Gayet iyi gidiyorum!';
-    else if (['CC', 'DC'].includes(harf)) onerilenMesaj = 'Geçtim, emek boşa gitmedi';
-    else if (harf === 'D') onerilenMesaj = 'Bu ders için yeni bir şansım var';
-    else onerilenMesaj = 'Bu sefer olmadı, pes yok';
-    return { renk, onerilenMesaj };
-}
-
-function hedefOnerilenMesaj(degerMetni) {
-    if (degerMetni && /İmkansız/i.test(degerMetni)) {
-        return 'Bu hedefe ulaşmak zor ama yeni bir plan yapılabilir';
-    }
-    return 'Hedefime giden yol belli, başarabilirim!';
-}
-
-function anoRenkVeMesaj(ano) {
-    if (ano === null || isNaN(ano)) return { renk: VARSAYILAN_KART_RENK, onerilenMesaj: 'Bu dönem devam ediyor' };
-    if (ano >= 3.5) return { renk: '#28a745', onerilenMesaj: 'Muhteşem bir dönem geçirdim!' };
-    if (ano >= 3.0) return { renk: '#28a745', onerilenMesaj: 'Çok iyi gidiyorum!' };
-    if (ano >= 2.0) return { renk: '#fd7e14', onerilenMesaj: 'Fena değil, devam!' };
-    return { renk: '#dc3545', onerilenMesaj: 'Zor bir dönemdi, toparlayacağım' };
-}
-
-// İlgili sekmenin sonuç kutusundaki ve form girdilerindeki DOM'dan kart verisini toplar.
-// (Hesaplama fonksiyonlarının kendi içindeki closure değişkenlerine buradan erişilemediği
-// için, zaten ekranda görünen değerler yeniden okunur.) Hesaplama yapılmamışsa null döner.
-function sonucKartiVeriTopla(sekme) {
-    if (sekme === 'harf') {
-        const kutu = document.getElementById('grade-result');
-        const badge = kutu?.querySelector('.grade-display-badge');
-        const harfNotu = badge ? badge.textContent.trim() : null;
-        if (!harfNotu) return null;
-        const { renk, onerilenMesaj } = harfRenkVeMesaj(harfNotu);
-        const yontem = document.querySelector('input[name="hesaplamaYontemiHarf"]:checked')?.value || 'tek';
-        const vize = yontem === 'tek' ? document.getElementById('midterm-avg')?.value : document.getElementById('vize-notu-harf')?.value;
-        const final = document.getElementById('final-grade')?.value;
-        const sinif = document.getElementById('class-avg')?.value;
-        return {
-            baslik: 'Harf Notu Sonucu',
-            heroEtiket: 'Harf Notunuz',
-            heroDeger: harfNotu,
-            heroAlt: '',
-            renk, onerilenMesaj,
-            alanlar: [
-                { key: 'vize', label: 'Vize / Ara Sınav', deger: vize, tip: 'metin' },
-                { key: 'final', label: 'Final Notu', deger: final, tip: 'metin' },
-                { key: 'sinif', label: 'Sınıf Ortalaması', deger: sinif, tip: 'metin' }
-            ]
-        };
-    }
-
-    if (sekme === 'gerekli') {
-        const kutu = document.getElementById('required-result');
-        const strongEl = kutu?.querySelector('strong[style*="1.2em"]');
-        if (!strongEl) return null;
-        const gerekliFinal = strongEl.textContent.trim().replace(/([a-zA-Z0-9])\(/g, '$1 (');
-        const hedefSelect = document.getElementById('target-grade');
-        const hedefHarfNotu = hedefSelect?.value || null;
-        const { renk } = harfRenkVeMesaj(hedefHarfNotu);
-        const yontem = document.querySelector('input[name="hesaplamaYontemiGerekli"]:checked')?.value || 'tek';
-        const vize = yontem === 'tek' ? document.getElementById('req-midterm-avg')?.value : document.getElementById('vize-notu-gerekli')?.value;
-        const sinif = document.getElementById('req-class-avg')?.value;
-        return {
-            baslik: 'Gereken Final Notu',
-            heroEtiket: 'Gereken Final Notu',
-            heroDeger: gerekliFinal,
-            heroAlt: hedefHarfNotu ? `Hedef: ${hedefHarfNotu}` : '',
-            renk, onerilenMesaj: hedefOnerilenMesaj(gerekliFinal),
-            alanlar: [
-                { key: 'vize', label: 'Vize / Ara Sınav', deger: vize, tip: 'metin' },
-                { key: 'sinif', label: 'Sınıf Ortalaması', deger: sinif, tip: 'metin' }
-            ]
-        };
-    }
-
-
-    if (sekme === 'ano') {
-        const anoDegerEl = document.querySelector('#gano-sonuc .gano-sonuc-deger');
-        const anoAltEl = document.querySelector('#gano-sonuc .gano-sonuc-alt');
-        const anoDegerMetin = anoDegerEl ? anoDegerEl.textContent.trim() : null;
-        const anoSayi = anoDegerMetin ? parseFloat(anoDegerMetin.replace(',', '.')) : null;
-        const { renk, onerilenMesaj } = anoRenkVeMesaj(anoSayi);
-        const dersAdlari = Array.from(document.querySelectorAll('.gano-ders-satir')).map(satir => {
-            const ad = satir.querySelector('.gano-ders-adi-input')?.value.trim();
-            const not = satir.querySelector('.gano-not-input')?.value;
-            const kredi = satir.querySelector('.gano-kredi-input')?.value;
-            if (!not || !kredi) return null;
-            return `${ad || 'Ders'} · ${not}`;
-        }).filter(Boolean);
-        if (!anoDegerMetin && dersAdlari.length === 0) return null;
-        return {
-            baslik: 'Dönem Ortalaması (ANO)',
-            heroEtiket: 'Dönem Ağırlıklı Not Ortalaması',
-            heroDeger: anoDegerMetin || '—',
-            heroAlt: anoAltEl ? anoAltEl.textContent.trim() : (anoDegerMetin ? '' : 'Bu derslerle ANO hesaplanamadı'),
-            renk, onerilenMesaj,
-            alanlar: dersAdlari.length > 0 ? [
-                { key: 'dersler', label: `Dersler (${dersAdlari.length})`, deger: dersAdlari, tip: 'liste' }
-            ] : []
-        };
-    }
-
-    return null;
-}
-
-// --- Canvas çizim yardımcıları ---
-
-// Modern (Chromium tabanlı) tarayıcılarda Canvas 2D'nin harf aralığı (letter-spacing)
-// özelliğini uygular; desteklenmiyorsa sessizce hiçbir şey yapmaz. ctx.save()/restore()
-// bu değeri de kapsadığı için, bir save/restore bloğu içinde çağırmak güvenlidir.
-function harfAraligiUygula(ctx, deger) {
-    try { ctx.letterSpacing = deger; } catch (e) { /* desteklenmiyor, yoksay */ }
-}
-
-// Ortalanmış metin: kutuya sığmıyorsa önce font küçültülür, hâlâ sığmıyorsa "…" ile kısaltılır.
-// harfAraligi (opsiyonel) verilirse, harfler arasına ince bir boşluk eklenir (ör. '1px').
-function ortalanmisYaziCiz(ctx, text, cx, y, font, renk, maxGenislik, harfAraligi) {
-    ctx.save();
-    ctx.fillStyle = renk;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    if (harfAraligi) harfAraligiUygula(ctx, harfAraligi);
-    const sizeMatch = font.match(/([\d.]+)px/);
-    let size = sizeMatch ? parseFloat(sizeMatch[1]) : 40;
-    const fontAilesi = font.replace(/^[^\d]*[\d.]+px\s*/, '');
-    let uygulananFont = font;
-    ctx.font = uygulananFont;
-    while (ctx.measureText(text).width > maxGenislik && size > 18) {
-        size -= 2;
-        uygulananFont = uygulananFont.replace(/[\d.]+px/, `${size}px`);
-        ctx.font = uygulananFont;
-    }
-    let gosterilecek = text;
-    if (ctx.measureText(gosterilecek).width > maxGenislik) {
-        while (gosterilecek.length > 1 && ctx.measureText(gosterilecek + '…').width > maxGenislik) {
-            gosterilecek = gosterilecek.slice(0, -1);
-        }
-        gosterilecek += '…';
-    }
-    ctx.fillText(gosterilecek, cx, y);
-    ctx.restore();
-}
-
-// Sola yaslı, tek satırlık, taşarsa "…" ile kısaltılan metin (istatistik kutucukları için).
-function solaYasliSigdirYaziCiz(ctx, text, x, y, maxGenislik, font, renk, harfAraligi) {
-    ctx.save();
-    ctx.fillStyle = renk;
-    ctx.font = font;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    if (harfAraligi) harfAraligiUygula(ctx, harfAraligi);
-    let gosterilecek = String(text);
-    if (ctx.measureText(gosterilecek).width > maxGenislik) {
-        while (gosterilecek.length > 1 && ctx.measureText(gosterilecek + '…').width > maxGenislik) {
-            gosterilecek = gosterilecek.slice(0, -1);
-        }
-        gosterilecek += '…';
-    }
-    ctx.fillText(gosterilecek, x, y);
-    ctx.restore();
-}
-
-// Yuvarlatılmış dikdörtgen yolu oluşturur; dolgu/çizgi çağıran fonksiyon tarafından yapılır.
-function yuvarlatilmisDikdortgenCiz(ctx, x, y, w, h, r) {
-    const yaricap = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + yaricap, y);
-    ctx.arcTo(x + w, y, x + w, y + h, yaricap);
-    ctx.arcTo(x + w, y + h, x, y + h, yaricap);
-    ctx.arcTo(x, y + h, x, y, yaricap);
-    ctx.arcTo(x, y, x + w, y, yaricap);
-    ctx.closePath();
-}
-
-// mulberry32 tabanlı, tohumlu (seeded) sözde rastgele sayı üreteci — her yeniden çizimde
-// konfeti noktalarının aynı yerde kalmasını (titreşim olmamasını) sağlar.
-function tohumluRastgele(tohum) {
-    let durum = tohum >>> 0;
-    return function () {
-        durum = (durum + 0x6D2B79F5) | 0;
-        let t = Math.imul(durum ^ (durum >>> 15), 1 | durum);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-// Kartı "boş" hissettirmemek için üst yarıya serpiştirilmiş, soluk konfeti noktaları çizer.
-function konfetiCiz(ctx, genislik, yukseklik) {
-    const rnd = tohumluRastgele(42);
-    ctx.save();
-    for (let i = 0; i < 46; i++) {
-        const x = rnd() * genislik;
-        const y = rnd() * yukseklik * 0.62;
-        const r = 3 + rnd() * 9;
-        const opaklik = 0.05 + rnd() * 0.12;
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(255,255,255,${opaklik.toFixed(2)})`;
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    ctx.restore();
-}
-
-// #rrggbb renk kodundan HSL renk tonunu (hue, 0-360) çıkarır — gradyanı sonucun rengiyle
-// uyumlu (aynı ton, farklı açıklık) üretmek için kullanılır.
-function renkHexHueCikar(hex) {
-    if (!hex) return null;
-    const temiz = hex.replace('#', '');
-    if (temiz.length !== 6) return null;
-    const r = parseInt(temiz.substring(0, 2), 16) / 255;
-    const g = parseInt(temiz.substring(2, 4), 16) / 255;
-    const b = parseInt(temiz.substring(4, 6), 16) / 255;
-    const maxV = Math.max(r, g, b), minV = Math.min(r, g, b);
-    if (maxV === minV) return 0;
-    const fark = maxV - minV;
-    let hue;
-    if (maxV === r) hue = ((g - b) / fark) % 6;
-    else if (maxV === g) hue = (b - r) / fark + 2;
-    else hue = (r - g) / fark + 4;
-    hue *= 60;
-    if (hue < 0) hue += 360;
-    return hue;
-}
-
-// Sonucun rengiyle (harf notu / ANO skalası) uyumlu, koyudan açığa diyagonal gradyan üretir.
-// FF gibi kötü bir sonuçta kart kırmızıya, AA gibi iyi bir sonuçta yeşile bürünür — kart
-// artık sabit mor kalmıyor, her zaman sonuçla renk uyumu içinde.
-function kartGradyanOlustur(ctx, genislik, yukseklik, renkHex) {
-    const hue = renkHexHueCikar(renkHex);
-    const h = hue === null ? 258 : hue;
-    const grad = ctx.createLinearGradient(0, 0, genislik, yukseklik);
-    grad.addColorStop(0, `hsl(${h.toFixed(0)}, 58%, 16%)`);
-    grad.addColorStop(0.5, `hsl(${h.toFixed(0)}, 62%, 32%)`);
-    grad.addColorStop(1, `hsl(${h.toFixed(0)}, 68%, 48%)`);
-    return grad;
-}
-
-// Ders adı gibi liste değerlerini, satır satır sarılan "hap" (pill) etiketler halinde çizer.
-// Çok fazla öğe varsa 12'de keser ve "+N daha" etiketiyle özetler. Çizimden sonraki Y
-// konumunu döndürür ki çağıran taraf bir sonraki bloğu ondan devam ettirebilsin.
-// sadeceOlc=true verilirse hiçbir şey çizmez, yalnızca kaplayacağı yüksekliği hesaplar
-// (kartın toplam içerik yüksekliğini önceden ölçüp dikeyde ortalamak için kullanılır).
-function pilListesiCiz(ctx, ogeler, x, y, maxGenislik, renk, sadeceOlc) {
-    const yukseklikPil = 52;
-    const aralik = 12;
-    const dikeyAralik = 14;
-    const maxGosterilecek = 12;
-    const gosterilenler = ogeler.slice(0, maxGosterilecek);
-    const fazlaSayi = ogeler.length - gosterilenler.length;
-    ctx.save();
-    ctx.font = '600 30px Poppins, Arial, sans-serif';
-    let curX = x, curY = y;
-    const satirSonu = x + maxGenislik;
-
-    function pilCiz(metinHam) {
-        let metin = metinHam.length > 30 ? metinHam.slice(0, 29) + '…' : metinHam;
-        const metinGenislik = ctx.measureText(metin).width;
-        const pilGenislik = metinGenislik + 48;
-        if (curX + pilGenislik > satirSonu && curX > x) {
-            curX = x;
-            curY += yukseklikPil + dikeyAralik;
-        }
-        if (!sadeceOlc) {
-            yuvarlatilmisDikdortgenCiz(ctx, curX, curY, pilGenislik, yukseklikPil, yukseklikPil / 2);
-            ctx.fillStyle = 'rgba(255,255,255,0.16)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(metin, curX + 24, curY + yukseklikPil / 2 + 1);
-        }
-        curX += pilGenislik + aralik;
-    }
-
-    gosterilenler.forEach(pilCiz);
-    if (fazlaSayi > 0) pilCiz(`+${fazlaSayi} daha`);
-
-    ctx.restore();
-    return curY + yukseklikPil;
-}
-
-// Hero panelinden sonraki içeriğin (istatistik satırları + liste) bittiği Y konumunu,
-// hiçbir şey çizmeden yalnızca ölçerek tahmin eder. kartCiz bunu, içerik azken kartın alt
-// tarafında büyük bir boşluk kalmaması için içeriği dikeyde dengelemekte kullanır.
-function tahminiIcerikSonY(ctx, veri, metinAlanlari, listeAlanlari, genislik, heroY, heroYukseklik, heroSonrasiBosluk) {
-    let y = heroY + heroYukseklik + heroSonrasiBosluk;
-    if (metinAlanlari.length > 0) {
-        const kutuYukseklik = 140, kutuAralik = 22;
-        y += Math.min(metinAlanlari.length, 4) * (kutuYukseklik + kutuAralik) + 20;
-    }
-    if (listeAlanlari.length > 0) {
-        listeAlanlari.forEach(alan => {
-            y += 40;
-            y = pilListesiCiz(ctx, alan.deger, 80, y, genislik - 160, veri.renk, true) + 30;
-        });
-    }
-    return y;
-}
-
-// Kartı Instagram Hikaye oranında (1080×1920) baştan çizer: gradyan zemin, dekoratif
-// daireler + konfeti, ders adı (veya sekme adı) başlığı, "cam" hero paneli (büyük sonuç
-// değeri), kullanıcının kendi yazdığı opsiyonel mesaj, seçili istatistik satırları,
-// (varsa) ders listesi ve alt bilgi.
-// İçerik azsa (ör. hiçbir ek alan seçilmemişse), kalan boşluk hesaplanıp içerik dikeyde
-// dengelenir — böylece kart, seçilen alan sayısından bağımsız olarak "dolu" hissettirir.
-function kartCiz(veri, dersAdi, kullaniciMesaji, seciliAlanlar) {
-    const canvas = document.getElementById('kart-canvas');
-    if (!canvas || !veri) return;
-    const GENISLIK = 1080, YUKSEKLIK = 1920;
-    canvas.width = GENISLIK;
-    canvas.height = YUKSEKLIK;
-    const ctx = canvas.getContext('2d');
-
-    const metinAlanlari = (seciliAlanlar || []).filter(a => a.tip !== 'liste' && a.deger !== null && a.deger !== undefined && String(a.deger).trim() !== '');
-    const listeAlanlari = (seciliAlanlar || []).filter(a => a.tip === 'liste' && Array.isArray(a.deger) && a.deger.length > 0);
-
-    // --- Dikey dengeleme: önce (çizmeden) tahmini bitiş Y'sini hesapla, kalan boşluğu
-    // başlangıç ve hero-sonrası aralığa dağıt ki içerik footer'a yapışık kalmasın. ---
-    const TABAN_BASLANGIC = 150;
-    const TABAN_HERO_SONRASI = 130;
-    const HERO_YUKSEKLIK = 430;
-    const FOOTER_SINIRI = YUKSEKLIK - 90 - 36 - 40;
-    const tahminiHeroY = TABAN_BASLANGIC + 104 + (dersAdi ? 66 : 30);
-    const tahminiSonY = tahminiIcerikSonY(ctx, veri, metinAlanlari, listeAlanlari, GENISLIK, tahminiHeroY, HERO_YUKSEKLIK, TABAN_HERO_SONRASI);
-    const bosluk = Math.max(0, FOOTER_SINIRI - tahminiSonY);
-    const ekstraUst = Math.min(bosluk * 0.3, 260);
-    const ekstraOrta = Math.min(bosluk * 0.55, 400);
-    const heroSonrasiBosluk = TABAN_HERO_SONRASI + ekstraOrta;
-
-    // Zemin: sonucun rengiyle uyumlu gradyan
-    ctx.fillStyle = kartGradyanOlustur(ctx, GENISLIK, YUKSEKLIK, veri.renk);
-    ctx.fillRect(0, 0, GENISLIK, YUKSEKLIK);
-
-    // Dekoratif yumuşak ışık daireleri — tüm yüksekliğe yayılmış
-    ctx.save();
-    [
-        { x: GENISLIK * 0.85, y: YUKSEKLIK * 0.06, r: 260, o: 0.10 },
-        { x: GENISLIK * 0.08, y: YUKSEKLIK * 0.32, r: 220, o: 0.08 },
-        { x: GENISLIK * 0.9, y: YUKSEKLIK * 0.56, r: 340, o: 0.11 },
-        { x: GENISLIK * 0.1, y: YUKSEKLIK * 0.74, r: 300, o: 0.10 },
-        { x: GENISLIK * 0.65, y: YUKSEKLIK * 0.9, r: 320, o: 0.12 }
-    ].forEach(d => {
-        const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r);
-        g.addColorStop(0, `rgba(255,255,255,${d.o})`);
-        g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    ctx.restore();
-
-    konfetiCiz(ctx, GENISLIK, YUKSEKLIK);
-
-    let cursorY = TABAN_BASLANGIC + ekstraUst;
-
-    // İnce, küçük bir dekoratif vurgu çizgisi — sade ve zarif bir üst açılış
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(GENISLIK / 2 - 44, cursorY);
-    ctx.lineTo(GENISLIK / 2 + 44, cursorY);
-    ctx.stroke();
-    ctx.restore();
-    cursorY += 60;
-
-    // Kart başlığı: ders adı girildiyse o büyük ve karizmatik şekilde öne çıkar;
-    // girilmediyse sekmenin adı (ör. "Harf Notu Sonucu") aynı stille gösterilir.
-    const kartBasligi = dersAdi || veri.baslik;
-    ortalanmisYaziCiz(ctx, kartBasligi, GENISLIK / 2, cursorY, '700 60px Poppins, Arial, sans-serif', '#ffffff', GENISLIK - 140, '0.5px');
-    cursorY += 20;
-
-    // Ders adı girildiyse, sekmeyi altında küçük, harf aralıklı bir alt başlık olarak hatırlat
-    if (dersAdi) {
-        ctx.save();
-        ctx.font = '600 24px Poppins, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.62)';
-        ctx.textAlign = 'center';
-        harfAraligiUygula(ctx, '3px');
-        ctx.fillText(veri.baslik.toLocaleUpperCase('tr-TR'), GENISLIK / 2 + 2, cursorY + 30);
-        ctx.restore();
-        cursorY += 66;
-    } else {
-        cursorY += 30;
-    }
-
-    // Hero paneli (cam efektli kutu) — büyük sonuç değeri
-    const heroY = cursorY + 24;
-    const heroYukseklik = HERO_YUKSEKLIK;
-    const heroX = 80, heroGenislik = GENISLIK - 160;
-    yuvarlatilmisDikdortgenCiz(ctx, heroX, heroY, heroGenislik, heroYukseklik, 40);
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.13)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-
-    // Hero içeriği (etiket + büyük değer + varsa alt metin), heroAlt olsun ya da olmasın
-    // panelin içinde dikeyde ortalanır — heroAlt yoksa (ör. Harf Notu sekmesi) panelin
-    // altında boş bir alan kalmaz.
-    const heroIcerikYukseklik = veri.heroAlt ? 300 : 190;
-    const heroIcerikBaslangicY = heroY + Math.max(20, (heroYukseklik - heroIcerikYukseklik) / 2);
-
-    ctx.save();
-    ctx.font = '600 28px Poppins, Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    ctx.textAlign = 'center';
-    harfAraligiUygula(ctx, '2px');
-    ctx.fillText(veri.heroEtiket.toLocaleUpperCase('tr-TR'), GENISLIK / 2 + 2, heroIcerikBaslangicY + 30);
-    ctx.restore();
-
-    ortalanmisYaziCiz(ctx, String(veri.heroDeger), GENISLIK / 2, heroIcerikBaslangicY + 192, '800 190px Poppins, Arial, sans-serif', '#ffffff', heroGenislik - 80);
-
-    if (veri.heroAlt) {
-        ortalanmisYaziCiz(ctx, veri.heroAlt, GENISLIK / 2, heroIcerikBaslangicY + 262, '500 32px Poppins, Arial, sans-serif', 'rgba(255,255,255,0.85)', heroGenislik - 100);
-    }
-
-    // Kullanıcının kendi yazdığı opsiyonel mesaj — yazılmadıysa hiçbir şey çizilmez
-    if (kullaniciMesaji) {
-        ortalanmisYaziCiz(ctx, kullaniciMesaji, GENISLIK / 2, heroY + heroYukseklik + 72, '600 36px Poppins, Arial, sans-serif', '#ffffff', GENISLIK - 200);
-    }
-
-    cursorY = heroY + heroYukseklik + heroSonrasiBosluk;
-
-    // Seçili metin alanları: her biri tam genişlikte, tek satırlık, alt alta bir satır —
-    // solda etiket, sağda değer (vize/final gibi alanlar artık yan yana değil, alt alta).
-    if (metinAlanlari.length > 0) {
-        const kutuGenislik = heroGenislik;
-        const kutuYukseklik = 140, kutuAralik = 22;
-        metinAlanlari.slice(0, 4).forEach((alan, i) => {
-            const x = 80;
-            const y = cursorY + i * (kutuYukseklik + kutuAralik);
-            yuvarlatilmisDikdortgenCiz(ctx, x, y, kutuGenislik, kutuYukseklik, 28);
-            ctx.save();
-            ctx.fillStyle = 'rgba(255,255,255,0.10)';
-            ctx.fill();
-            ctx.restore();
-            solaYasliSigdirYaziCiz(ctx, alan.label.toLocaleUpperCase('tr-TR'), x + 36, y + kutuYukseklik / 2 + 9, kutuGenislik * 0.42, '600 27px Poppins, Arial, sans-serif', 'rgba(255,255,255,0.72)', '2px');
-            ctx.save();
-            ctx.font = '800 58px Poppins, Arial, sans-serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillText(String(alan.deger), x + kutuGenislik - 36, y + kutuYukseklik / 2 + 20);
-            ctx.restore();
-        });
-        cursorY += Math.min(metinAlanlari.length, 4) * (kutuYukseklik + kutuAralik) + 20;
-    }
-
-    // Liste alanları (ör. ANO sekmesindeki ders adları) — sarılan hap/etiket listesi
-    if (listeAlanlari.length > 0) {
-        listeAlanlari.forEach(alan => {
-            ctx.save();
-            ctx.font = '600 26px Poppins, Arial, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.75)';
-            ctx.textAlign = 'left';
-            harfAraligiUygula(ctx, '2px');
-            ctx.fillText(alan.label.toLocaleUpperCase('tr-TR'), 80, cursorY);
-            ctx.restore();
-            cursorY += 40;
-            cursorY = pilListesiCiz(ctx, alan.deger, 80, cursorY, GENISLIK - 160, veri.renk) + 30;
-        });
-    }
-
-    // Alt bilgi — sabit konumda (tarih + site adı)
-    const footerY = YUKSEKLIK - 90;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(80, footerY - 36);
-    ctx.lineTo(GENISLIK - 80, footerY - 36);
-    ctx.stroke();
-    ctx.restore();
-
-    const tarihMetni = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-    ctx.save();
-    ctx.font = '500 26px Poppins, Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.textAlign = 'left';
-    ctx.fillText(tarihMetni, 80, footerY + 10);
-    ctx.restore();
-
-    ctx.save();
-    ctx.font = '700 30px Poppins, Arial, sans-serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'right';
-    harfAraligiUygula(ctx, '0.5px');
-    ctx.fillText('ktunotsimulatoru.com', GENISLIK - 80, footerY + 12);
-    ctx.restore();
-}
-
-// "Kart İndir"e tıklanınca önizleme modalını açar: sonucu toplar, alan seçim
-// kutucuklarını (checkbox'ları) oluşturur ve ilk önizlemeyi çizer.
-function sonucKartModalAc(sekme) {
-    const veri = sonucKartiVeriTopla(sekme);
-    if (!veri) {
-        toastGoster('⚠️ Önce bir hesaplama yapmalısınız.');
-        return;
-    }
-    kartAktifVeri = { sekme, veri, dersAdi: '', mesaj: '', baslik: veri.baslik };
-    const dersInput = document.getElementById('kart-ders-adi');
-    const dersEtiket = document.getElementById('kart-ders-adi-etiket');
-    if (dersInput) dersInput.value = '';
-    // ANO sekmesinde "ders adı" değil, dönemi anlatan bir "başlık" giriliyor (ör. "Bahar Dönemi 2026").
-    if (sekme === 'ano') {
-        if (dersEtiket) dersEtiket.innerHTML = 'Başlık <span class="gano-opsiyonel">(opsiyonel)</span>';
-        if (dersInput) dersInput.placeholder = 'Örn: Bahar Dönemi 2026';
-    } else {
-        if (dersEtiket) dersEtiket.innerHTML = 'Ders Adı <span class="gano-opsiyonel">(opsiyonel)</span>';
-        if (dersInput) dersInput.placeholder = 'Örn: Matematik I';
-    }
-    const mesajInput = document.getElementById('kart-mesaj');
-    if (mesajInput) {
-        mesajInput.value = '';
-        // Önerilen mesaj yalnızca placeholder olarak gösterilir; kullanıcı bir şey
-        // yazmadığı sürece kartın üzerine hiçbir mesaj otomatik olarak çizilmez.
-        mesajInput.placeholder = veri.onerilenMesaj ? `Örn: ${veri.onerilenMesaj}` : 'Kendi mesajını yaz';
-    }
-    kartAlanKutucuklariOlustur(veri);
-    const modal = document.getElementById('kartOnizlemeModal');
-    if (modal) modal.classList.add('aktif');
-    document.body.style.overflow = 'hidden';
-    kartOnizlemeGuncelle();
-}
-
-function kartModalKapat(event) {
-    if (event && event.target !== document.getElementById('kartOnizlemeModal')) return;
-    document.getElementById('kartOnizlemeModal')?.classList.remove('aktif');
-    document.body.style.overflow = '';
-}
-
-// Sonuç verisindeki her alan için bir "Kartta Görünsün" checkbox satırı oluşturur.
-function kartAlanKutucuklariOlustur(veri) {
-    const kutu = document.getElementById('kart-alan-secim-alani');
-    if (!kutu) return;
-    kutu.innerHTML = '';
-    veri.alanlar.forEach(alan => {
-        const label = document.createElement('label');
-        label.className = 'kart-checkbox-satir';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = true;
-        checkbox.dataset.alanKey = alan.key;
-        checkbox.addEventListener('change', kartOnizlemeGuncelle);
-        const span = document.createElement('span');
-        span.textContent = alan.label;
-        label.appendChild(checkbox);
-        label.appendChild(span);
-        kutu.appendChild(label);
-    });
-}
-
-// Ders adı, mesaj girişi veya alan checkbox'ları değiştikçe kart önizlemesini yeniden çizer.
-function kartOnizlemeGuncelle() {
-    if (!kartAktifVeri) return;
-    const dersInput = document.getElementById('kart-ders-adi');
-    const dersAdi = dersInput ? dersInput.value.trim() : '';
-    const mesajInput = document.getElementById('kart-mesaj');
-    const mesaj = mesajInput ? mesajInput.value.trim() : '';
-    kartAktifVeri.dersAdi = dersAdi;
-    kartAktifVeri.mesaj = mesaj;
-    kartAktifVeri.baslik = dersAdi || kartAktifVeri.veri.baslik;
-    const kutu = document.getElementById('kart-alan-secim-alani');
-    const seciliAnahtarlar = new Set();
-    if (kutu) {
-        kutu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            if (cb.checked) seciliAnahtarlar.add(cb.dataset.alanKey);
-        });
-    }
-    const seciliAlanlar = kartAktifVeri.veri.alanlar.filter(a => seciliAnahtarlar.has(a.key));
-    kartCiz(kartAktifVeri.veri, dersAdi, mesaj, seciliAlanlar);
-}
-
-// Modaldaki güncel görünümü (o an ekranda duran #kart-canvas) PNG olarak indirir.
-function kartPngIndir() {
-    const canvas = document.getElementById('kart-canvas');
-    if (!canvas) return;
-    canvas.toBlob(blob => {
-        if (!blob) { toastGoster('⚠️ Kart oluşturulamadı.'); return; }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ktu-not-sonucu-${kartAktifVeri ? kartAktifVeri.baslik.toLocaleLowerCase('tr-TR').replace(/[^a-z0-9]+/g, '-') : 'kart'}-${Date.now()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toastGoster('✅ Kart indirildi!');
-    }, 'image/png');
-}
 
 function urldenHesaplamaYukle() {
     try {
@@ -2593,17 +1982,6 @@ function buildGanoDersSatirHTML(id, ad, kredi, not) {
     </div>`;
 }
 
-// "Kart İndir" özelliği şimdilik pasif — kod (modal, canvas çizimi vb.) tamamen duruyor,
-// yalnızca buton hiçbir sekmede görünmüyor. İleride tekrar açmak için bu satırı true yapmak yeterli.
-const KART_INDIR_OZELLIGI_AKTIF = false;
-
-// "Kart İndir" butonunu sonuç gelince göster
-function sonucIndirButonuGoster(sekme) {
-    if (!KART_INDIR_OZELLIGI_AKTIF) return;
-    const idler = { harf: 'grade-indir-kutu', gerekli: 'gerekli-indir-kutu', ano: 'ano-indir-kutu' };
-    const el = document.getElementById(idler[sekme]);
-    if (el) el.style.display = 'flex';
-}
 async function sayfaGoruntulemeLogKaydet() {
     try {
         const referrerHam = document.referrer;
@@ -3022,15 +2400,6 @@ function dersiGoruntule(dersAdi, bolumAdi, fakulteAdi) {
     });
     switchVeriTab('goruntule');
 }
-
-function dersiLinkGoster(containerId, dersAdiBilgisi) {
-    const alan = document.getElementById(containerId);
-    if (!alan) return;
-    alan.innerHTML = `<button class="ders-verisi-link-btn" onclick="openTab(null,'veriPaylasim'); document.querySelectorAll('.tab-button').forEach(b=>{b.classList.remove('active'); if(b.getAttribute('onclick')?.includes('veriPaylasim')) b.classList.add('active');}); switchVeriTab('goruntule');">
-        📊 Bu Dersin Paylaşılan Verilerini Gör
-    </button>`;
-}
-
 
 // =============================================
 // DERS VERİSİ MODAL
