@@ -121,18 +121,7 @@
 }
 
 /* --- Genel Stiller --- */
-/* scrollbar-gutter: stable — bir modal açılırken body'ye overflow:hidden
-   uygulanıyor (aşağıda, modal kuralları) ve bu, native kaydırma çubuğunu
-   anında kaldırıyordu. Kaydırma çubuğu kalkınca sayfanın içerik genişliği
-   birkaç piksel artıyor ve tarayıcı TÜM sayfanın düzenini (layout) yeniden
-   hesaplamak zorunda kalıyordu — uzun/ağır sayfalarda (ör. SSS bölümü olan
-   hesaplama sayfaları) bu yeniden hesaplama, modal kutusunun ilk boyanmasını
-   (paint) gözle görülür şekilde geciktiriyor, "kasma" hissi veriyordu. Kaydırma
-   çubuğu için alanı HER ZAMAN (çubuk görünse de görünmese de) ayırarak bu
-   genişlik değişimini ve dolayısıyla tüm sayfa yeniden düzenini tamamen
-   ortadan kaldırıyoruz. Desteklemeyen eski tarayıcılarda zararsız şekilde
-   yok sayılır (eski davranışa döner). */
-html { background-color: var(--bg-color); scroll-behavior: smooth; scrollbar-gutter: stable; }
+html { background-color: var(--bg-color); scroll-behavior: smooth; }
 body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
     color: var(--text-color); background-color: var(--bg-color);
@@ -1260,22 +1249,15 @@ main { margin-top: 1.5rem; }
     align-items: center;
     justify-content: center;
     padding: 16px;
+    opacity: 0;
 }
-/* Karartma (overlay) ARTIK animasyonla açılmıyor, anında görünüyor — display:none'dan flex'e
-   geçerken tarayıcı zaten tek seferlik bir stil/layout hesaplaması yapıyor, buna ek olarak
-   opaklığı da 0'dan 1'e ayrı bir animasyonla götürmek, TAM VİEWPORT'U kaplayan bu katmanın
-   birkaç kare boyunca tekrar tekrar (yarı saydam haldeyken altındaki koca sayfayla birlikte)
-   yeniden çizilmesi gerektiği anlamına geliyordu. `will-change: opacity` ile bunu GPU'nun kendi
-   katmanına almayı denedik ama kullanıcının Firefox'unda GPU hızlandırmalı render motoru
-   (WebRender) ekran kartı sürücüsündeki bilinen bir soruna karşı Mozilla tarafından bloklanmış
-   (about:support → Grafikler → WebRender: "blocklisted by gfxInfo") — yani GPU katmanına alma
-   ipuçlarının devredebileceği bir GPU render hattı yok, her şey yazılımsal (CPU) çiziliyor ve bu
-   modda tam ekranı kaplayan bir opaklık animasyonu ÇOK pahalı kalıyor. Bunu tersine çeviremeyiz
-   (tarayıcı/sürücü tarafı bir kısıtlama), o yüzden en pahalı işi (koca overlay'i animasyonla
-   açmayı) tamamen kaldırdık. Görsel yumuşaklık artık sadece küçük modal kutusunun (aşağıda,
-   .modal-kutu) kendi fade+slide animasyonundan geliyor — o çok daha küçük bir alan olduğu için
-   yazılımsal render modunda bile ucuz. */
-.modal-overlay.aktif { display: flex; }
+/* Artık backdrop-filter yok — düz bir renk animasyonu ucuz olduğu için overlay'e de
+   hafif bir solma ekleyebiliyoruz, bu kasmadan biraz daha yumuşak bir açılış hissi verir. */
+.modal-overlay.aktif { display: flex; animation: modalArkaplanAcil 0.16s ease-out forwards; }
+@keyframes modalArkaplanAcil {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
 
 /* Modal kutu */
 .modal-kutu {

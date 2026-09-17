@@ -2928,10 +2928,8 @@ function nyModalAc(event) {
     const modal = document.getElementById('nyModal');
     modal.classList.add('aktif');
     nyEkranGoster('baslangic');
-    // Not: en yüksek skor göstergesi burada değil, artık yalnızca "Oyun Bitti"
-    // ekranı gerçekten gösterileceği zaman (nyOyunBitti içinde) güncelleniyor —
-    // o ekran v5'ten itibaren ancak o an DOM'a ekleniyor (bkz. nyEkraniHazirla),
-    // burada erkenden dokunmak modalin ilk açılışını gereksiz yere ağırlaştırırdı.
+    const enYuksek = localStorage.getItem(NY_YUKSEK_SKOR_ANAHTARI) || 0;
+    document.getElementById('nyEnYuksekGosterge').textContent = enYuksek;
     nyOturumKontrol();
 }
 
@@ -3113,11 +3111,6 @@ const NY_DERS_HATIRLATMALARI = [
 
 function nyOyunBitti() {
     nyOyunuDurdur();
-    // "Oyun Bitti" ekranı v5'ten itibaren DOM'da baştan yok — aşağıdaki satırlar
-    // nySonucMesaji/nySonPuan/nyEnYuksekGosterge elemanlarına yazacağı için önce
-    // bu ekranın gerçekten var olduğundan emin oluyoruz.
-    nyEkraniHazirla('bitti');
-
     const enYuksekMevcut = parseInt(localStorage.getItem(NY_YUKSEK_SKOR_ANAHTARI) || '0', 10);
     if (nyPuan > enYuksekMevcut) {
         localStorage.setItem(NY_YUKSEK_SKOR_ANAHTARI, nyPuan);
@@ -3185,77 +3178,6 @@ const NY_EKRAN_ID = {
     bitti: 'nyBittiEkrani'
 };
 
-// v5 performans iyileştirmesi: "Giriş Yap", "Kayıt Ol", "Liderlik Tablosu" ve
-// "Oyun Bitti" ekranları artık sayfa yüklenirken DOM'da HİÇ yer almıyor — sadece
-// "başlangıç" ekranı (modal ilk açıldığında görünen ekran) statik HTML'de duruyor.
-// Sebep: bu 4 ekran (formlar, girişler, başlıklar) toplamda hatırı sayılır bir DOM
-// yüküydü; modal her açıldığında (overlay display:none'dan flex'e geçerken)
-// tarayıcı GÖRÜNMESELER BİLE bu 4 ekranı da stil hesabına dahil etmek zorunda
-// kalıyordu — Not Yakala modalinin, çok daha sade olan "Ders Verilerini Gör"
-// modaline göre gözle görülür şekilde daha yavaş/kasarak açılmasının sebebi buydu.
-// Artık her ekran yalnızca kullanıcı gerçekten oraya gittiğinde (nyEkraniHazirla)
-// bir kerelik oluşturulup DOM'a ekleniyor; sonraki gösterimlerde tekrar oluşturulmaz.
-const NY_EKRAN_HTML = {
-    giris: `<div id="nyGirisEkrani" class="ny-overlay-ekran" style="display:none;">
-        <h3>Giriş Yap</h3>
-        <form class="ny-form" onsubmit="nyGirisGonder(event)">
-            <input type="text" id="nyGirisAd" class="ny-input" placeholder="Kullanıcı adı" maxlength="20" autocomplete="username" required>
-            <input type="password" id="nyGirisSifre" class="ny-input" placeholder="Şifre" autocomplete="current-password" required>
-            <label class="ny-checkbox-satir"><input type="checkbox" id="nyGirisBeniHatirla" checked> Beni hatırla</label>
-            <div id="nyGirisHata" class="ny-form-hata"></div>
-            <button type="submit" class="ny-baslat-btn">Giriş Yap</button>
-        </form>
-        <p class="ny-alt-metin">Hesabın yok mu? <a href="#" onclick="nyEkranGoster('kayit', event)">Kayıt ol</a></p>
-        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
-    </div>`,
-    kayit: `<div id="nyKayitEkrani" class="ny-overlay-ekran" style="display:none;">
-        <h3>Kayıt Ol</h3>
-        <form class="ny-form" onsubmit="nyKayitGonder(event)">
-            <input type="text" id="nyKayitAd" class="ny-input" placeholder="Kullanıcı adı (3-20 karakter)" maxlength="20" autocomplete="username" required>
-            <input type="password" id="nyKayitSifre" class="ny-input" placeholder="Şifre (en az 4 karakter)" autocomplete="new-password" required>
-            <input type="password" id="nyKayitSifreTekrar" class="ny-input" placeholder="Şifre (tekrar)" autocomplete="new-password" required>
-            <label class="ny-checkbox-satir"><input type="checkbox" id="nyKayitBeniHatirla" checked> Beni hatırla</label>
-            <div id="nyKayitHata" class="ny-form-hata"></div>
-            <button type="submit" class="ny-baslat-btn">Kayıt Ol</button>
-        </form>
-        <p class="ny-alt-metin">Zaten hesabın var mı? <a href="#" onclick="nyEkranGoster('giris', event)">Giriş yap</a></p>
-        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
-    </div>`,
-    liderlik: `<div id="nyLiderlikEkrani" class="ny-overlay-ekran" style="display:none;">
-        <h3>🏆 Liderlik Tablosu</h3>
-        <div class="ny-liderlik-sekmeler">
-            <button type="button" class="ny-liderlik-sekme aktif" id="nyLiderlikSekmeHaftalik" onclick="nyLiderlikSekmeDegistir('haftalik')">Bu Hafta</button>
-            <button type="button" class="ny-liderlik-sekme" id="nyLiderlikSekmeTum" onclick="nyLiderlikSekmeDegistir('tum')">Tüm Zamanlar</button>
-        </div>
-        <div id="nyLiderlikListesi" class="ny-liderlik-listesi">
-            <p class="ny-ipucu">Yükleniyor...</p>
-        </div>
-        <button type="button" class="ny-geri-btn" onclick="nyEkranGoster('baslangic')">← Geri</button>
-    </div>`,
-    bitti: `<div id="nyBittiEkrani" class="ny-overlay-ekran" style="display:none;">
-        <h3>Oyun Bitti!</h3>
-        <p id="nySonucMesaji"></p>
-        <p>Puan: <strong id="nySonPuan">0</strong> &nbsp;•&nbsp; Cihazdaki En Yüksek: <strong id="nyEnYuksekGosterge">0</strong></p>
-        <p id="nyDersHatirlatma" class="ny-ders-hatirlatma" style="display:none;"></p>
-        <div id="nySkorKayitAlani" class="ny-skor-kayit-alani"></div>
-        <button type="button" class="ny-baslat-btn" onclick="nyOyunuBaslat()">Tekrar Oyna</button>
-        <div class="ny-alt-linkler">
-            <a href="#" onclick="nyLiderlikGoster(event)">🏆 Liderlik Tablosu</a>
-        </div>
-    </div>`
-};
-
-// Bir ekranı (baslangic hariç) ilk kez gerektiğinde DOM'a ekler; zaten
-// oluşturulmuşsa hiçbir şey yapmaz (tekrar tekrar oluşturmaz).
-function nyEkraniHazirla(ad) {
-    const id = NY_EKRAN_ID[ad];
-    if (!id || document.getElementById(id)) return;
-    const html = NY_EKRAN_HTML[ad];
-    const alan = document.getElementById('nyOyunAlani');
-    if (!html || !alan) return;
-    alan.insertAdjacentHTML('beforeend', html);
-}
-
 let nyGirisliMi = false;
 let nyKullaniciAdi = null;
 let nyOturumToken = null;
@@ -3263,7 +3185,6 @@ let nyBekleyenSkor = null;
 
 function nyEkranGoster(ad, event) {
     if (event) event.preventDefault();
-    nyEkraniHazirla(ad);
     Object.values(NY_EKRAN_ID).forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';

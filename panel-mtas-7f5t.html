@@ -533,15 +533,55 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let chartInstances = {};
 
 // ── GİRİŞ ──
+// v5 güvenlik güncellemesi: Önceden girişten sonra tüm admin işlemleri (ders
+// onaylama, duyuru/anket yönetimi, fakülte/bölüm ekleme vb.) doğrudan tablo
+// çağrılarıyla yapılıyordu; asıl yetki sınırı tamamen o tabloların RLS'ine
+// kalmıştı ve bazı tablolar (dersler, ders_verileri, ano_* log tabloları)
+// RLS'siz (UNRESTRICTED) olduğu için herkes panele hiç girmeden bu tablolara
+// doğrudan yazabiliyordu. Artık girişte gerçek bir sunucu oturum token'ı
+// (admin_oturum_olustur, ny_oturum_* ile aynı desen) üretiliyor ve panelin
+// yaptığı HER yazma/silme işlemi bu token'ı isteyen bir admin_* RPC'si
+// üzerinden gidiyor (bkz. supabase-admin-guvenlik-v5.sql).
+function adminToken() { return sessionStorage.getItem('admin_token') || ''; }
+
+// Bir admin_* RPC'si {basarili:false, hata:'yetkisiz'} döndüyse (token süresi
+// dolmuş/geçersiz) oturumu temizleyip giriş ekranına döner ve true döner —
+// çağıran fonksiyon bu durumda kendi normal akışını (tabloyu yeniden yükleme
+// vb.) atlamalı.
+function adminYetkisizIseGirisEkraninaDon(sonuc) {
+    if (sonuc && sonuc.hata === 'yetkisiz') {
+        sessionStorage.removeItem('admin_token');
+        alert('Oturum süresi doldu, tekrar giriş yapmalısınız.');
+        location.reload();
+        return true;
+    }
+    return false;
+}
+
+// admin_ano_gruplari_getir / admin_ano_grup_sayisi gibi "table"/skaler dönen okuma RPC'leri
+// geçersiz token'da json {basarili:false} değil, doğrudan bir SQL hatası ('yetkisiz' mesajıyla)
+// fırlatıyor — bu yüzden onlar için ayrı, hata mesajını kontrol eden bir yardımcı gerekiyor.
+function oturumSuresiDolduMuKontrolEt(errorMesaji) {
+    if (errorMesaji && errorMesaji.includes('yetkisiz')) {
+        sessionStorage.removeItem('admin_token');
+        alert('Oturum süresi doldu, tekrar giriş yapmalısınız.');
+        location.reload();
+        return true;
+    }
+    return false;
+}
+
 async function girisYap() {
     const sifre = document.getElementById('sifre-input').value.trim();
     if (!sifre) return;
     // Şifre artık client-side'da okunmuyor — admin_config tablosu anon key ile hiç okunamıyor
-    // (bkz. check_admin_password SQL fonksiyonu). Yalnızca true/false dönen bir RPC çağrısı yapılıyor.
-    const { data: dogruMu, error } = await sb.rpc('check_admin_password', { attempt: sifre });
+    // (bkz. check_admin_password SQL fonksiyonu). admin_oturum_olustur şifreyi sunucuda bir kez
+    // daha doğrulayıp rastgele bir oturum token'ı üretiyor; panel artık şifreyi değil, sadece
+    // bu token'ı saklıyor ve her admin işleminde onu gönderiyor.
+    const { data: sonuc, error } = await sb.rpc('admin_oturum_olustur', { p_sifre: sifre });
     if (error) { document.getElementById('giris-hata').textContent = 'Bağlantı hatası.'; return; }
-    if (dogruMu === true) {
-        sessionStorage.setItem('admin_giris', '1');
+    if (sonuc && sonuc.basarili && sonuc.token) {
+        sessionStorage.setItem('admin_token', sonuc.token);
         document.getElementById('giris-ekrani').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'block';
         panelBaslat();
@@ -550,9 +590,14 @@ async function girisYap() {
     }
 }
 
-function cikisYap() { sessionStorage.removeItem('admin_giris'); location.reload(); }
+async function cikisYap() {
+    const token = adminToken();
+    sessionStorage.removeItem('admin_token');
+    if (token) { try { await sb.rpc('admin_oturum_iptal', { p_admin_token: token }); } catch (e) {} }
+    location.reload();
+}
 
-if (sessionStorage.getItem('admin_giris') === '1') {
+if (sessionStorage.getItem('admin_token')) {
     document.getElementById('giris-ekrani').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     window.addEventListener('DOMContentLoaded', panelBaslat);
@@ -1125,22 +1170,23 @@ function onayliDersleriFiltrele() {
 }
 
 async function dersiOnayla(id) {
-    const { error } = await sb.from('dersler').update({ onaylandi: true }).eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_ders_onayla', { p_admin_token: adminToken(), p_id: id });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Ders onaylandı ✓', 'basari'); dersleriYukle();
 }
 async function dersiReddet(id) {
     if (!confirm('Bu dersi silmek istediğine emin misin?')) return;
-    const { error } = await sb.from('dersler').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_ders_reddet', { p_admin_token: adminToken(), p_id: id });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Ders silindi.', 'hata'); dersleriYukle();
 }
 async function onayliDersiSil(id) {
     if (!confirm('Bu dersi ve tüm verilerini silmek istediğine emin misin?')) return;
-    const { error: veriHata } = await sb.from('ders_verileri').delete().eq('ders_id', id);
-    if (veriHata) { bildirimGoster('Hata: ' + veriHata.message, 'hata'); return; }
-    const { error: dersHata } = await sb.from('dersler').delete().eq('id', id);
-    if (dersHata) { bildirimGoster('Hata: ' + dersHata.message, 'hata'); return; }
+    const { data: sonuc, error } = await sb.rpc('admin_ders_sil', { p_admin_token: adminToken(), p_id: id });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Ders silindi.', 'hata'); onayliDersleriYukle();
 }
 // Not: id'yi ve düzenlenecek metinleri onclick attribute'una gömmek yerine (eskiden
@@ -1161,8 +1207,9 @@ async function dersiKaydet() {
     const adi = document.getElementById('modal-ders-adi').value.trim();
     const kodu = document.getElementById('modal-ders-kodu').value.trim();
     if (!adi) { bildirimGoster('Ders adı boş olamaz.', 'hata'); return; }
-    const { error } = await sb.from('dersler').update({ ders_adi: adi, ders_kodu: kodu || null }).eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_ders_duzenle', { p_admin_token: adminToken(), p_id: id, p_adi: adi, p_kodu: kodu || null });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Ders güncellendi ✓', 'basari'); modalKapat(); onayliDersleriYukle();
 }
 
@@ -1347,8 +1394,9 @@ async function dersIstatistikleriYukle() {
 
 async function veriSil(id) {
     if (!confirm('Bu veriyi silmek istediğine emin misin?')) return;
-    const { error } = await sb.from('ders_verileri').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_ders_verisi_sil', { p_admin_token: adminToken(), p_id: id });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Veri silindi.', 'hata'); verileriYukle();
 }
 
@@ -1531,14 +1579,16 @@ async function duyuruKaydet() {
     const bitis = document.getElementById('duyuru-bitis').value || null;
     if (!baslik || !anaMetin) { bildirimGoster('Başlık ve ana metin zorunlu!', 'hata'); return; }
     const icerik = duyuruIcerikOlustur();
-    const kayitData = { baslik, icerik, aktif, gecerlilik_tarihi: bitis };
-    let error;
-    if (duzenlemeId) {
-        ({ error } = await sb.from('duyurular').update(kayitData).eq('id', duzenlemeId));
-    } else {
-        ({ error } = await sb.from('duyurular').insert(kayitData));
-    }
+    const { data: sonuc, error } = await sb.rpc('admin_duyuru_kaydet', {
+        p_admin_token: adminToken(),
+        p_id: duzenlemeId || null,
+        p_baslik: baslik,
+        p_icerik: icerik,
+        p_aktif: aktif,
+        p_gecerlilik_tarihi: bitis
+    });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     const guncellemeMi = !!duzenlemeId;
     duyuruDuzenlemeIptal();
     bildirimGoster(guncellemeMi ? 'Duyuru güncellendi ✓' : 'Duyuru yayınlandı! 📢', 'basari');
@@ -1547,18 +1597,21 @@ async function duyuruKaydet() {
 
 async function duyuruSuresiBitenleriKapat() {
     try {
-        const bugun = new Date().toISOString().slice(0,10);
-        await sb.from('duyurular').update({ aktif: false }).eq('aktif', true).lt('gecerlilik_tarihi', bugun);
+        await sb.rpc('admin_duyuru_suresi_bitenleri_kapat', { p_admin_token: adminToken() });
     } catch(e) {}
 }
 
 async function duyuruDurumDegistir(id, aktif) {
-    await sb.from('duyurular').update({ aktif }).eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_duyuru_durum_degistir', { p_admin_token: adminToken(), p_id: id, p_aktif: aktif });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster(aktif?'Duyuru aktif edildi.':'Duyuru pasif yapıldı.', 'basari'); duyurulariYukle();
 }
 async function duyuruSil(id) {
     if (!confirm('Bu duyuruyu silmek istediğine emin misin?')) return;
-    await sb.from('duyurular').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_duyuru_sil', { p_admin_token: adminToken(), p_id: id });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     if (document.getElementById('duyuru-duzenleme-id').value === String(id)) duyuruDuzenlemeIptal();
     bildirimGoster('Duyuru silindi.', 'hata'); duyurulariYukle();
 }
@@ -1650,58 +1703,28 @@ async function anketKaydet() {
     }
 
     try {
-        // Aktif edilecekse önce diğer tüm aktif anketleri pasif yap (tek-aktif kuralı).
-        if (aktif) await sb.from('anketler').update({ aktif: false }).eq('aktif', true);
+        // Soru id'lerini (varsa) koruyarak tek bir RPC'ye gönderiyoruz — ekle/güncelle/sil
+        // diff'i artık sunucu tarafında (admin_anket_kaydet içinde) yapılıyor. Id'lerin
+        // korunması önemli: her yanıt hangi soruya ait olduğunu soru_id ile tutuyor, id'ler
+        // her düzenlemede sıfırdan üretilseydi geçmiş yanıtlar hiçbir soruyla eşleşmezdi.
+        const soruPayload = anketSoruState.map(s => ({
+            id: s.id != null ? s.id : null,
+            soru_metni: s.soru_metni.trim(),
+            soru_tipi: s.soru_tipi,
+            secenekler: s.soru_tipi === 'coktan_secmeli' ? s.secenekler.map(x => x.trim()).filter(Boolean) : null,
+            zorunlu: !!s.zorunlu
+        }));
 
-        if (duzenlemeId) {
-            const { error } = await sb.from('anketler').update({ baslik, aciklama: aciklama || null, aktif }).eq('id', duzenlemeId);
-            if (error) throw error;
-
-            // Var olan soruları (id'leri değişmeden) güncelle, kaldırılanları sil, yenileri ekle.
-            // Soru id'lerini korumak önemli: her yanıt hangi soruya ait olduğunu soru_id ile
-            // tutuyor, id'ler her düzenlemede sıfırdan üretilseydi geçmiş yanıtlar "Yanıtları Gör"
-            // ekranında hiçbir soruyla eşleşmez, sanki hiç yanıt yokmuş gibi görünürdü.
-            const { data: mevcutSorular, error: mevcutHata } = await sb.from('anket_sorulari').select('id').eq('anket_id', duzenlemeId);
-            if (mevcutHata) throw mevcutHata;
-            const kalanIdSet = new Set(anketSoruState.filter(s => s.id != null).map(s => String(s.id)));
-            const silinecekIdler = (mevcutSorular || []).map(s => s.id).filter(id => !kalanIdSet.has(String(id)));
-            if (silinecekIdler.length) {
-                const { error: silHata } = await sb.from('anket_sorulari').delete().in('id', silinecekIdler);
-                if (silHata) throw silHata;
-            }
-
-            for (let idx = 0; idx < anketSoruState.length; idx++) {
-                const s = anketSoruState[idx];
-                const row = {
-                    anket_id: duzenlemeId,
-                    soru_metni: s.soru_metni.trim(),
-                    soru_tipi: s.soru_tipi,
-                    secenekler: s.soru_tipi === 'coktan_secmeli' ? s.secenekler.map(x => x.trim()).filter(Boolean) : null,
-                    zorunlu: !!s.zorunlu,
-                    sira: idx
-                };
-                if (s.id != null) {
-                    const { error: guncelleHata } = await sb.from('anket_sorulari').update(row).eq('id', s.id);
-                    if (guncelleHata) throw guncelleHata;
-                } else {
-                    const { error: ekleHata } = await sb.from('anket_sorulari').insert(row);
-                    if (ekleHata) throw ekleHata;
-                }
-            }
-        } else {
-            const { data, error } = await sb.from('anketler').insert({ baslik, aciklama: aciklama || null, aktif }).select('id').single();
-            if (error) throw error;
-            const soruRows = anketSoruState.map((s, idx) => ({
-                anket_id: data.id,
-                soru_metni: s.soru_metni.trim(),
-                soru_tipi: s.soru_tipi,
-                secenekler: s.soru_tipi === 'coktan_secmeli' ? s.secenekler.map(x => x.trim()).filter(Boolean) : null,
-                zorunlu: !!s.zorunlu,
-                sira: idx
-            }));
-            const { error: soruHata } = await sb.from('anket_sorulari').insert(soruRows);
-            if (soruHata) throw soruHata;
-        }
+        const { data: sonuc, error } = await sb.rpc('admin_anket_kaydet', {
+            p_admin_token: adminToken(),
+            p_id: duzenlemeId || null,
+            p_baslik: baslik,
+            p_aciklama: aciklama || null,
+            p_aktif: aktif,
+            p_sorular: soruPayload
+        });
+        if (error) throw error;
+        if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
 
         bildirimGoster(duzenlemeId ? 'Anket güncellendi.' : 'Anket yayınlandı.', 'basari');
         anketDuzenlemeIptal();
@@ -1780,15 +1803,18 @@ async function anketDuzenle(id) {
 }
 
 async function anketDurumDegistir(id, aktif) {
-    if (aktif) await sb.from('anketler').update({ aktif: false }).eq('aktif', true);
-    await sb.from('anketler').update({ aktif }).eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_anket_durum_degistir', { p_admin_token: adminToken(), p_id: id, p_aktif: aktif });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster(aktif ? 'Anket aktif edildi.' : 'Anket pasif yapıldı.', 'basari');
     anketleriYukle();
 }
 
 async function anketSil(id) {
     if (!confirm('Bu anketi silmek istediğine emin misin? Soruları ve toplanan yanıtları da silinecek.')) return;
-    await sb.from('anketler').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_anket_sil', { p_admin_token: adminToken(), p_id: id });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     if (document.getElementById('anket-duzenleme-id').value === String(id)) anketDuzenlemeIptal();
     bildirimGoster('Anket silindi.', 'hata');
     anketleriYukle();
@@ -1879,16 +1905,18 @@ async function fakulteleriYukle() {
 async function fakulteEkle() {
     const ad = document.getElementById('yeni-fakulte-adi').value.trim();
     if (!ad) { bildirimGoster('Fakülte adı boş olamaz.', 'hata'); return; }
-    const { error } = await sb.from('fakulteler').insert({ ad });
+    const { data: sonuc, error } = await sb.rpc('admin_fakulte_ekle', { p_admin_token: adminToken(), p_ad: ad });
     if (error) { bildirimGoster('Hata: '+error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     document.getElementById('yeni-fakulte-adi').value = '';
     bildirimGoster('Fakülte eklendi ✓', 'basari'); fakulteleriYukle(); fakulteSelectDoldur();
 }
 
 async function fakulteSil(id) {
     if (!confirm('Bu fakülteyi silmek istediğine emin misin? Bağlı tüm bölümler ve dersler de silinir!')) return;
-    const { error } = await sb.from('fakulteler').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_fakulte_sil', { p_admin_token: adminToken(), p_id: id });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Fakülte silindi.', 'hata'); fakulteleriYukle(); fakulteSelectDoldur();
 }
 
@@ -1914,16 +1942,18 @@ async function bolumEkle() {
     const ad = document.getElementById('yeni-bolum-adi').value.trim();
     if (!fakulteId) { bildirimGoster('Fakülte seçin.', 'hata'); return; }
     if (!ad) { bildirimGoster('Bölüm adı boş olamaz.', 'hata'); return; }
-    const { error } = await sb.from('bolumler').insert({ ad, fakulte_id: fakulteId });
+    const { data: sonuc, error } = await sb.rpc('admin_bolum_ekle', { p_admin_token: adminToken(), p_ad: ad, p_fakulte_id: fakulteId });
     if (error) { bildirimGoster('Hata: '+error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     document.getElementById('yeni-bolum-adi').value = '';
     bildirimGoster('Bölüm eklendi ✓', 'basari'); bolumleriYukle();
 }
 
 async function bolumSil(id) {
     if (!confirm('Bu bölümü silmek istediğine emin misin?')) return;
-    const { error } = await sb.from('bolumler').delete().eq('id', id);
+    const { data: sonuc, error } = await sb.rpc('admin_bolum_sil', { p_admin_token: adminToken(), p_id: id });
     if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(sonuc)) return;
     bildirimGoster('Bölüm silindi.', 'hata'); bolumleriYukle();
 }
 
@@ -1968,26 +1998,37 @@ async function csvExport(tablo) {
         setTimeout(() => { mesaj.textContent = ''; }, 3000);
     } catch(e) { mesaj.textContent = '❌ Hata: ' + e.message; }
 }
+// admin_ano_gruplari_getir'i sayfalayarak TÜM ANO gruplarını (ders adlarıyla birlikte) çeken
+// ortak yardımcı — v5'ten sonra ano_hesaplama_gruplari/ano_ders_loglari anon'a kapalı olduğu
+// için hem istatistik ekranı hem CSV export artık bu RPC üzerinden okuyor.
+async function tumAnoGruplariniCek() {
+    let tumVeri = [], sayfa = 0, limit = 1000;
+    while (sayfa < 200) {
+        const { data, error } = await sb.rpc('admin_ano_gruplari_getir', {
+            p_admin_token: adminToken(), p_limit: limit, p_offset: sayfa * limit
+        });
+        if (error) {
+            if (oturumSuresiDolduMuKontrolEt(error.message)) throw new Error('yetkisiz');
+            throw error;
+        }
+        if (!data || !data.length) break;
+        tumVeri = tumVeri.concat(data);
+        if (data.length < limit) break;
+        sayfa++;
+    }
+    return tumVeri;
+}
+
 async function csvExportAno() {
     const mesaj = document.getElementById('csv-mesaj');
     mesaj.textContent = '⏳ ANO verileri çekiliyor...';
     try {
-        let tumVeri = [], sayfa = 0, limit = 500;
-        while (sayfa < 200) {
-            const { data, error } = await sb.from('ano_hesaplama_gruplari')
-                .select('id, ano_degeri, toplam_kredi, olusturulma_tarihi, ano_ders_loglari(ders_adi)')
-                .range(sayfa*limit, (sayfa+1)*limit-1).order('id', { ascending: false });
-            if (error) throw error;
-            if (!data || !data.length) break;
-            tumVeri = tumVeri.concat(data);
-            if (data.length < limit) break;
-            sayfa++;
-        }
+        const tumVeri = await tumAnoGruplariniCek();
         if (!tumVeri.length) { mesaj.textContent = '⚠️ Veri bulunamadı.'; return; }
         const satirlar = tumVeri.map(g => {
             // ders_adi serbest metin olduğu için içinde çift tırnak geçebilir — CSV'de bunu
             // ikiye katlamazsak (RFC 4180) hücre sınırı bozulur, sonraki sütunlar kayar.
-            const dersler = (g.ano_ders_loglari||[]).map(d=>d.ders_adi).join(' | ').replace(/"/g, '""');
+            const dersler = (g.dersler||[]).join(' | ').replace(/"/g, '""');
             return [g.id, g.ano_degeri, g.toplam_kredi, g.olusturulma_tarihi, `"${dersler}"`].join(',');
         });
         csvIndir('id,ano_degeri,toplam_kredi,olusturulma_tarihi,dersler\n' + satirlar.join('\n'), `ano_gruplari_${new Date().toISOString().slice(0,10)}.csv`);
@@ -2039,44 +2080,39 @@ async function anoDersAnalizYukle() {
         if (anoToplamErr) throw anoToplamErr;
         anoGercekToplamHesaplama = gercekAnoToplamSayi || 0;
 
-        // 1) Ders adı girilen grup sayısı (limitten bağımsız)
-        const { count: toplamGrup, error: countErr } = await sb.from('ano_hesaplama_gruplari').select('*', { count: 'exact', head: true });
-        if (countErr) throw countErr;
+        // v5: ano_hesaplama_gruplari / ano_ders_loglari artık anon'a kapalı (sadece admin
+        // RPC'siyle okunabiliyor). Sayaç ucuz bir RPC'den, geri kalan tüm istatistikler
+        // (ortalama ANO, ders frekansı, son 10 kayıt) TEK bir tumAnoGruplariniCek() sonucundan
+        // çıkarılıyor.
+        const { data: toplamGrup, error: countErr } = await sb.rpc('admin_ano_grup_sayisi', { p_admin_token: adminToken() });
+        if (countErr) { if (oturumSuresiDolduMuKontrolEt(countErr.message)) return; throw countErr; }
         anoDersGercekToplam = toplamGrup || 0;
 
-        // 2) TÜM grupların ano_degeri'i (join yok, tek sütun) → ortalama ANO tüm kayıtlar üzerinden
-        const anoDegerleri = await tumSatirlariCek('ano_hesaplama_gruplari', 'ano_degeri');
-        let toplamAno = 0, anoAdedi = 0;
-        anoDegerleri.forEach(g => { if (g.ano_degeri != null) { toplamAno += g.ano_degeri; anoAdedi++; } });
-        anoDersOrtAno = anoAdedi ? (toplamAno/anoAdedi).toFixed(2) : '—';
+        const tumGruplar = await tumAnoGruplariniCek();
 
-        // 3) TÜM ders kayıtları (join yok, sadece grup_id + ders_adi) → top 15 ders, benzersiz ders
-        //    sayısı ve "ders adı girilmiş" grup sayısı hep buradan, tüm veri üzerinden çıkarılıyor.
-        const dersKayitlari = await tumSatirlariCek('ano_ders_loglari', 'grup_id, ders_adi');
+        let toplamAno = 0, anoAdedi = 0;
         const frekans = {}; const benzersizSet = new Set(); const grupIdSet = new Set();
-        dersKayitlari.forEach(d => {
-            if (!d.ders_adi) return;
-            const key = d.ders_adi.trim().toLowerCase();
-            if (!frekans[key]) frekans[key] = { goruntu: d.ders_adi.trim(), sayi: 0 };
-            frekans[key].sayi++;
-            benzersizSet.add(key);
-            if (d.grup_id != null) grupIdSet.add(d.grup_id);
+        tumGruplar.forEach(g => {
+            if (g.ano_degeri != null) { toplamAno += g.ano_degeri; anoAdedi++; }
+            (g.dersler || []).forEach(dersAdi => {
+                if (!dersAdi) return;
+                const key = dersAdi.trim().toLowerCase();
+                if (!frekans[key]) frekans[key] = { goruntu: dersAdi.trim(), sayi: 0 };
+                frekans[key].sayi++;
+                benzersizSet.add(key);
+                grupIdSet.add(g.id);
+            });
         });
+        anoDersOrtAno = anoAdedi ? (toplamAno/anoAdedi).toFixed(2) : '—';
         anoDersFrekans = frekans;
         anoDersBenzersizSayisi = benzersizSet.size;
         anoDersAdliGrupSayisi = grupIdSet.size;
 
-        // 4) Sadece "Son 10 Hesaplama" listesi için — bu kadar az satırda join ucuz.
-        const { data: sonGruplar, error: sonHataMi } = await sb
-            .from('ano_hesaplama_gruplari')
-            .select('id, ano_degeri, toplam_kredi, olusturulma_tarihi, ano_ders_loglari(ders_adi)')
-            .order('olusturulma_tarihi', { ascending: false })
-            .limit(10);
-        if (sonHataMi) throw sonHataMi;
-        anoDersSonKayitlar = (sonGruplar||[]).map(g => ({
+        // Son 10 hesaplama — tumAnoGruplariniCek() zaten id'ye göre azalan sırada döndüğü için
+        // ilk 10 kayıt en yeni kayıtlardır.
+        anoDersSonKayitlar = tumGruplar.slice(0, 10).map(g => ({
             id: g.id, ano: g.ano_degeri, kredi: g.toplam_kredi,
-            tarih: g.olusturulma_tarihi,
-            dersler: (g.ano_ders_loglari||[]).map(d => d.ders_adi)
+            tarih: g.olusturulma_tarihi, dersler: g.dersler || []
         }));
 
         anoDersStat();
