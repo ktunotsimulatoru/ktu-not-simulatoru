@@ -1264,7 +1264,17 @@ main { margin-top: 1.5rem; }
 }
 /* Artık backdrop-filter yok — düz bir renk animasyonu ucuz olduğu için overlay'e de
    hafif bir solma ekleyebiliyoruz, bu kasmadan biraz daha yumuşak bir açılış hissi verir. */
-.modal-overlay.aktif { display: flex; animation: modalArkaplanAcil 0.16s ease-out forwards; }
+/* will-change: opacity — .modal-kutu (aşağıda) kendi katmanına alınıyordu ama TAM EKRANI
+   kaplayan bu karartma (overlay) katmana hiç alınmıyordu. Katmana alınmayan bir opaklık
+   animasyonunda bazı tarayıcılar (özellikle Firefox), animasyonun HER karesinde overlay'in
+   ALTINDAKİ TÜM sayfa içeriğini karartmayla birlikte yeniden çiziyor — sayfa ne kadar ağırsa
+   (form/tablo/SSS dolu hesaplama sayfaları gibi) o kadar pahalı. Chrome'da bu daha az belirgin
+   olduğu için sorun Firefox'ta çok daha kasarak açılıyor olarak fark edildi; kullanıcının kendi
+   Firefox'unda kare kare ölçümle doğrulandı (animasyonun ilk ~150-300ms'sinde kare hızı 60'tan
+   15-20'ye düşüyordu). Overlay'i de kendi GPU katmanına alarak bu tekrar tekrar tetiklenen
+   tam sayfa yeniden çizimini engelliyoruz — sadece .aktif iken (modal kapalıyken gereksiz yere
+   katman ayırmamak için). */
+.modal-overlay.aktif { display: flex; animation: modalArkaplanAcil 0.16s ease-out forwards; will-change: opacity; }
 @keyframes modalArkaplanAcil {
     from { opacity: 0; }
     to   { opacity: 1; }
