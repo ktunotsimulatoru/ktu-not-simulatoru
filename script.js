@@ -3002,7 +3002,8 @@ function nyOgeSpawnDongusu() {
     nyOgeOlustur();
 
     const gecenSaniye = (performance.now() - nyBaslangicZamani) / 1000;
-    const araGecikme = Math.max(480, 1150 - gecenSaniye * 12);
+    // Not: 22 katsayısı ile azalıyor (öncesi 12'ydi) — zorluk daha erken tavan yapıyor
+    const araGecikme = Math.max(480, 1150 - gecenSaniye * 22);
     nySpawnTimeout = setTimeout(nyOgeSpawnDongusu, araGecikme);
 }
 
@@ -3032,13 +3033,13 @@ function nyOyunDongusu(zaman) {
     const dt = Math.min(0.05, (zaman - nySonKareZamani) / 1000);
     nySonKareZamani = zaman;
     const gecenSaniye = (zaman - nyBaslangicZamani) / 1000;
-    const hiz = 90 + gecenSaniye * 4.5; // piksel/saniye, zamanla hızlanır
+    const hiz = 90 + gecenSaniye * 9; // piksel/saniye, zamanla hızlanır (öncesi 4.5'ti — artık daha erken hızlanıyor)
 
     const alan = document.getElementById('nyOyunAlani');
     const alanGenislik = alan.clientWidth;
     const alanYukseklik = alan.clientHeight;
 
-    // Sepeti hedefe doğru yumuşakça hareket ettir (klavye veya sürükleme)
+    // Çantayı hedefe doğru yumuşakça hareket ettir (klavye veya sürükleme)
     if (nyKlavyeSol) nyHedefX = Math.max(0, nyHedefX - dt * 1.6);
     if (nyKlavyeSag) nyHedefX = Math.min(1, nyHedefX + dt * 1.6);
     nyBasketX += (nyHedefX - nyBasketX) * Math.min(1, dt * 12);
