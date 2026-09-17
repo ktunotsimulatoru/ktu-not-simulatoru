@@ -121,7 +121,18 @@
 }
 
 /* --- Genel Stiller --- */
-html { background-color: var(--bg-color); scroll-behavior: smooth; }
+/* scrollbar-gutter: stable — bir modal açılırken body'ye overflow:hidden
+   uygulanıyor (aşağıda, modal kuralları) ve bu, native kaydırma çubuğunu
+   anında kaldırıyordu. Kaydırma çubuğu kalkınca sayfanın içerik genişliği
+   birkaç piksel artıyor ve tarayıcı TÜM sayfanın düzenini (layout) yeniden
+   hesaplamak zorunda kalıyordu — uzun/ağır sayfalarda (ör. SSS bölümü olan
+   hesaplama sayfaları) bu yeniden hesaplama, modal kutusunun ilk boyanmasını
+   (paint) gözle görülür şekilde geciktiriyor, "kasma" hissi veriyordu. Kaydırma
+   çubuğu için alanı HER ZAMAN (çubuk görünse de görünmese de) ayırarak bu
+   genişlik değişimini ve dolayısıyla tüm sayfa yeniden düzenini tamamen
+   ortadan kaldırıyoruz. Desteklemeyen eski tarayıcılarda zararsız şekilde
+   yok sayılır (eski davranışa döner). */
+html { background-color: var(--bg-color); scroll-behavior: smooth; scrollbar-gutter: stable; }
 body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
     color: var(--text-color); background-color: var(--bg-color);
