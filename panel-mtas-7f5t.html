@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KTÜ Not Simülatörü — Admin</title>
+    <meta name="robots" content="noindex, nofollow">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -679,13 +680,20 @@ async function istatistikleriYukle() {
         const HARF_CLR = { AA:'#28a745',BA:'#5cb85c',BB:'#82ca9c',CB:'#007bff',CC:'#17a2b8',DC:'#fd7e14',DD:'#ffc107',FD:'#dc3545',FF:'#a21427' };
         const fmtSure = s => s==null ? '—' : s>=60 ? `${Math.floor(s/60)}dk ${Math.round(s%60)}sn` : `${Math.round(s)}sn`;
 
-        const qhl = () => {
-            let b = sb.from('hesaplama_loglari').select('*',{count:'exact',head:true});
-            if(sinir) b=b.gte('olusturulma_tarihi',sinir);
-            if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis);
-            return b;
-        };
-        const qf = (filtre) => { let b = qhl(); Object.entries(filtre).forEach(([k,v])=>{ b=b.eq(k,v); }); return b; };
+        // v6: hesaplama_loglari/paylasim_loglari/sayfa_goruntuleme artık anon'a kapalı — bu
+        // yardımcılar artık doğrudan tablo sorgusu yerine admin_log_sayisi RPC'sini çağırıyor,
+        // ama geriye dönen şekil ({count: N}) aynı kaldığı için aşağıdaki c(r) okuma kodu
+        // değişmeden çalışıyor.
+        const adminSayi = (tablo, filtre) => sb.rpc('admin_log_sayisi', {
+            p_admin_token: adminToken(), p_tablo: tablo, p_filtre: filtre || {},
+            p_baslangic: sinir, p_bitis: sinirBitis
+        }).then(({ data, error }) => {
+            if (error) { if (oturumSuresiDolduMuKontrolEt(error.message)) throw new Error('yetkisiz'); throw error; }
+            return { count: data };
+        });
+        const qhl = () => adminSayi('hesaplama_loglari', {});
+        const qf = (filtre) => adminSayi('hesaplama_loglari', filtre);
+        const qp = (filtre) => adminSayi('paylasim_loglari', filtre);
 
         // ── 1. Count sorguları (limitsiz, sadece sayı) ──
         const SISTEM_LISTESI = ['tablo1','tablo2','mutlak'];
@@ -699,11 +707,7 @@ async function istatistikleriYukle() {
             qhl(),
             qf({sekme:'harf'}), qf({sekme:'gerekli'}), qf({sekme:'senaryo'}), qf({sekme:'ano'}),
             qf({is_mobile:true}), qf({is_mobile:false}), qf({sekme:'harf',final_notu:45}),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','harf'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','gerekli'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','senaryo'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
-            (() => { let b=sb.from('paylasim_loglari').select('*',{count:'exact',head:true}).eq('sekme','ano'); if(sinir) b=b.gte('olusturulma_tarihi',sinir); if(sinirBitis) b=b.lte('olusturulma_tarihi',sinirBitis); return b; })(),
+            qp({}), qp({sekme:'harf'}), qp({sekme:'gerekli'}), qp({sekme:'senaryo'}), qp({sekme:'ano'}),
             ...HARF_LISTESI.map(h => qf({harf_notu:h})),
             ...SISTEM_LISTESI.map(s => qf({sistem_secimi:s})),
             ...FAKULTE_TURU_LISTESI.map(f => qf({fakulte_turu:f}))
@@ -780,12 +784,10 @@ async function istatistikleriYukle() {
         const gunSayisi2 = aralik > 0 ? Math.min(aralik, 365) : 30;
         const gunlukSinirTarih = new Date(); gunlukSinirTarih.setDate(gunlukSinirTarih.getDate() - gunSayisi2);
         const gunlukSinirStr = aralikVal === 'ozel' && sinir ? sinir : gunlukSinirTarih.toISOString();
-        let gunlukQ = sb.from('hesaplama_loglari')
-            .select('olusturulma_tarihi')
-            .gte('olusturulma_tarihi', gunlukSinirStr)
-            .order('olusturulma_tarihi');
-        if (sinirBitis) gunlukQ = gunlukQ.lte('olusturulma_tarihi', sinirBitis);
-        const { data: gunlukData } = await gunlukQ;
+        const { data: gunlukData, error: gunlukErr } = await sb.rpc('admin_hesaplama_tarihleri', {
+            p_admin_token: adminToken(), p_baslangic: gunlukSinirStr, p_bitis: sinirBitis
+        });
+        if (gunlukErr) { if (oturumSuresiDolduMuKontrolEt(gunlukErr.message)) return; throw gunlukErr; }
         const gunSayac = {};
         for(let i=gunSayisi2-1;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); gunSayac[d.toISOString().slice(0,10)]=0; }
         (gunlukData||[]).forEach(r => { const g=r.olusturulma_tarihi?.slice(0,10); if(g&&gunSayac[g]!==undefined) gunSayac[g]++; });
@@ -793,21 +795,21 @@ async function istatistikleriYukle() {
         // ── 4. Ziyaretçi verileri ──
         let ziyaretciToplam=0, ziyaretciMobil=0, topReferrerler=[];
         try {
-            let ztQ = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true});
-            let zmQ = sb.from('sayfa_goruntuleme').select('*',{count:'exact',head:true}).eq('is_mobile',true);
-            if(sinir) { ztQ=ztQ.gte('olusturulma_tarihi',sinir); zmQ=zmQ.gte('olusturulma_tarihi',sinir); }
-            if(sinirBitis) { ztQ=ztQ.lte('olusturulma_tarihi',sinirBitis); zmQ=zmQ.lte('olusturulma_tarihi',sinirBitis); }
-            const [ztR, zmR] = await Promise.all([ztQ, zmQ]);
+            const [ztR, zmR] = await Promise.all([
+                adminSayi('sayfa_goruntuleme', {}),
+                adminSayi('sayfa_goruntuleme', {is_mobile:true})
+            ]);
             ziyaretciToplam = ztR.count||0;
             ziyaretciMobil  = zmR.count||0;
-            // Referrer: sayfalama ile tümünü çek (limit yok)
+            // Referrer: sayfalama ile tümünü çek
             const refSayac={};
             let refSayfa=0, refLimit=1000;
             while(true) {
-                let refQ = sb.from('sayfa_goruntuleme').select('referrer').range(refSayfa*refLimit,(refSayfa+1)*refLimit-1);
-                if(sinir) refQ=refQ.gte('olusturulma_tarihi',sinir);
-                if(sinirBitis) refQ=refQ.lte('olusturulma_tarihi',sinirBitis);
-                const { data: refData } = await refQ;
+                const { data: refData, error: refErr } = await sb.rpc('admin_sayfa_referrerlari', {
+                    p_admin_token: adminToken(), p_baslangic: sinir, p_bitis: sinirBitis,
+                    p_limit: refLimit, p_offset: refSayfa*refLimit
+                });
+                if (refErr) { if (oturumSuresiDolduMuKontrolEt(refErr.message)) return; throw refErr; }
                 if(!refData || !refData.length) break;
                 refData.forEach(r => { const ref=r.referrer||'direkt'; refSayac[ref]=(refSayac[ref]||0)+1; });
                 if(refData.length < refLimit) break;
@@ -844,10 +846,10 @@ async function istatistikleriYukle() {
             const GECEN_NOTLAR = ['AA','BA','BB','CB','CC'];
             let mezSayfa = 0, mezLimit = 1000, mezSatirlar = [];
             while (true) {
-                let mezQ = sb.from('hesaplama_loglari').select('harf_notu, sinav_notu').eq('giris_yontemi', 'mezuniyet').range(mezSayfa*mezLimit, (mezSayfa+1)*mezLimit-1);
-                if (sinir) mezQ = mezQ.gte('olusturulma_tarihi', sinir);
-                if (sinirBitis) mezQ = mezQ.lte('olusturulma_tarihi', sinirBitis);
-                const { data: mezData, error: mezErr } = await mezQ;
+                const { data: mezData, error: mezErr } = await sb.rpc('admin_mezuniyet_kayitlari', {
+                    p_admin_token: adminToken(), p_baslangic: sinir, p_bitis: sinirBitis,
+                    p_limit: mezLimit, p_offset: mezSayfa*mezLimit
+                });
                 if (mezErr || !mezData || !mezData.length) break;
                 mezSatirlar = mezSatirlar.concat(mezData);
                 if (mezData.length < mezLimit) break;
@@ -1059,12 +1061,9 @@ async function istatistikleriYukle() {
             const trendGunSayisi = aralikVal === 'ozel' ? 30 : (aralik > 0 ? Math.min(aralik, 365) : 30);
             const trendSinirTarih = new Date(); trendSinirTarih.setDate(trendSinirTarih.getDate() - trendGunSayisi);
             const trendSinirStr = aralikVal === 'ozel' && sinir ? sinir : trendSinirTarih.toISOString();
-            let zTrendQ = sb.from('sayfa_goruntuleme')
-                .select('olusturulma_tarihi')
-                .gte('olusturulma_tarihi', trendSinirStr)
-                .order('olusturulma_tarihi');
-            if (sinirBitis) zTrendQ = zTrendQ.lte('olusturulma_tarihi', sinirBitis);
-            const { data: zTrendData } = await zTrendQ;
+            const { data: zTrendData } = await sb.rpc('admin_sayfa_tarihleri', {
+                p_admin_token: adminToken(), p_baslangic: trendSinirStr, p_bitis: sinirBitis
+            });
             if (!gecerliMi()) return;
             // Not: eskiden bu destroy çağrısı yalnızca "veri varsa" dalının içindeydi — filtre
             // ziyaretçi kaydı olmayan bir aralığa değiştirilince önceki (artık geçersiz) grafik
@@ -1750,18 +1749,25 @@ function anketDuzenlemeIptal() {
 async function anketleriYukle() {
     const icerik = document.getElementById('anket-tablo-icerik');
     icerik.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
-    const { data, error } = await sb
-        .from('anketler')
-        .select('id, baslik, aktif, olusturulma_tarihi, anket_sorulari(count), anket_yanitlari(count)')
-        .order('olusturulma_tarihi', { ascending: false });
+    // v6: anket_yanitlari artık anon'a kapalı, embedded "anket_yanitlari(count)" ile birlikte
+    // gelmiyor — yanıt sayıları ayrı bir admin RPC'sinden (tüm anketler için tek seferde) çekilip
+    // anket id'sine göre eşleniyor.
+    const [{ data, error }, { data: yanitSayilariData, error: yanitSayiHata }] = await Promise.all([
+        sb.from('anketler')
+            .select('id, baslik, aktif, olusturulma_tarihi, anket_sorulari(count)')
+            .order('olusturulma_tarihi', { ascending: false }),
+        sb.rpc('admin_anket_yanit_sayilari', { p_admin_token: adminToken() })
+    ]);
     if (error) { icerik.innerHTML = `<div class="bos-mesaj">Hata: ${error.message}</div>`; return; }
+    if (yanitSayiHata && oturumSuresiDolduMuKontrolEt(yanitSayiHata.message)) return;
+    const yanitSayisiMap = new Map((yanitSayilariData || []).map(r => [String(r.anket_id), r.sayi]));
     tumAnketler = data || [];
     if (!tumAnketler.length) { icerik.innerHTML = '<div class="bos-mesaj">Henüz anket yok.</div>'; return; }
 
     icerik.innerHTML = `<table><thead><tr><th>Başlık</th><th>Soru</th><th>Yanıt</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody>
         ${tumAnketler.map(a => {
             const soruSayisi = a.anket_sorulari?.[0]?.count ?? 0;
-            const yanitSayisi = a.anket_yanitlari?.[0]?.count ?? 0;
+            const yanitSayisi = yanitSayisiMap.get(String(a.id)) ?? 0;
             return `<tr>
                 <td><strong>${escHtml(a.baslik)}</strong></td>
                 <td>${soruSayisi}</td>
@@ -1838,8 +1844,10 @@ async function anketYanitlariGoster(id) {
         const tumYanitlar = [];
         const pageSize = 1000;
         for (let sayfa = 0; sayfa < 100; sayfa++) {
-            const { data, error } = await sb.from('anket_yanitlari').select('yanitlar').eq('anket_id', id).range(sayfa*pageSize, (sayfa+1)*pageSize - 1);
-            if (error) throw error;
+            const { data, error } = await sb.rpc('admin_anket_yanitlari_getir', {
+                p_admin_token: adminToken(), p_anket_id: id, p_limit: pageSize, p_offset: sayfa*pageSize
+            });
+            if (error) { if (oturumSuresiDolduMuKontrolEt(error.message)) return; throw error; }
             if (!data || !data.length) break;
             tumYanitlar.push(...data);
             if (data.length < pageSize) break;
@@ -1981,10 +1989,21 @@ async function csvExport(tablo) {
     try {
         // tumSatirlariCek'teki gibi bir üst sınır: tablo sürekli büyüyen bir log tablosuysa
         // (ör. hesaplama_loglari) bu döngü sınırsız büyüyüp tarayıcı belleğini zorlamasın.
+        // v6: hesaplama_loglari / anket_yanitlari (ve paylasim_loglari / sayfa_goruntuleme)
+        // artık anon'a kapalı, admin_tablo_dump RPC'si üzerinden okunuyor. ders_verileri ve
+        // duyurular hâlâ herkese açık okunabildiği için onlar doğrudan tablo sorgusuyla kalıyor.
+        const KILITLI_TABLOLAR = ['hesaplama_loglari', 'anket_yanitlari', 'paylasim_loglari', 'sayfa_goruntuleme'];
         let tumVeri = [], sayfa = 0, limit = 1000;
         while (sayfa < 200) {
-            const { data, error } = await sb.from(tablo).select('*').range(sayfa*limit, (sayfa+1)*limit-1);
-            if (error) throw error;
+            let data, error;
+            if (KILITLI_TABLOLAR.includes(tablo)) {
+                ({ data, error } = await sb.rpc('admin_tablo_dump', {
+                    p_admin_token: adminToken(), p_tablo: tablo, p_limit: limit, p_offset: sayfa*limit
+                }));
+            } else {
+                ({ data, error } = await sb.from(tablo).select('*').range(sayfa*limit, (sayfa+1)*limit-1));
+            }
+            if (error) { if (oturumSuresiDolduMuKontrolEt(error.message)) return; throw error; }
             if (!data || !data.length) break;
             tumVeri = tumVeri.concat(data);
             if (data.length < limit) break;
@@ -2076,8 +2095,10 @@ async function anoDersAnalizYukle() {
         //    en az bir ders adı girilen hesaplamalarda ayrıca bir kayıt alıyor (script.js'te
         //    anoDersGrupLogKaydet yalnızca dersAdlari.length > 0 iken çağrılıyor) — bu yüzden bu iki
         //    sayı KASITLI olarak farklı: biri "tüm ANO hesaplamaları", diğeri "ders adı da girilenler".
-        const { count: gercekAnoToplamSayi, error: anoToplamErr } = await sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme','ano');
-        if (anoToplamErr) throw anoToplamErr;
+        const { data: gercekAnoToplamSayi, error: anoToplamErr } = await sb.rpc('admin_log_sayisi', {
+            p_admin_token: adminToken(), p_tablo: 'hesaplama_loglari', p_filtre: { sekme: 'ano' }
+        });
+        if (anoToplamErr) { if (oturumSuresiDolduMuKontrolEt(anoToplamErr.message)) return; throw anoToplamErr; }
         anoGercekToplamHesaplama = gercekAnoToplamSayi || 0;
 
         // v5: ano_hesaplama_gruplari / ano_ders_loglari artık anon'a kapalı (sadece admin
