@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Tema (açık/koyu) rengini ilk boyamadan (paint) önce, senkron olarak uygular
+        // (FOUC/tema flaşını önler). Aşağıdaki, sayfa sonundaki tema scripti bunu
+        // tekrar (zararsız şekilde) uygular ve tema değiştirme butonunu bağlar.
+        (function () {
+            try {
+                var t = localStorage.getItem('ktu-theme');
+                if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
