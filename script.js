@@ -3160,6 +3160,10 @@ async function nyMisafirOyunKaydet(skor) {
 // ------------------------------------------------------------
 // Hesap sistemi ve liderlik tablosu
 // ------------------------------------------------------------
+// v4: Bu anahtarın altında artık düz metin şifre değil, sadece rastgele/
+// anlamsız bir oturum token'ı saklanır (bkz. supabase-not-yakala-kurulum.sql).
+// Anahtar adı eskisiyle aynı bırakıldı ki eski ("Beni Hatırla") kayıtlar da
+// okunup nyOturumKontrol() içinde güvenle tespit edilip temizlenebilsin.
 const NY_HESAP_ANAHTARI = 'ktuNotYakalaHesap';
 const NY_EKRAN_ID = {
     baslangic: 'nyBaslangicEkrani',
@@ -3171,7 +3175,7 @@ const NY_EKRAN_ID = {
 
 let nyGirisliMi = false;
 let nyKullaniciAdi = null;
-let nyKullaniciSifre = null;
+let nyOturumToken = null;
 let nyBekleyenSkor = null;
 
 function nyEkranGoster(ad, event) {
@@ -3202,12 +3206,12 @@ function nyHesapDurumuGuncelle() {
         : `<a href="#" onclick="nyEkranGoster('giris', event)">Giriş Yap</a> &nbsp;·&nbsp; <a href="#" onclick="nyEkranGoster('kayit', event)">Kayıt Ol</a>`;
 }
 
-function nyOturumAyarla(ad, sifre, beniHatirla) {
+function nyOturumAyarla(ad, token, beniHatirla) {
     nyGirisliMi = true;
     nyKullaniciAdi = ad;
-    nyKullaniciSifre = sifre;
-    if (beniHatirla) {
-        localStorage.setItem(NY_HESAP_ANAHTARI, JSON.stringify({ ad, sifre }));
+    nyOturumToken = token;
+    if (beniHatirla && token) {
+        localStorage.setItem(NY_HESAP_ANAHTARI, token);
     } else {
         localStorage.removeItem(NY_HESAP_ANAHTARI);
     }
@@ -3218,13 +3222,21 @@ async function nyOturumKontrol() {
     if (nyGirisliMi) { nyHesapDurumuGuncelle(); return; }
     const kayitli = localStorage.getItem(NY_HESAP_ANAHTARI);
     if (!kayitli) { nyHesapDurumuGuncelle(); return; }
+    // v3 ve öncesinden kalan eski kayıt formatı JSON içinde düz metin şifre
+    // tutuyordu ({"ad":...,"sifre":...}). Yeni token formatı düz bir metin
+    // (hex) dizisidir, asla "{" ile başlamaz — eski kaydı görürsek güvenlik
+    // gereği hemen sil, kullanıcı normal şekilde tekrar giriş yapsın.
+    if (kayitli.trim().startsWith('{')) {
+        localStorage.removeItem(NY_HESAP_ANAHTARI);
+        nyHesapDurumuGuncelle();
+        return;
+    }
     try {
-        const { ad, sifre } = JSON.parse(kayitli);
-        const { data, error } = await getSupabase().rpc('ny_giris_yap', { p_kullanici_adi: ad, p_sifre: sifre });
+        const { data, error } = await getSupabase().rpc('ny_oturum_dogrula', { p_token: kayitli });
         if (!error && data && data.basarili) {
             nyGirisliMi = true;
             nyKullaniciAdi = data.kullanici_adi;
-            nyKullaniciSifre = sifre;
+            nyOturumToken = kayitli;
         } else {
             localStorage.removeItem(NY_HESAP_ANAHTARI);
         }
@@ -3236,11 +3248,17 @@ async function nyOturumKontrol() {
 
 function nyCikisYap(event) {
     if (event) event.preventDefault();
+    const oncekiToken = nyOturumToken;
     nyGirisliMi = false;
     nyKullaniciAdi = null;
-    nyKullaniciSifre = null;
+    nyOturumToken = null;
     localStorage.removeItem(NY_HESAP_ANAHTARI);
     nyHesapDurumuGuncelle();
+    if (oncekiToken) {
+        // Token'ı sunucu tarafında da geçersiz kıl — sadece tarayıcıdan
+        // silmek yetmez, token ele geçirilmişse yine kullanılabilir kalırdı.
+        getSupabase().rpc('ny_oturum_iptal', { p_token: oncekiToken }).catch(() => {});
+    }
 }
 
 async function nyGirisSonrasiIslemler() {
@@ -3280,7 +3298,14 @@ async function nyGirisGonder(event) {
             hataEl.textContent = data && data.hata === 'sifre_yanlis' ? 'Şifre yanlış.' : 'Böyle bir kullanıcı bulunamadı.';
             return;
         }
-        nyOturumAyarla(data.kullanici_adi, sifre, beniHatirla);
+        // Şifre doğrulandı — artık şifreyi bir daha hiç saklamadan/göndermeden
+        // devam etmek için tek kullanımlık bir oturum token'ı üret.
+        const oturum = await getSupabase().rpc('ny_oturum_olustur', { p_kullanici_adi: ad, p_sifre: sifre });
+        if (oturum.error || !oturum.data || !oturum.data.basarili) {
+            hataEl.textContent = 'Bağlantı hatası, tekrar dene.';
+            return;
+        }
+        nyOturumAyarla(oturum.data.kullanici_adi, oturum.data.token, beniHatirla);
         document.getElementById('nyGirisAd').value = '';
         document.getElementById('nyGirisSifre').value = '';
         await nyGirisSonrasiIslemler();
@@ -3329,7 +3354,14 @@ async function nyKayitGonder(event) {
             hataEl.textContent = 'Kayıt başarısız, tekrar dene.';
             return;
         }
-        nyOturumAyarla(ad, sifre, beniHatirla);
+        // Kayıt başarılı — hemen bir oturum token'ı üret, şifreyi bir daha
+        // hiç saklamadan/göndermeden devam et.
+        const oturum = await getSupabase().rpc('ny_oturum_olustur', { p_kullanici_adi: ad, p_sifre: sifre });
+        if (oturum.error || !oturum.data || !oturum.data.basarili) {
+            hataEl.textContent = 'Kayıt oldu, ama giriş yapılamadı. Lütfen giriş ekranından tekrar dene.';
+            return;
+        }
+        nyOturumAyarla(oturum.data.kullanici_adi, oturum.data.token, beniHatirla);
         document.getElementById('nyKayitAd').value = '';
         document.getElementById('nyKayitSifre').value = '';
         document.getElementById('nyKayitSifreTekrar').value = '';
@@ -3344,14 +3376,22 @@ async function nyKayitGonder(event) {
 
 async function nySkorGonder(skor) {
     const kayitAlani = document.getElementById('nySkorKayitAlani');
-    if (!nyGirisliMi) { nyBekleyenSkor = skor; return; }
+    if (!nyGirisliMi || !nyOturumToken) { nyBekleyenSkor = skor; return; }
     try {
         const { data, error } = await getSupabase().rpc('ny_skor_gonder', {
-            p_kullanici_adi: nyKullaniciAdi,
-            p_sifre: nyKullaniciSifre,
+            p_token: nyOturumToken,
             p_skor: skor
         });
         if (error || !data || !data.basarili) {
+            if (data && data.hata === 'yetkisiz') {
+                // Token süresi dolmuş veya geçersiz — kullanıcıyı çıkış
+                // yapılmış say ki durum arayüzde doğru yansısın.
+                nyGirisliMi = false;
+                nyKullaniciAdi = null;
+                nyOturumToken = null;
+                localStorage.removeItem(NY_HESAP_ANAHTARI);
+                nyHesapDurumuGuncelle();
+            }
             kayitAlani.innerHTML = '<p class="ny-form-hata">Skor kaydedilemedi, bağlantını kontrol et.</p>';
             return;
         }
