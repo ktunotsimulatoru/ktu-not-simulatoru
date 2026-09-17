@@ -124,12 +124,28 @@
 html { background-color: var(--bg-color); scroll-behavior: smooth; }
 body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
-    color: var(--text-color); background-image: url('ktulogo.png');
-    background-repeat: no-repeat; background-position: center center;
-    background-attachment: fixed;
-    background-size: contain; background-color: var(--bg-color);
+    color: var(--text-color); background-color: var(--bg-color);
 }
-[data-theme="dark"] body { background-image: url('ktulogo-dark.png'); }
+/* Not: Arka plan logosu önceden body'ye "background-attachment: fixed" ile
+   uygulanıyordu. Bu, birçok tarayıcı/GPU kombinasyonunda arka planın ayrı bir
+   GPU katmanına (compositor layer) alınmasını engelliyor ve sayfa kaydırılırken
+   HER karede tüm arka planın yeniden çizilmesine (repaint) neden oluyordu —
+   masaüstünde hissedilen kaydırma yavaşlığının asıl kaynağı buydu. Aynı görsel
+   sonucu (sabit, ortalanmış, kaydırmadan etkilenmeyen logo) "position: fixed"
+   ile ayrı bir katmana koyarak elde ediyoruz; bu katman kendi GPU katmanında
+   durur ve kaydırma sırasında yeniden çizilmesi gerekmez.  */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: url('ktulogo.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    pointer-events: none;
+}
+[data-theme="dark"] body::before { background-image: url('ktulogo-dark.png'); }
 
 /* Header Stilleri */
 .site-header {

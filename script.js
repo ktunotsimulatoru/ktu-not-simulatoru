@@ -3046,7 +3046,13 @@ function nyOyunDongusu(zaman) {
 
     const basketEl = document.getElementById('nyBasket');
     const basketPx = nyBasketX * alanGenislik;
-    basketEl.style.left = basketPx + 'px';
+    // Not: basketPx'i doğrudan .style.left'e yazmak her karede sayfa düzenini (layout)
+    // yeniden hesaplatıyor ("reflow") ve bu, özellikle masaüstünde oyun sırasında hissedilen
+    // kasmanın asıl kaynağıydı. Düşen öğeler zaten transform kullanıyordu (GPU/compositor
+    // üzerinden, layout tetiklemez); çantayı da aynı yönteme geçiriyoruz — CSS'teki statik
+    // "left: 50%" konumundan px cinsinden farkı transform ile uyguluyoruz.
+    const merkezdenFarkPx = basketPx - alanGenislik / 2;
+    basketEl.style.transform = `translateX(${merkezdenFarkPx}px) translateX(-50%)`;
     const basketYariGenislik = 30;
     const basketUstY = alanYukseklik - 34;
 
