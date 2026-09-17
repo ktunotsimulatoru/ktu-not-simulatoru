@@ -1260,25 +1260,22 @@ main { margin-top: 1.5rem; }
     align-items: center;
     justify-content: center;
     padding: 16px;
-    opacity: 0;
 }
-/* Artık backdrop-filter yok — düz bir renk animasyonu ucuz olduğu için overlay'e de
-   hafif bir solma ekleyebiliyoruz, bu kasmadan biraz daha yumuşak bir açılış hissi verir. */
-/* will-change: opacity — .modal-kutu (aşağıda) kendi katmanına alınıyordu ama TAM EKRANI
-   kaplayan bu karartma (overlay) katmana hiç alınmıyordu. Katmana alınmayan bir opaklık
-   animasyonunda bazı tarayıcılar (özellikle Firefox), animasyonun HER karesinde overlay'in
-   ALTINDAKİ TÜM sayfa içeriğini karartmayla birlikte yeniden çiziyor — sayfa ne kadar ağırsa
-   (form/tablo/SSS dolu hesaplama sayfaları gibi) o kadar pahalı. Chrome'da bu daha az belirgin
-   olduğu için sorun Firefox'ta çok daha kasarak açılıyor olarak fark edildi; kullanıcının kendi
-   Firefox'unda kare kare ölçümle doğrulandı (animasyonun ilk ~150-300ms'sinde kare hızı 60'tan
-   15-20'ye düşüyordu). Overlay'i de kendi GPU katmanına alarak bu tekrar tekrar tetiklenen
-   tam sayfa yeniden çizimini engelliyoruz — sadece .aktif iken (modal kapalıyken gereksiz yere
-   katman ayırmamak için). */
-.modal-overlay.aktif { display: flex; animation: modalArkaplanAcil 0.16s ease-out forwards; will-change: opacity; }
-@keyframes modalArkaplanAcil {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
+/* Karartma (overlay) ARTIK animasyonla açılmıyor, anında görünüyor — display:none'dan flex'e
+   geçerken tarayıcı zaten tek seferlik bir stil/layout hesaplaması yapıyor, buna ek olarak
+   opaklığı da 0'dan 1'e ayrı bir animasyonla götürmek, TAM VİEWPORT'U kaplayan bu katmanın
+   birkaç kare boyunca tekrar tekrar (yarı saydam haldeyken altındaki koca sayfayla birlikte)
+   yeniden çizilmesi gerektiği anlamına geliyordu. `will-change: opacity` ile bunu GPU'nun kendi
+   katmanına almayı denedik ama kullanıcının Firefox'unda GPU hızlandırmalı render motoru
+   (WebRender) ekran kartı sürücüsündeki bilinen bir soruna karşı Mozilla tarafından bloklanmış
+   (about:support → Grafikler → WebRender: "blocklisted by gfxInfo") — yani GPU katmanına alma
+   ipuçlarının devredebileceği bir GPU render hattı yok, her şey yazılımsal (CPU) çiziliyor ve bu
+   modda tam ekranı kaplayan bir opaklık animasyonu ÇOK pahalı kalıyor. Bunu tersine çeviremeyiz
+   (tarayıcı/sürücü tarafı bir kısıtlama), o yüzden en pahalı işi (koca overlay'i animasyonla
+   açmayı) tamamen kaldırdık. Görsel yumuşaklık artık sadece küçük modal kutusunun (aşağıda,
+   .modal-kutu) kendi fade+slide animasyonundan geliyor — o çok daha küçük bir alan olduğu için
+   yazılımsal render modunda bile ucuz. */
+.modal-overlay.aktif { display: flex; }
 
 /* Modal kutu */
 .modal-kutu {
