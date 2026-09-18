@@ -737,7 +737,7 @@ async function istatistikleriYukle() {
         const paylasimOran = fmtKucukOran(paylasimToplam, toplam);
 
         // ── 2. Tek RPC çağrısı — tüm ağır hesaplamalar DB'de ──
-        const rpcParams = {};
+        const rpcParams = { p_admin_token: adminToken() };
         if (sinir) rpcParams.sinir_tarihi = sinir;
         if (sinirBitis) rpcParams.sinir_bitis = sinirBitis;
         let { data: fnData, error: fnErr } = await sb.rpc('istatistik_ozet', rpcParams);
@@ -745,12 +745,13 @@ async function istatistikleriYukle() {
         if (fnErr && fnErr.message && fnErr.message.includes('istatistik_ozet') && sinirBitis) {
             // DB'de henüz (sinir_tarihi, sinir_bitis) ikilisini birlikte kabul eden bir fonksiyon
             // tanımı yok (PGRST202). Panel tamamen kırılmasın diye sadece başlangıç sınırıyla tekrar dene.
-            const tekParamRes = await sb.rpc('istatistik_ozet', sinir ? { sinir_tarihi: sinir } : {});
+            const tekParamRes = await sb.rpc('istatistik_ozet', sinir ? { p_admin_token: adminToken(), sinir_tarihi: sinir } : { p_admin_token: adminToken() });
             fnData = tekParamRes.data; fnErr = tekParamRes.error;
             if (!fnErr) bitisTarihiUyarisi = true;
         }
-        if (fnErr) throw new Error('istatistik_ozet: ' + fnErr.message);
+        if (fnErr) { if (oturumSuresiDolduMuKontrolEt(fnErr.message)) return; throw new Error('istatistik_ozet: ' + fnErr.message); }
         const fn = fnData || {};
+        if (adminYetkisizIseGirisEkraninaDon(fn)) return;
 
         const ortVize      = fn.ort_vize   != null ? fn.ort_vize   : '—';
         const ortFinal     = fn.ort_final  != null ? fn.ort_final  : '—';
@@ -2159,8 +2160,9 @@ async function oyunIstatistikYukle() {
     document.getElementById('oyun-stat-kartlar').innerHTML = '<div style="color:var(--muted);font-size:0.9em;padding:8px;">Yükleniyor...</div>';
     document.getElementById('oyun-oyuncu-tablo-icerik').innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
     try {
-        const { data, error } = await sb.rpc('ny_admin_istatistik');
-        if (error) throw error;
+        const { data, error } = await sb.rpc('ny_admin_istatistik', { p_admin_token: adminToken() });
+        if (error) { if (oturumSuresiDolduMuKontrolEt(error.message)) return; throw error; }
+        if (adminYetkisizIseGirisEkraninaDon(data)) return;
 
         const toplamOyun = (data && data.toplam_oyun) || 0;
         const kayitliOyuncu = (data && data.kayitli_oyuncu_sayisi) || 0;
@@ -2232,8 +2234,8 @@ async function sifreDegistir() {
     if (yeni.length < 6) { mesajEl.style.color='var(--red)'; mesajEl.textContent='Şifre en az 6 karakter olmalı.'; return; }
     // Aynı şekilde şifre değişimi de artık tek bir RPC çağrısıyla sunucu tarafında doğrulanıp
     // güncelleniyor — mevcut şifre hiçbir zaman düz metin olarak client'a dönmüyor.
-    const { data: basariliMi, error } = await sb.rpc('change_admin_password', { current_attempt: mevcut, new_password: yeni });
-    if (error) { mesajEl.style.color='var(--red)'; mesajEl.textContent='❌ Şifre güncellenemedi: ' + error.message; return; }
+    const { data: basariliMi, error } = await sb.rpc('change_admin_password', { p_admin_token: adminToken(), current_attempt: mevcut, new_password: yeni });
+    if (error) { if (oturumSuresiDolduMuKontrolEt(error.message)) return; mesajEl.style.color='var(--red)'; mesajEl.textContent='❌ Şifre güncellenemedi: ' + error.message; return; }
     if (basariliMi !== true) { mesajEl.style.color='var(--red)'; mesajEl.textContent='❌ Mevcut şifre yanlış.'; return; }
     mesajEl.style.color='var(--green)'; mesajEl.textContent='✓ Şifre güncellendi!';
     document.getElementById('mevcut-sifre').value='';
