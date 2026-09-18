@@ -2674,89 +2674,36 @@ async function istatistikleriYukle() {
     try {
         const sb = getSupabase();
 
-        const HARF_LISTESI = ['AA','BA','BB','CB','CC','DC','DD','FD','FF'];
-
-        // Tüm sorgular paralel — count tabanlı, satır limiti yok
-        const [
-            { count: genelToplam },
-            { count: harfSayisi },
-            { count: gerekliSayisi },
-            { count: senaryoSayisi },
-            { count: anoSayisiSekme },
-            ...harfCountler
-        ] = await Promise.all([
-            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }),
-            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'harf'),
-            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'gerekli'),
-            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'senaryo'),
-            sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('sekme', 'ano'),
-            ...HARF_LISTESI.map(h =>
-                sb.from('hesaplama_loglari').select('*', { count: 'exact', head: true }).eq('harf_notu', h)
-            )
-        ]);
+        // v6 güvenlik güncellemesiyle hesaplama_loglari tablosundan anon/authenticated'in
+        // doğrudan SELECT yetkisi kaldırıldı (bkz. supabase-admin-guvenlik-v6-log-tablolari.sql).
+        // Bu genel/herkese-açık özet artık tek bir public RPC'den (genel_istatistikler) geliyor —
+        // fonksiyon sadece toplam/ortalama gibi anonim özet değerler döndürüyor, hiçbir ham satır
+        // (kişisel veri barındırmasa bile) client'a gelmiyor. Ayrıca eskiden vize/final en çok
+        // girilenler ilk 1000 kayıtla, ANO ortalaması ise sayfalama ile client'ta hesaplanıyordu —
+        // şimdi ikisi de sunucu tarafında TÜM kayıtlar üzerinden (group by / avg) hesaplanıyor.
+        const { data: fn, error } = await sb.rpc('genel_istatistikler');
+        if (error) throw error;
+        if (!fn) return;
 
         const sekmeSayilari = {
-            harf: harfSayisi || 0,
-            gerekli: gerekliSayisi || 0,
-            senaryo: senaryoSayisi || 0,
-            ano: anoSayisiSekme || 0
+            harf: fn.harf_sayisi || 0,
+            gerekli: fn.gerekli_sayisi || 0,
+            senaryo: fn.senaryo_sayisi || 0,
+            ano: fn.ano_sayisi_sekme || 0
         };
 
-        // Harf dağılımı — her harf için count
-        const harfSayac = {};
-        HARF_LISTESI.forEach((h, i) => {
-            if (harfCountler[i]?.count > 0) harfSayac[h] = harfCountler[i].count;
-        });
+        const harfSayac = fn.harf_sayac || {};
+        const topHarfler = Object.entries(harfSayac)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([not]) => not);
 
-        // Vize/final en çok girilen — bunlar az veri, 1000 yeterli
-        const { data: notData } = await sb
-            .from('hesaplama_loglari')
-            .select('vize_notu, final_notu')
-            .eq('sekme', 'harf')
-            .not('final_notu', 'is', null)
-            .limit(1000);
+        const topVize = fn.top_vize != null ? [String(fn.top_vize)] : null;
+        const topFinal = fn.top_final != null ? [String(fn.top_final)] : null;
+        const anoOrtalama = fn.ano_ortalama != null ? parseFloat(fn.ano_ortalama) : null;
+        const anoSayisi = fn.ano_ortalama_sayisi || 0;
 
-        const vizeSayac = {}, finalSayac = {};
-        let final45Sayisi = 0;
-        notData?.forEach(r => {
-            if (r.vize_notu !== null) vizeSayac[r.vize_notu] = (vizeSayac[r.vize_notu] || 0) + 1;
-            if (r.final_notu !== null) finalSayac[r.final_notu] = (finalSayac[r.final_notu] || 0) + 1;
-            if (r.final_notu === 45) final45Sayisi++;
-        });
-
-        // final45 doğru sayım için count sorgusu
-        const { count: final45Count } = await sb
-            .from('hesaplama_loglari')
-            .select('*', { count: 'exact', head: true })
-            .eq('sekme', 'harf')
-            .eq('final_notu', 45);
-
-        // ANO ortalaması — Supabase tek istekte varsayılan olarak en fazla 1000 satır döndürdüğü için
-        // (limit(10000) verilse bile), tüm kayıtları sayfalama (range) ile çekip öyle ortalıyoruz.
-        let anoToplam = 0, anoSayisi = 0;
-        {
-            let anoSayfa = 0;
-            const anoSayfaBoyutu = 1000;
-            while (true) {
-                const { data: anoSayfaVerisi } = await sb
-                    .from('hesaplama_loglari')
-                    .select('ano')
-                    .eq('sekme', 'ano')
-                    .not('ano', 'is', null)
-                    .range(anoSayfa * anoSayfaBoyutu, anoSayfa * anoSayfaBoyutu + anoSayfaBoyutu - 1);
-                if (!anoSayfaVerisi || anoSayfaVerisi.length === 0) break;
-                anoSayfaVerisi.forEach(r => { anoToplam += parseFloat(r.ano); anoSayisi++; });
-                if (anoSayfaVerisi.length < anoSayfaBoyutu) break;
-                anoSayfa++;
-            }
-        }
-
-        const topHarfler = Object.entries(harfSayac).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([not]) => not);
-        const topVize = Object.entries(vizeSayac).sort((a, b) => b[1] - a[1])[0];
-        const topFinal = Object.entries(finalSayac).sort((a, b) => b[1] - a[1])[0];
-        const anoOrtalama = anoSayisi > 0 ? anoToplam / anoSayisi : null;
-
-        istatistikleriGoster(genelToplam || 0, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, final45Count || 0, anoOrtalama, anoSayisi);
+        istatistikleriGoster(fn.genel_toplam || 0, sekmeSayilari, topHarfler, topVize, topFinal, harfSayac, fn.final45_sayisi || 0, anoOrtalama, anoSayisi);
 
     } catch (e) {
         console.error('İstatistik yükleme hatası:', e);
@@ -3300,7 +3247,10 @@ async function nyGirisGonder(event) {
         const { data, error } = await getSupabase().rpc('ny_giris_yap', { p_kullanici_adi: ad, p_sifre: sifre });
         if (error) throw error;
         if (!data || !data.basarili) {
-            hataEl.textContent = data && data.hata === 'sifre_yanlis' ? 'Şifre yanlış.' : 'Böyle bir kullanıcı bulunamadı.';
+            // Kullanıcı adı sızıntısını (enumeration) önlemek için sunucu artık "kullanıcı yok"
+            // ile "şifre yanlış" durumlarını ayırt etmiyor (bkz. ny_giris_yap) — burada da tek,
+            // genel bir mesaj gösteriyoruz.
+            hataEl.textContent = 'Kullanıcı adı veya şifre yanlış.';
             return;
         }
         // Şifre doğrulandı — artık şifreyi bir daha hiç saklamadan/göndermeden
