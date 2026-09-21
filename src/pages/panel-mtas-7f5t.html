@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTÜ Not Simülatörü — Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="vendor-supabase.js"></script>
+    <script src="vendor-chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+    <script src="dosya-guvenligi.js"></script>
+    <script src="course-code.js"></script>
+    <script src="dosya-erisim.js" defer></script>
+    <script src="admin-storage.js" defer></script>
+</head>
+<body>
+
+<div id="giris-ekrani">
+    <div class="giris-kutu">
+        <img class="giris-logo" src="logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
+        <h1>🔐 Admin Paneli</h1>
+        <p>KTÜ Not Simülatörü</p>
+        <input type="password" id="sifre-input" class="giris-input" placeholder="Şifre" data-nk-keydown="girisYap" data-nk-keydown-key="Enter">
+        <button class="giris-btn" data-nk-click="girisYap">Giriş Yap</button>
+        <div id="giris-hata" class="giris-hata"></div>
+    </div>
+</div>
+
+<div id="admin-panel">
+    <div class="admin-header">
+        <div class="admin-header-brand">
+            <img src="logo.png" alt="KTÜ Not Simülatörü" width="126" height="42">
+            <h1>⚙️ Admin</h1>
+        </div>
+        <button class="cikis-btn" data-nk-click="cikisYap">Çıkış Yap</button>
+    </div>
+    <div class="admin-nav">
+        <button class="nav-btn aktif" data-nk-click="sekmeDegistir" data-nk-click-arg0="istatistik" data-nk-click-arg1="@this">📊 İstatistikler</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="dersler" data-nk-click-arg1="@this">📚 Ders Yönetimi <span id="onay-badge" class="nav-badge" style="display:none"></span></button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="sorular" data-nk-click-arg1="@this">🗃️ Not Kutusu Onayları <span id="soru-onay-badge" class="nav-badge" style="display:none"></span></button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="veriler" data-nk-click-arg1="@this">🗂️ Paylaşılan Veriler</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="duyurular" data-nk-click-arg1="@this">📢 Duyurular</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="anketler" data-nk-click-arg1="@this">📊 Anketler</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="fakulteler" data-nk-click-arg1="@this">🏫 Fakülte & Bölüm</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="anodersler" data-nk-click-arg1="@this">🎓 ANO Ders Analizi</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="oyun" data-nk-click-arg1="@this">🎮 Not Yakala</button>
+        <button class="nav-btn" data-nk-click="sekmeDegistir" data-nk-click-arg0="ayarlar" data-nk-click-arg1="@this">⚙️ Ayarlar</button>
+    </div>
+
+    <div class="admin-icerik">
+
+        <!-- İSTATİSTİKLER -->
+        <div id="bolum-istatistik" class="panel-bolum aktif">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div class="bolum-baslik" style="margin-bottom:0;">📊 Genel İstatistikler</div>
+                <div class="filtre-bar" style="margin-bottom:0;">
+                    <span class="filtre-etiket">Tarih Aralığı:</span>
+                    <select class="filtre-select" id="istat-aralik" data-nk-change="aralikDegisti">
+                        <option value="1">Son 24 Saat</option>
+                        <option value="7">Son 7 Gün</option>
+                        <option value="30">Son 30 Gün</option>
+                        <option value="90">Son 90 Gün</option>
+                        <option value="365">Son 1 Yıl</option>
+                        <option value="0" selected>Tüm Zamanlar</option>
+                        <option value="ozel">Özel Aralık</option>
+                    </select>
+                    <div class="filtre-tarih-ozel" id="filtre-tarih-ozel">
+                        <span>Başlangıç:</span>
+                        <input type="date" id="istat-baslangic">
+                        <span>Bitiş:</span>
+                        <input type="date" id="istat-bitis-tarih">
+                        <button class="btn btn-mavi" data-nk-click="istatistikleriYukle">Uygula</button>
+                    </div>
+                    <button class="btn btn-gri" data-nk-click="istatistikleriYukle">↻ Yenile</button>
+                </div>
+            </div>
+            <div class="stat-karti-grid" id="stat-kartlar">
+                <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik"><span>İşletim Sağlığı</span><button class="btn btn-gri" data-nk-click="isletimOzetiYukle">↻ Yenile</button></div>
+                <div id="isletim-ozeti"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="grafik-grid">
+                <div class="grafik-wrapper"><div class="grafik-baslik">Sekme Kullanımı</div><canvas id="sekmeChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">Harf Notu Dağılımı</div><canvas id="harfChart" height="180"></canvas></div>
+                <div class="grafik-wrapper">
+                    <div class="grafik-baslik">Cihaz Türü</div>
+                    <div class="cihaz-pasta" style="max-height:220px;">
+                        <canvas id="cihazChart" class="cihaz-pasta-canvas" style="max-height:200px;"></canvas>
+                        <div class="cihaz-legend" id="cihaz-legend"></div>
+                    </div>
+                </div>
+                <div class="grafik-wrapper"><div class="grafik-baslik" id="gunluk-baslik">Günlük Hesaplama</div><canvas id="gunlukChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">🎯 Hedeflenen Harf Notu</div><canvas id="hedefChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">📊 Sınıf Ort. Dağılımı</div><canvas id="ortChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">📝 Hedef Nota Göre Ort. Vize</div><canvas id="vizeHedefChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">🕐 Saatlik Kullanım Yoğunluğu</div><canvas id="saatChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">📅 Günlük Kullanım (Hafta içi/sonu)</div><canvas id="haftaChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">🌐 Ziyaretçi Kaynakları</div><canvas id="referrerChart" height="180"></canvas></div>
+                <div class="grafik-wrapper"><div class="grafik-baslik">👥 Günlük Ziyaretçi Trendi</div><canvas id="ziyaretciTrendChart" height="180"></canvas></div>
+            </div>
+        </div>
+
+        <!-- DERS YÖNETİMİ -->
+        <div id="bolum-dersler" class="panel-bolum">
+            <div class="bolum-baslik">📚 Ders Yönetimi</div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>⏳ Onay Bekleyen Dersler</span>
+                    <button class="btn btn-gri" data-nk-click="dersleriYukle">↻ Yenile</button>
+                </div>
+                <div id="ders-onay-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>✅ Onaylı Dersler</span>
+                    <div class="btn-grup">
+                        <input type="text" id="ders-arama" class="filtre-input" placeholder="Ders ara..." data-nk-input="onayliDersleriFiltrele" style="width:180px;">
+                        <button class="btn btn-gri" data-nk-click="onayliDersleriYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div class="filtre-bar" style="margin-bottom:10px;">
+                    <select class="filtre-select" id="filtre-fakulte-ders" data-nk-change="dersFiltreFakulteDegisti">
+                        <option value="">Tüm Fakülteler</option>
+                    </select>
+                    <select class="filtre-select" id="filtre-bolum-ders" data-nk-change="onayliDersleriFiltrele">
+                        <option value="">Tüm Bölümler</option>
+                    </select>
+                </div>
+                <div id="ders-onayli-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- NOT KUTUSU ONAYLARI -->
+        <div id="bolum-sorular" class="panel-bolum">
+            <div class="bolum-baslik">🗃️ Not Kutusu — Soru Onayları</div>
+            <details class="admin-tablo-wrapper">
+                <summary>Dosya depolama kontrolü</summary>
+                <p>Eski yüklemeleri tarayıp hiçbir soruya bağlı olmayan dosyaları inceleyebilirsin. Tarama dosya silmez.</p>
+                <button type="button" class="btn btn-gri" id="nk-depolama-tara">Depolamayı tara</button>
+                <p id="nk-depolama-durum" role="status"></p>
+                <div id="nk-depolama-liste"></div>
+                <button type="button" class="btn btn-gri" id="nk-depolama-devam" hidden>Sonraki dosyaları tara</button>
+            </details>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>⏳ Onay Bekleyen Sorular</span>
+                    <button class="btn btn-gri" data-nk-click="sorulariYukle">↻ Yenile</button>
+                </div>
+                <div id="soru-onay-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>📋 Tüm Sorular</span>
+                    <div class="btn-grup">
+                        <input type="search" id="soru-arama" class="filtre-input" placeholder="Ders, kod veya e-posta ara..." data-nk-input="adminSoruAramaPlanla">
+                        <select class="filtre-select" id="soru-durum-filtre" data-nk-change="adminSoruFiltresiDegisti">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="beklemede">Beklemede</option>
+                            <option value="onaylandi">Onaylanmış</option>
+                            <option value="reddedildi">Reddedilmiş</option>
+                        </select>
+                        <button class="btn btn-gri" data-nk-click="tumSorulariYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div id="soru-tum-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>📚 Not Kutusu Dersleri (Kullanıcı Eklemeleri)</span>
+                    <div class="btn-grup">
+                        <input type="search" id="nk-ders-admin-arama" class="filtre-input" placeholder="Ders adı veya kodu ara..." data-nk-input="nkAdminDersAramaPlanla">
+                        <button class="btn btn-gri" data-nk-click="nkAdminDersleriYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div style="font-size:0.82em;color:var(--muted);padding:0 2px 8px;">
+                    Kullanıcıların eklediği dersleri düzenleyebilir veya aynı bölümdeki standart ders kaydıyla birleştirebilirsin. Birleştirme, bağlı soruları hedef derse taşır ve işlem geçmişini saklar.
+                </div>
+                <div id="nk-ders-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>🚩 İçerik Bildirimleri</span>
+                    <div class="btn-grup">
+                        <select class="filtre-select" id="nk-bildirim-durum" data-nk-change="bildirimFiltresiDegisti">
+                            <option value="acik">Açık bildirimler</option>
+                            <option value="kapatildi">Kapatılmış bildirimler</option>
+                            <option value="">Tümü</option>
+                        </select>
+                        <button class="btn btn-gri" data-nk-click="bildirimleriYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div id="nk-bildirim-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>✏️ Düzeltme Talepleri</span>
+                    <div class="btn-grup">
+                        <select class="filtre-select" id="duzeltme-talebi-durum" data-nk-change="adminDuzeltmeFiltresiDegisti">
+                            <option value="beklemede">Bekleyen talepler</option><option value="onaylandi">Onaylananlar</option><option value="reddedildi">Reddedilenler</option><option value="">Tümü</option>
+                        </select>
+                        <button class="btn btn-gri" data-nk-click="adminDuzeltmeTalepleriniYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div style="font-size:0.82em;color:var(--muted);padding:0 2px 8px;">Öğrencilerin kendi ekledikleri ders ve ders verileri için gönderdiği değişiklik önerileri. Onay, önerilen değerleri doğrudan uygular.</div>
+                <div id="duzeltme-talebi-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- PAYLAŞILAN VERİLER -->
+        <div id="bolum-veriler" class="panel-bolum">
+            <div class="bolum-baslik">🗂️ Paylaşılan Çan Verileri</div>
+            <div class="gorunum-toggle-grup">
+                <button class="gorunum-toggle-btn aktif" id="gorunum-btn-liste" data-nk-click="veriGorunumDegistir" data-nk-click-arg0="liste" data-nk-click-arg1="@this">📋 Ham Liste</button>
+                <button class="gorunum-toggle-btn" id="gorunum-btn-istatistik" data-nk-click="veriGorunumDegistir" data-nk-click-arg0="istatistik" data-nk-click-arg1="@this">📊 Ders Bazlı İstatistik</button>
+            </div>
+            <div class="filtre-bar">
+                <select class="filtre-select" id="filtre-fakulte" data-nk-change="veriFiltreFakulteDegisti">
+                    <option value="">Tüm Fakülteler</option>
+                </select>
+                <select class="filtre-select" id="filtre-bolum" data-nk-change="verileriYukleGuncelGorunum">
+                    <option value="">Tüm Bölümler</option>
+                </select>
+                <select class="filtre-select" id="filtre-can-turu" data-nk-change="verileriYukleGuncelGorunum">
+                    <option value="">Final & Büt</option>
+                    <option value="final">Sadece Final</option>
+                    <option value="but">Sadece Bütünleme</option>
+                </select>
+                <button class="btn btn-gri" data-nk-click="verileriYukleGuncelGorunum">↻ Yenile</button>
+            </div>
+            <div class="admin-tablo-wrapper" id="veri-liste-gorunumu">
+                <div id="veri-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper" id="veri-istatistik-gorunumu" style="display:none;">
+                <p style="color:var(--muted); font-size:0.82em; margin:0 0 10px 0;">Bu ders için paylaşılan tüm çan verilerinin (yukarıdaki filtrelere göre) ders bazında özeti. En son 2000 paylaşım üzerinden hesaplanır.</p>
+                <div id="veri-istatistik-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- DUYURULAR -->
+        <div id="bolum-duyurular" class="panel-bolum">
+            <div class="bolum-baslik">📢 Duyuru Yönetimi</div>
+            <div class="bolum-grid">
+                <div class="admin-form">
+                    <h3 id="duyuru-form-baslik">➕ Yeni Duyuru Yayınla</h3>
+                    <input type="hidden" id="duyuru-duzenleme-id" value="">
+                    <div class="form-row-admin">
+                        <div class="form-group-admin" style="flex:2"><label>Başlık</label><input type="text" id="duyuru-baslik" placeholder="Duyuru başlığı..." data-nk-input="duyuruOnizlemeGuncelle"></div>
+                        <div class="form-group-admin" style="flex:0 0 140px"><label>Durum</label>
+                            <select id="duyuru-aktif"><option value="true">✅ Aktif</option><option value="false">⏸️ Pasif</option></select>
+                        </div>
+                        <div class="form-group-admin" style="flex:0 0 190px"><label>Son Kullanma <span style="color:var(--muted);font-weight:400;">(opsiyonel)</span></label>
+                            <input type="date" id="duyuru-bitis" style="width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'Poppins',sans-serif;font-size:0.88em;">
+                        </div>
+                    </div>
+                    <div class="form-group-admin" style="margin-bottom:12px;"><label>Ana Metin</label><textarea id="duyuru-icerik" placeholder="Duyurunun giriş metni..." data-nk-input="duyuruOnizlemeGuncelle"></textarea></div>
+                    <div class="form-row-admin">
+                        <div class="form-group-admin"><label>Resmi Link URL <span style="color:var(--muted);font-weight:400;">(opsiyonel)</span></label><input type="text" id="duyuru-link-url" placeholder="https://..." data-nk-input="duyuruOnizlemeGuncelle"></div>
+                        <div class="form-group-admin"><label>Link Metni</label><input type="text" id="duyuru-link-metin" placeholder="Resmi duyuruya git →" data-nk-input="duyuruOnizlemeGuncelle"></div>
+                    </div>
+                    <div style="margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <label style="font-size:0.8em;color:var(--muted);font-weight:600;">📦 Değişiklik Kutuları <span style="font-weight:400;">(opsiyonel — vurgulanan değişiklikleri örneklerle göstermek için)</span></label>
+                        <button type="button" class="btn btn-gri" data-nk-click="duyuruKutuEkle">➕ Kutu Ekle</button>
+                    </div>
+                    <div id="duyuru-kutular-container"><p style="font-size:0.82em;color:var(--muted);">Henüz kutu eklenmedi.</p></div>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <button class="btn btn-mavi" id="duyuru-submit-btn" data-nk-click="duyuruKaydet">📢 Duyuruyu Yayınla</button>
+                        <button class="btn btn-gri" id="duyuru-iptal-btn" data-nk-click="duyuruDuzenlemeIptal" style="display:none;">✕ Düzenlemeyi İptal Et</button>
+                    </div>
+                </div>
+                <div class="admin-form">
+                    <h3>👁️ Canlı Önizleme</h3>
+                    <div id="duyuru-onizleme"><p style="font-size:0.82em;color:var(--muted);">Doldurdukça burada önizleme görünecek.</p></div>
+                </div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik"><span>Mevcut Duyurular</span><button class="btn btn-gri" data-nk-click="duyurulariYukle">↻ Yenile</button></div>
+                <div id="duyuru-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- ANKETLER -->
+        <div id="bolum-anketler" class="panel-bolum">
+            <div class="bolum-baslik">📊 Anket Yönetimi</div>
+            <div class="bolum-grid">
+                <div class="admin-form">
+                    <h3 id="anket-form-baslik">➕ Yeni Anket Oluştur</h3>
+                    <input type="hidden" id="anket-duzenleme-id" value="">
+                    <div class="form-row-admin">
+                        <div class="form-group-admin" style="flex:2"><label>Başlık</label><input type="text" id="anket-baslik" placeholder="Anket başlığı..."></div>
+                        <div class="form-group-admin" style="flex:0 0 140px"><label>Durum</label>
+                            <select id="anket-aktif"><option value="false">⏸️ Pasif</option><option value="true">✅ Aktif</option></select>
+                        </div>
+                    </div>
+                    <div class="form-group-admin" style="margin-bottom:12px;"><label>Açıklama <span style="color:var(--muted);font-weight:400;">(opsiyonel, sorulardan önce gösterilir)</span></label><textarea id="anket-aciklama" placeholder="Anket hakkında kısa bir açıklama..."></textarea></div>
+
+                    <div style="margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <label style="font-size:0.8em;color:var(--muted);font-weight:600;">❓ Sorular</label>
+                        <button type="button" class="btn btn-gri" data-nk-click="anketSoruEkle">➕ Soru Ekle</button>
+                    </div>
+                    <div id="anket-sorular-container"><p style="font-size:0.82em;color:var(--muted);">Henüz soru eklenmedi.</p></div>
+
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <button class="btn btn-mavi" id="anket-submit-btn" data-nk-click="anketKaydet">📊 Anketi Yayınla</button>
+                        <button class="btn btn-gri" id="anket-iptal-btn" data-nk-click="anketDuzenlemeIptal" style="display:none;">✕ Düzenlemeyi İptal Et</button>
+                    </div>
+                    <div id="anket-form-hata" style="margin-top:10px;font-size:0.82em;color:var(--red);"></div>
+                </div>
+                <div class="admin-form">
+                    <h3>ℹ️ Bilgi</h3>
+                    <p style="font-size:0.85em;color:var(--muted);line-height:1.7;">
+                        • Aynı anda yalnızca <strong>bir</strong> anket aktif olabilir; birini aktif ettiğinde diğerleri otomatik pasif olur.<br><br>
+                        • <strong>Çoktan seçmeli</strong> sorularda en az 2 seçenek gerekir. <strong>Yorum yazma</strong> sorularında ziyaretçi serbest metin girer.<br><br>
+                        • <strong>Zorunlu</strong> işaretlenen sorular doldurulmadan anket gönderilemez.<br><br>
+                        • Anket aktif değilken sitede hiçbir iz bırakmaz; aktif ettiğinde sağ altta bir buton olarak belirir.<br><br>
+                        • Bir anketi düzenlersen mevcut sorular yerinde güncellenir, yalnızca sildiğin sorular kaldırılır; böylece o soruya daha önce verilmiş yanıtlar "Yanıtları Gör" ekranında ilişkili kalmaya devam eder.
+                    </p>
+                </div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik"><span>Mevcut Anketler</span><button class="btn btn-gri" data-nk-click="anketleriYukle">↻ Yenile</button></div>
+                <div id="anket-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper" id="anket-yanit-wrapper" style="display:none;">
+                <div class="admin-tablo-baslik"><span id="anket-yanit-baslik">Yanıtlar</span><button class="btn btn-gri" data-nk-click="nkElementGizle" data-nk-click-arg0="anket-yanit-wrapper">✕ Kapat</button></div>
+                <div id="anket-yanit-icerik"></div>
+            </div>
+        </div>
+
+        <!-- FAKÜLTE & BÖLÜM -->
+        <div id="bolum-fakulteler" class="panel-bolum">
+            <div class="bolum-baslik">🏫 Fakülte & Bölüm Yönetimi</div>
+            <div class="bolum-grid">
+                <div>
+                    <div class="admin-form">
+                        <h3>➕ Yeni Fakülte Ekle</h3>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Fakülte Adı</label><input type="text" id="yeni-fakulte-adi" placeholder="Örn: Mühendislik Fakültesi"></div>
+                        <button class="btn btn-mavi" data-nk-click="fakulteEkle">Ekle</button>
+                    </div>
+                    <div class="admin-tablo-wrapper">
+                        <div class="admin-tablo-baslik"><span>Fakülteler</span><button class="btn btn-gri" data-nk-click="fakulteleriYukle">↻ Yenile</button></div>
+                        <div id="fakulte-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="admin-form">
+                        <h3>➕ Yeni Bölüm Ekle</h3>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Fakülte Seç</label><select id="bolum-fakulte-sec"><option value="">-- Fakülte Seçin --</option></select></div>
+                        <div class="form-group-admin" style="margin-bottom:12px;"><label>Bölüm Adı</label><input type="text" id="yeni-bolum-adi" placeholder="Örn: Bilgisayar Mühendisliği"></div>
+                        <button class="btn btn-mavi" data-nk-click="bolumEkle">Ekle</button>
+                    </div>
+                    <div class="admin-tablo-wrapper">
+                        <div class="admin-tablo-baslik">
+                            <span>Bölümler</span>
+                            <div class="btn-grup">
+                                <select class="filtre-select" id="bolum-filtre-fakulte" data-nk-change="bolumleriYukle" style="font-size:0.82em;"><option value="">Tüm Fakülteler</option></select>
+                                <button class="btn btn-gri" data-nk-click="bolumleriYukle">↻ Yenile</button>
+                            </div>
+                        </div>
+                        <div id="bolum-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANO DERS ANALİZİ -->
+        <div id="bolum-anodersler" class="panel-bolum">
+            <div class="bolum-baslik">🎓 ANO Ders Analizi</div>
+            <div class="stat-karti-grid" id="ano-ders-stat-kartlar" style="margin-bottom:20px;">
+                <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
+            </div>
+            <div class="grafik-wrapper" style="margin-bottom:20px;">
+                <div class="grafik-baslik">📊 En Çok Girilen Dersler (Top 15)</div>
+                <canvas id="anoDersChart" height="160"></canvas>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>📋 Son 10 Hesaplama</span>
+                    <div class="btn-grup">
+                        <button class="btn btn-gri" data-nk-click="anoDersAnalizYukle">↻ Yenile</button>
+                    </div>
+                </div>
+                <div id="ano-ders-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- NOT YAKALA (OYUN) İSTATİSTİKLERİ -->
+        <div id="bolum-oyun" class="panel-bolum">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div class="bolum-baslik" style="margin-bottom:0;">🎮 Not Yakala İstatistikleri</div>
+                <button class="btn btn-gri" data-nk-click="oyunIstatistikYukle">↻ Yenile</button>
+            </div>
+            <div class="stat-karti-grid" id="oyun-stat-kartlar" style="margin-bottom:20px;">
+                <div class="stat-karti"><div class="stat-karti-baslik">Yükleniyor...</div></div>
+            </div>
+            <div class="admin-tablo-wrapper">
+                <div class="admin-tablo-baslik">
+                    <span>🏆 En Çok Oynayan Kayıtlı Oyuncular</span>
+                </div>
+                <div id="oyun-oyuncu-tablo-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
+            </div>
+        </div>
+
+        <!-- AYARLAR -->
+        <div id="bolum-ayarlar" class="panel-bolum">
+            <div class="bolum-baslik">⚙️ Ayarlar</div>
+            <div class="admin-form" style="max-width:420px;">
+                <h3>🔑 Şifre Değiştir</h3>
+                <div class="form-group-admin" style="margin-bottom:12px;"><label>Mevcut Şifre</label><input type="password" id="mevcut-sifre" placeholder="Mevcut şifrenizi girin"></div>
+                <div class="form-group-admin" style="margin-bottom:12px;"><label>Yeni Şifre</label><input type="password" id="yeni-sifre" placeholder="Yeni şifre"></div>
+                <div class="form-group-admin" style="margin-bottom:16px;"><label>Yeni Şifre (Tekrar)</label><input type="password" id="yeni-sifre-tekrar" placeholder="Yeni şifre tekrar"></div>
+                <button class="btn btn-mavi" data-nk-click="sifreDegistir">🔑 Şifreyi Güncelle</button>
+                <div id="sifre-mesaj" style="margin-top:10px;font-size:0.85em;"></div>
+            </div>
+            <div class="admin-form" style="max-width:500px;margin-top:20px;">
+                <h3>📥 CSV Export</h3>
+                <p style="font-size:0.82em;color:var(--muted);margin-bottom:14px;">Tabloları CSV olarak indir. Büyük tablolarda birkaç saniye sürebilir.</p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;gap:8px;">
+                        <div><div style="font-weight:600;font-size:0.88em;">Hesaplama Logları</div><div style="font-size:0.78em;color:var(--muted);">hesaplama_loglari — tüm kayıtlar</div></div>
+                        <button class="btn btn-mavi" data-nk-click="csvExport" data-nk-click-arg0="hesaplama_loglari">⬇ İndir</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;gap:8px;">
+                        <div><div style="font-weight:600;font-size:0.88em;">ANO Hesaplama Grupları</div><div style="font-size:0.78em;color:var(--muted);">ano_hesaplama_gruplari — ders adlarıyla birlikte</div></div>
+                        <button class="btn btn-mavi" data-nk-click="csvExportAno">⬇ İndir</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;gap:8px;">
+                        <div><div style="font-weight:600;font-size:0.88em;">Paylaşılan Çan Verileri</div><div style="font-size:0.78em;color:var(--muted);">ders_verileri — tüm kayıtlar</div></div>
+                        <button class="btn btn-mavi" data-nk-click="csvExport" data-nk-click-arg0="ders_verileri">⬇ İndir</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;gap:8px;">
+                        <div><div style="font-weight:600;font-size:0.88em;">Duyurular</div><div style="font-size:0.78em;color:var(--muted);">duyurular tablosu — tüm kayıtlar</div></div>
+                        <button class="btn btn-mavi" data-nk-click="csvExport" data-nk-click-arg0="duyurular">⬇ İndir</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;gap:8px;">
+                        <div><div style="font-weight:600;font-size:0.88em;">Anket Yanıtları</div><div style="font-size:0.78em;color:var(--muted);">anket_yanitlari tablosu — tüm kayıtlar</div></div>
+                        <button class="btn btn-mavi" data-nk-click="csvExport" data-nk-click-arg0="anket_yanitlari">⬇ İndir</button>
+                    </div>
+                </div>
+                <div id="csv-mesaj" style="margin-top:10px;font-size:0.82em;color:var(--muted);"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- DERS DÜZENLEME MODAL -->
+<div class="modal-overlay" id="ders-modal" data-nk-click="modalKapat" data-nk-click-self="true">
+    <div class="modal-kutu">
+        <div class="modal-baslik">✏️ Ders Düzenle</div>
+        <input type="hidden" id="modal-ders-id">
+        <div class="modal-form-grup"><label>Ders Adı</label><input type="text" id="modal-ders-adi"></div>
+        <div class="modal-form-grup"><label>Ders Kodu</label><input type="text" id="modal-ders-kodu" placeholder="Örn: BLM301"></div>
+        <div class="modal-btn-grup">
+            <button class="btn btn-gri" data-nk-click="modalKapat">İptal</button>
+            <button class="btn btn-mavi" data-nk-click="dersiKaydet">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<!-- NOT KUTUSU DERSİ DÜZENLEME MODAL -->
+<div class="modal-overlay" id="nk-ders-modal" data-nk-click="nkAdminDersModalKapat" data-nk-click-self="true">
+    <div class="modal-kutu">
+        <div class="modal-baslik">✏️ Not Kutusu Dersi Düzenle</div>
+        <input type="hidden" id="nk-modal-ders-id">
+        <div class="modal-form-grup"><label>Ders Adı</label><input type="text" id="nk-modal-ders-adi"></div>
+        <div class="modal-form-grup"><label>Ders Kodu</label><input type="text" id="nk-modal-ders-kodu" placeholder="Örn: BLM301"></div>
+        <div class="modal-btn-grup">
+            <button class="btn btn-gri" data-nk-click="nkAdminDersModalKapat">İptal</button>
+            <button class="btn btn-mavi" data-nk-click="nkAdminDersiKaydet">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<!-- SORU MODERASYON MODAL -->
+<div class="modal-overlay" id="moderasyon-modal" data-nk-click="moderasyonModalKapat" data-nk-click-self="true">
+    <div class="modal-kutu" role="dialog" aria-modal="true" aria-labelledby="moderasyon-modal-baslik">
+        <div class="modal-baslik" id="moderasyon-modal-baslik">Soru Reddetme Gerekçesi</div>
+        <input type="hidden" id="moderasyon-soru-id">
+        <div class="modal-form-grup"><label for="moderasyon-neden">Gerekçe</label><select id="moderasyon-neden">
+            <option value="okunmuyor">Okunmuyor</option><option value="yanlis_ders">Yanlış ders</option>
+            <option value="yanlis_bilgi">Yanlış bilgi</option><option value="tekrar">Tekrar içerik</option>
+            <option value="telif">Telif hakkı</option><option value="kisisel_veri">Kişisel veri</option>
+            <option value="spam">Spam</option><option value="diger">Diğer</option>
+        </select></div>
+        <div class="modal-form-grup"><label for="moderasyon-not">Açıklama</label><textarea id="moderasyon-not" maxlength="1000" rows="4" placeholder="Kullanıcının görebileceği kısa açıklama"></textarea></div>
+        <div class="modal-btn-grup"><button class="btn btn-gri" data-nk-click="moderasyonModalKapat">İptal</button><button class="btn btn-kirmizi" data-nk-click="soruModerasyonKaydet">Reddet</button></div>
+    </div>
+</div>
+
+<!-- DERS BİRLEŞTİRME MODAL -->
+<div class="modal-overlay" id="nk-ders-birlestir-modal" data-nk-click="nkAdminDersBirlestirKapat" data-nk-click-self="true">
+    <div class="modal-kutu" role="dialog" aria-modal="true" aria-labelledby="nk-birlestir-baslik">
+        <div class="modal-baslik" id="nk-birlestir-baslik">Dersleri Birleştir</div>
+        <input type="hidden" id="nk-birlestir-kaynak-id">
+        <p>Kaynak: <strong id="nk-birlestir-kaynak"></strong></p>
+        <div class="modal-form-grup"><label for="nk-birlestir-hedef">Hedef ders</label><select id="nk-birlestir-hedef"></select></div>
+        <div class="modal-form-grup"><label for="nk-birlestir-neden">Gerekçe</label><select id="nk-birlestir-neden"><option value="tekrar">Tekrar ders</option><option value="yanlis_ders">Yanlış ders kaydı</option><option value="diger">Diğer</option></select></div>
+        <div class="modal-form-grup"><label for="nk-birlestir-not">Not</label><textarea id="nk-birlestir-not" maxlength="1000" rows="3"></textarea></div>
+        <p class="modal-uyari">Kaynak dersteki sorular hedefe taşınır ve kaynak ders silinir.</p>
+        <div class="modal-btn-grup"><button class="btn btn-gri" data-nk-click="nkAdminDersBirlestirKapat">İptal</button><button class="btn btn-mavi" data-nk-click="nkAdminDersBirlestirKaydet">Birleştir</button></div>
+    </div>
+</div>
+
+<!-- MODERASYON GEÇMİŞİ MODAL -->
+<div class="modal-overlay" id="moderasyon-gecmis-modal" data-nk-click="moderasyonGecmisiKapat" data-nk-click-self="true">
+    <div class="modal-kutu modal-kutu-genis" role="dialog" aria-modal="true" aria-labelledby="moderasyon-gecmis-baslik">
+        <div class="modal-baslik" id="moderasyon-gecmis-baslik">Moderasyon Geçmişi</div>
+        <div id="moderasyon-gecmis-icerik"></div>
+        <div class="modal-btn-grup"><button class="btn btn-gri" data-nk-click="moderasyonGecmisiKapat">Kapat</button></div>
+    </div>
+</div>
+
+<script src="admin-panel.js"></script>
+    <script src="modal-accessibility.js" defer></script>
+    <script src="event-bindings.js" defer></script>
+</body>
+</html>
+

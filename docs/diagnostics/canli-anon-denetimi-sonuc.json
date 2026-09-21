@@ -1,0 +1,213 @@
+{
+  "zaman": "2026-09-21T13:38:01.555Z",
+  "hedef": "tsfscfgwbmiouptsljyi.supabase.co",
+  "not": "Satır gövdeleri ve anahtar kaydedilmedi. authenticated/service_role denetimi değildir.",
+  "results": [
+    {
+      "tur": "tablo",
+      "ad": "sorular",
+      "beklenti": "private",
+      "durum": 200,
+      "toplam": 0,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "nk_dosyalar",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "nk_dosya_ayarlari",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "kullanici_profilleri",
+      "beklenti": "private",
+      "durum": 200,
+      "toplam": 0,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "anket_yanitlari",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "hesaplama_loglari",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "sayfa_goruntuleme",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "ano_ders_loglari",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "ano_hesaplama_gruplari",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "kayitli_donemler",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "katki_sahipligi",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "duzeltme_talepleri",
+      "beklenti": "private",
+      "durum": 401,
+      "toplam": null,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "fakulteler",
+      "beklenti": "public-read",
+      "durum": 206,
+      "toplam": 12,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "bolumler",
+      "beklenti": "public-read",
+      "durum": 206,
+      "toplam": 64,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "dersler",
+      "beklenti": "public-read",
+      "durum": 206,
+      "toplam": 72,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "nk_dersler",
+      "beklenti": "public-read",
+      "durum": 200,
+      "toplam": 0,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "ders_verileri",
+      "beklenti": "public-read",
+      "durum": 206,
+      "toplam": 110,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "duyurular",
+      "beklenti": "public-read",
+      "durum": 200,
+      "toplam": 1,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "anketler",
+      "beklenti": "public-read",
+      "durum": 200,
+      "toplam": 1,
+      "basarili": true
+    },
+    {
+      "tur": "tablo",
+      "ad": "anket_sorulari",
+      "beklenti": "public-read",
+      "durum": 206,
+      "toplam": 2,
+      "basarili": true
+    },
+    {
+      "tur": "rpc",
+      "ad": "nk_dosya_islem",
+      "beklenti": "anon reddedilmeli",
+      "durum": 401,
+      "hata_kodu": null,
+      "yetkisiz_yaniti": true,
+      "basarili": true
+    },
+    {
+      "tur": "rpc",
+      "ad": "admin_soru_listele",
+      "beklenti": "anon reddedilmeli",
+      "durum": 400,
+      "hata_kodu": "P0001",
+      "yetkisiz_yaniti": true,
+      "basarili": true
+    },
+    {
+      "tur": "rpc",
+      "ad": "admin_nk_dersler_listele",
+      "beklenti": "anon reddedilmeli",
+      "durum": 400,
+      "hata_kodu": "P0001",
+      "yetkisiz_yaniti": true,
+      "basarili": true
+    },
+    {
+      "tur": "rpc",
+      "ad": "admin_isletim_ozeti",
+      "beklenti": "anon reddedilmeli",
+      "durum": 400,
+      "hata_kodu": "P0001",
+      "yetkisiz_yaniti": true,
+      "basarili": true
+    },
+    {
+      "tur": "rpc",
+      "ad": "admin_duzeltme_talepleri_listele",
+      "beklenti": "anon reddedilmeli",
+      "durum": 400,
+      "hata_kodu": "P0001",
+      "yetkisiz_yaniti": true,
+      "basarili": true
+    }
+  ],
+  "basarili": true
+}

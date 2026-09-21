@@ -1,0 +1,22 @@
+name = "not-kutusu"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# R2 bucket bağlantısı. Bucket'ı henüz oluşturmadıysanız önce şunu çalıştırın:
+#   wrangler r2 bucket create not-kutusu-elementleri
+[[r2_buckets]]
+binding = "NK_ELEMENT_BUCKET"
+bucket_name = "not-kutusu-elementleri"
+
+[vars]
+SUPABASE_URL = "https://tsfscfgwbmiouptsljyi.supabase.co"
+
+# SUPABASE_JWT_SECRET buraya YAZILMAZ — güvenlik için "wrangler secret put
+# SUPABASE_JWT_SECRET" komutuyla ayrıca eklenir (docs/DOSYA_YASAM_DONGUSU.md kurulum
+# notlarına bakın).
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Worker-only secret: wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# Legacy Supabase service_role API anahtarı. Tarayıcıya veya vars'a yazılmaz.

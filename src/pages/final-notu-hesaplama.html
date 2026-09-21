@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme-boot.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>KTÜ Final Notu Hesaplama - Gerekli Final Notu Aracı</title>
+    <meta name="description" content="KTÜ öğrencileri için, hedeflediğiniz harf notunu almak üzere final sınavından kaç almanız gerektiğini hesaplayan ücretsiz araç. Vize notunuzu girin, hedefinizi seçin, gereken final puanını anında öğrenin.">
+    <meta name="keywords" content="KTÜ, Karadeniz Teknik Üniversitesi, not hesaplama, harf notu, bağıl değerlendirme, çan eğrisi, final notu, geçme notu, not simülatörü, ktü not sistemi">
+
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://www.ktunotsimulatoru.com/final-notu-hesaplama.html">
+    <meta property="og:url" content="https://www.ktunotsimulatoru.com/final-notu-hesaplama.html">
+    <meta property="og:title" content="KTÜ Final Notu Hesaplama - Gerekli Final Notu Aracı">
+    <meta property="og:description" content="KTÜ öğrencileri için, hedeflediğiniz harf notunu almak üzere final sınavından kaç almanız gerektiğini hesaplayan ücretsiz araç. Vize notunuzu girin, hedefinizi seçin, gereken final puanını anında öğrenin.">
+    <meta property="og:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KTÜ Final Notu Hesaplama - Gerekli Final Notu Aracı">
+    <meta name="twitter:description" content="KTÜ öğrencileri için, hedeflediğiniz harf notunu almak üzere final sınavından kaç almanız gerektiğini hesaplayan ücretsiz araç. Vize notunuzu girin, hedefinizi seçin, gereken final puanını anında öğrenin.">
+    <meta name="twitter:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+
+    <link rel="stylesheet" href="style.min.css">
+    
+    <script src="vendor-chart.js" defer></script>
+    <script src="vendor-supabase.js" defer></script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="Turkish">
+    <meta name="author" content="Mustafa Taş">
+    <meta http-equiv=Content-Language content=tr>
+    <meta name=theme-color content="#006FEE">
+    <meta name=msapplication-navbutton-color content="#006FEE">
+    <meta name=apple-mobile-web-app-capable content=yes>
+    <meta name=apple-mobile-web-app-status-bar-style content="#006FEE">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "KTÜ Not Simülatörü",
+        "url": "https://www.ktunotsimulatoru.com/final-notu-hesaplama.html",
+        "description": "Karadeniz Teknik Üniversitesi (KTÜ) öğrencileri için Bağıl Değerlendirme Sistemine göre harf notu, gerekli final notu ve geçme senaryolarını hesaplayan ücretsiz not simülatörü.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any (Web Browser)",
+        "inLanguage": "tr",
+        "isAccessibleForFree": true,
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "TRY"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Mustafa Taş"
+        }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "KTÜ Bağıl Değerlendirme Sistemi (BDS) nedir?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "KTÜ'de derslerin büyük bölümünde notlar, sınıfın genel başarı düzeyine göre harf notuna çevrilen bağıl (göreceli) bir sistemle değerlendirilir. Sınava giren öğrenci sayısına göre T-Skoru ya da yüzdelik dilim yöntemlerinden biri uygulanır; bazı derslerde (seminer, bitirme çalışması, mezuniyet sınavı gibi) ise doğrudan mutlak puan aralıkları geçerlidir."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "KTÜ'de harf notu nasıl hesaplanır?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Sınava giren ve değerlendirmeye dahil edilen öğrenci sayısı 30 ve üzeri olan derslerde, sınıfın ortalaması ve standart sapmasına göre bir T-Skoru hesaplanıp harf notuna çevrilir. 29 ve altı öğrencili derslerde ise notlar sıralanıp önceden belirlenmiş yüzdelik dilimlere göre paylaştırılır."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Final sınavından kaç almam gerekiyor?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yarıyıl içi notunuz ne olursa olsun, bir dersten başarılı sayılabilmeniz için final (veya bütünleme) sınavından 100 üzerinden en az 45 almanız şarttır. Bu taban, Sağlık Bilimleri Fakültesi'nde 50, Eczacılık Fakültesi'nde 60'tır. Bu tabanı geçtikten sonra, hedeflediğiniz belirli bir harf notuna ulaşmak için gereken tam puan ise vize notunuza, dersin vize/final ağırlığına ve sınıfın bağıl değerlendirme sonucuna göre değişir. KTÜ Not Simülatörü'ndeki Gerekli Final Notu Hesaplama aracına kendi notlarınızı ve hedefinizi girerek bu hesaplamayı anında yapabilirsiniz."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Bağıl değerlendirmeye kimler katılır?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Dersten devamsız olmayan, final sınavına giren ve ham başarı notu 15'in üzerinde olan öğrenciler, o dersin sınıf çan ortalaması ve standart sapması hesabına dahil edilir ve bağıl değerlendirmeye katılan öğrenciler olarak kabul edilir."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "AGNO / ANO (not ortalaması) nasıl hesaplanır?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Dönemlik ağırlıklı not ortalaması (ANO), o dönem alınan derslerin kredileri ile harf notu katsayılarının ağırlıklı ortalaması alınarak hesaplanır; KTÜ Senatosu Usul ve Esasları Madde 11'e göre yapılır."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "KTÜ Not Simülatörü ücretsiz mi, üyelik gerekiyor mu?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Evet, bütün hesaplama araçları girişsiz ve ücretsiz kullanılabilir. İsteğe bağlı KTÜ öğrenci hesabı; AGNO dönem planlarını kaydetmek, Not Kutusu dosyalarına erişmek ve Not Yakala liderlik tablosuna katılmak için kullanılır."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Yeni yönetmelikle eski yönetmelik arasında ne değişti?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "KTÜ Senatosu 24.03.2026'da eski yönetmeliği (2012'den beri yürürlükteydi) kaldırıp yenisini kabul etti; yeni sistem 2026-2027 eğitim öğretim yılından itibaren geçerli. En önemli iki değişiklik: 1) HBN 30'un altındaysa doğrudan FF: final barajını (45) geçsen bile, ham başarı notun (HBN, vize ve final notlarının ağırlıklı ortalaması) 30'un altındaysa FF alırsın, çan eğrisi seni kurtarmaz. Örnek: vize %50-final %50 ağırlıklı bir derste vizeden 14, finalden 45 alırsan HBN = (14+45)/2 = 29.5 olur ve dersten FF alırsın. Eski yönetmelikte böyle kesin bir taban yoktu. 2) Bütünlemede ayrı çan yok, finalin çanı kullanılıyor: bütünlemeye girenler artık kendi aralarında yeni bir ortalama/çan oluşturmuyor; notlar, finale giren herkesin oluşturduğu çandaki harf notu aralıklarına göre değerlendiriliyor (istisna: final sonucunda hiç aralık oluşmadıysa bütünleme için ayrı hesaplama yapılır). Diğer değişiklikler: 3) Eskiden 1-10 öğrencili derslerde doğrudan mutlak sistem uygulanırken artık 1-29 öğrencili tüm derslerde yüzdelik dilim yöntemi kullanılıyor. 4) Mutlak sistemdeki puan aralıkları öğrenci lehine güncellendi (AA için eskiden en az 90 gerekirken şimdi 86 yeterli, CC aralığı eskiden 60-69 iken şimdi 50-59). 5) Seminer, bitirme çalışması gibi derslerde en az 50 (CC) alınması şartı var; bu genel ders geçme notu değildir, sadece bu tür derslere özgü bir kuraldır. 6) Süren Çalışma (S) notu artık not ortalamasına dahil ediliyor. Final/bütünlemeden alınması gereken en az puan (45, Sağlık Bilimleri'nde 50, Eczacılık'ta 60) değişmedi."
+                }
+            }
+        ]
+    }
+    </script>
+    <script src="dosya-guvenligi.js"></script>
+    <script src="dosya-erisim.js" defer></script>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1 class="header-logo">
+                    <a href="index.html" aria-label="Ana sayfa">
+                        <img class="logo-light" src="logo.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                        <img class="logo-dark" src="logo-dark.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                    </a>
+                </h1>
+                <p>Bağıl Değerlendirme Sistemi Not Hesaplama Aracı</p>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir">
+                    <span class="icon-moon">🌙</span>
+                    <span class="icon-sun">☀️</span>
+                    <span class="toggle-label">Karanlık</span>
+                </button>
+                <button class="hesap-buton hb-cikis-yapilmis" id="hesapButonu" data-nk-click="hesapButonTiklandi" data-nk-click-arg0="@event" aria-label="Hesabım">
+                    <span class="hesap-buton-ikon">🔑</span>
+                    <span class="hesap-buton-metin">Giriş Yap</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Duyurular artık tamamen admin panelinden yönetiliyor (Supabase 'duyurular' tablosu) -->
+    <div id="dinamik-duyurular-wrapper"></div>
+
+    {{> calculators active=gerekliNot}}{{> calculator-tail}}

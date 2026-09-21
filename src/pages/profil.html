@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme-boot.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>Profilim - KTÜ Not Simülatörü</title>
+    <meta name="description" content="KTÜ Not Simülatörü hesabınızı, kullanıcı adınızı ve paylaşımlarınızı yönetin.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://www.ktunotsimulatoru.com/profil.html">
+    <meta name="theme-color" content="#006FEE">
+    <link rel="stylesheet" href="style.min.css">
+    <script src="vendor-chart.js" defer></script>
+    <script src="vendor-supabase.js" defer></script>
+    <script src="dosya-guvenligi.js"></script>
+    <script src="dosya-erisim.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="geri-don-btn" href="index.html" aria-label="Ana sayfaya dön">← <span>Ana sayfa</span></a>
+            <div class="header-text">
+                <h1 class="header-logo"><a href="index.html" aria-label="Ana sayfa"><img class="logo-light" src="logo.png" alt="KTÜ Not Simülatörü" width="252" height="80"><img class="logo-dark" src="logo-dark.png" alt="KTÜ Not Simülatörü" width="252" height="80"></a></h1>
+                <p>Hesap ve paylaşım merkezi</p>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir"><span class="icon-moon">🌙</span><span class="icon-sun">☀️</span><span class="toggle-label">Karanlık</span></button>
+                <button class="hesap-buton hb-cikis-yapilmis" id="hesapButonu" data-nk-click="hesapButonTiklandi" data-nk-click-arg0="@event" aria-label="Hesabım"><span class="hesap-buton-ikon">🔑</span><span class="hesap-buton-metin">Giriş Yap</span></button>
+            </div>
+        </div>
+    </header>
+
+    <div id="dinamik-duyurular-wrapper"></div>
+
+    <main id="hs-profil-sayfa" class="profil-sayfa">
+        <div id="hs-profil-yukleniyor" class="profil-durum-karti"><span class="profil-durum-ikon">•••</span><h1>Profil yükleniyor</h1><p>Hesap bilgilerin kontrol ediliyor.</p></div>
+
+        <section id="hs-profil-giris-gerekli" class="profil-durum-karti" hidden>
+            <span class="profil-durum-ikon">👤</span>
+            <h1>Profilini görüntülemek için giriş yap</h1>
+            <p>KTÜ öğrenci hesabınla giriş yaptığında kullanıcı adını, AGNO kayıtlarını ve paylaştığın içerikleri buradan yönetebilirsin.</p>
+            <button type="button" class="profil-birincil-buton" data-nk-click="hsGirisModalAc">Giriş yap / Kayıt ol</button>
+        </section>
+
+        <div id="hs-profil-icerik" hidden>
+            <section class="profil-hero">
+                <span class="hs-profil-avatar" id="hs-profil-avatar" aria-hidden="true">K</span>
+                <div class="profil-hero-metin"><span class="hs-profil-dogrulama">Doğrulanmış KTÜ öğrencisi</span><h1 id="hs-profil-kullanici-adi">Profilim</h1><p id="hs-profil-eposta"></p></div>
+                <button type="button" class="profil-cikis-buton" data-nk-click="hesapCikisYap">Çıkış yap</button>
+            </section>
+
+            <div class="profil-yerlesim">
+                <nav class="profil-nav" id="hs-profil-tab-bar" aria-label="Profil bölümleri">
+                    <button type="button" class="nk-tab-btn active" data-nk-click="hsProfilSekmeGoster" data-nk-click-arg0="genel"><span>Kullanıcı adı</span><small>Herkese açık kimliğin</small></button>
+                    <button type="button" class="nk-tab-btn" data-nk-click="hsProfilSekmeGoster" data-nk-click-arg0="agno"><span>AGNO kayıtlarım</span><small>Kaydettiğin dönemler</small></button>
+                    <button type="button" class="nk-tab-btn" data-nk-click="hsProfilSekmeGoster" data-nk-click-arg0="cikmislar"><span>Çıkmışlarım</span><small>Paylaştığın sorular</small></button>
+                    <button type="button" class="nk-tab-btn" data-nk-click="hsProfilSekmeGoster" data-nk-click-arg0="katkilar"><span>Katkılarım</span><small>Dersler ve veriler</small></button>
+                </nav>
+
+                <section class="profil-panel">
+                    <div id="hs-profil-genel" class="nk-tab-content active">
+                        <div class="profil-panel-baslik"><span>Profil bilgisi</span><h2>Kullanıcı adın</h2><p>Bu ad Not Yakala liderlik tablosunda görünür ve ileride hesabına bağlı topluluk özelliklerinde kullanılabilir. E-posta adresin herkese gösterilmez.</p></div>
+                        <form id="hs-kullanici-adi-form" class="profil-form" novalidate>
+                            <div class="form-group"><label for="hs-kullanici-adi">Kullanıcı adı</label><input type="text" id="hs-kullanici-adi" minlength="3" maxlength="20" autocomplete="username" placeholder="ornek_kullanici" aria-describedby="hs-kullanici-adi-yardim"><small id="hs-kullanici-adi-yardim">3-20 karakter; harf, rakam ve alt çizgi kullanabilirsin.</small></div>
+                            <button type="submit" class="profil-birincil-buton">Değişiklikleri kaydet</button>
+                        </form>
+                        <div id="hs-kullanici-adi-sonuc" class="result-box" role="status" aria-live="polite" style="display:none"></div>
+                    </div>
+
+                    <div id="hs-profil-agno" class="nk-tab-content"><div class="profil-panel-baslik"><span>Hesaplamalarım</span><h2>Kaydettiğim AGNO dönemleri</h2><p>Kaydettiğin bir dönemi AGNO hesaplayıcıda açabilir, güncelleyebilir veya silebilirsin.</p></div><div id="hs-agno-listesi"><p class="veri-yukle">Yükleniyor...</p></div></div>
+                    <div id="hs-profil-cikmislar" class="nk-tab-content"><div class="profil-panel-baslik"><span>İçeriklerim</span><h2>Paylaştığım çıkmış sorular</h2><p>Gönderdiğin soruların moderasyon durumunu ve eklerini buradan takip edebilirsin.</p></div><div id="hs-cikmislar-listesi"><p class="veri-yukle">Yükleniyor...</p></div></div>
+                    <div id="hs-profil-katkilar" class="nk-tab-content">
+                        <div class="profil-panel-baslik"><span>Katkılarım</span><h2>Dersler ve ders verileri</h2><p>Eklediğin dersleri ve paylaştığın çan verilerini görebilir, yanlış bilgi için moderasyona düzeltme talebi gönderebilirsin.</p></div>
+                        <h3 class="profil-alt-baslik">Eklediğim dersler</h3><div id="hs-dersler-listesi"><p class="veri-yukle">Yükleniyor...</p></div>
+                        <h3 class="profil-alt-baslik">Paylaştığım ders verileri</h3><div id="hs-ders-verileri-listesi"><p class="veri-yukle">Yükleniyor...</p></div>
+                        <h3 class="profil-alt-baslik">Düzeltme taleplerim</h3><div id="hs-duzeltme-talepleri-listesi"><p class="veri-yukle">Yükleniyor...</p></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="hs-duzeltme-modal" data-nk-click="hsDuzeltmeModalKapat" data-nk-click-self="true">
+        <div class="modal-kutu" role="dialog" aria-modal="true" aria-labelledby="hs-duzeltme-baslik">
+            <div class="modal-baslik"><span id="hs-duzeltme-baslik">Düzeltme talebi</span><button type="button" class="modal-kapat-btn" data-nk-click="hsDuzeltmeModalKapat" aria-label="Kapat">✕</button></div>
+            <form id="hs-duzeltme-form" class="profil-form" novalidate>
+                <div id="hs-duzeltme-alanlari"></div>
+                <div class="form-group"><label for="hs-duzeltme-aciklama">Düzeltme gerekçesi</label><textarea id="hs-duzeltme-aciklama" minlength="5" maxlength="500" rows="3" required placeholder="Hangi bilginin neden değişmesi gerektiğini açıkla."></textarea></div>
+                <div id="hs-duzeltme-sonuc" class="result-box" role="status" aria-live="polite" style="display:none"></div>
+                <button type="submit" class="profil-birincil-buton">Moderasyona gönder</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="anketModal" data-nk-click="anketModalKapat" data-nk-click-arg0="@event"><div class="modal-kutu"><div class="modal-baslik"><span id="anket-modal-baslik">Anket</span><button class="modal-kapat-btn" data-nk-click="anketModalKapat" data-nk-click-arg0="@null">✕</button></div><div class="modal-icerik" id="anket-modal-icerik"></div></div></div>
+    <div id="anket-pill-wrapper"></div>
+
+    <footer><div class="footer-logo"><img class="logo-light" src="footer-logo.png" alt="KTÜ Not Simülatörü" width="150" height="50"><img class="logo-dark" src="footer-logo-dark.png" alt="KTÜ Not Simülatörü" width="150" height="50"></div><div class="footer-ayrac"></div><p>Bu site gönüllü bir oluşumdur ve Karadeniz Teknik Üniversitesi veya başka bir resmi kurumla doğrudan bağlantısı yoktur.</p><p><a href="gizlilik-politikasi.html">Gizlilik Politikası ve KVKK Aydınlatma Metni</a></p><p>&copy; <span id="telif-yili">2025</span> KTÜ Not Simülatörü by Mustafa Taş</p></footer>
+
+    <script src="script.min.js" defer></script>
+    <script src="modal-accessibility.js" defer></script>
+    <script src="event-bindings.js" defer></script>
+</body>
+</html>

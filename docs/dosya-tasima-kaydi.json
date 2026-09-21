@@ -1,0 +1,202 @@
+[
+  {
+    "Source": "apple-touch-icon.png",
+    "Target": "public/apple-touch-icon.png"
+  },
+  {
+    "Source": "CNAME",
+    "Target": "public/CNAME"
+  },
+  {
+    "Source": "donem-ortalamasi-hesaplama.html",
+    "Target": "src/pages/donem-ortalamasi-hesaplama.html"
+  },
+  {
+    "Source": "dosya-guvenligi.js",
+    "Target": "src/scripts/dosya-guvenligi.js"
+  },
+  {
+    "Source": "favicon-512.png",
+    "Target": "public/favicon-512.png"
+  },
+  {
+    "Source": "favicon.ico",
+    "Target": "public/favicon.ico"
+  },
+  {
+    "Source": "final-notu-hesaplama.html",
+    "Target": "src/pages/final-notu-hesaplama.html"
+  },
+  {
+    "Source": "footer-logo-dark.png",
+    "Target": "public/footer-logo-dark.png"
+  },
+  {
+    "Source": "footer-logo.png",
+    "Target": "public/footer-logo.png"
+  },
+  {
+    "Source": "gecme-senaryolari-hesaplama.html",
+    "Target": "src/pages/gecme-senaryolari-hesaplama.html"
+  },
+  {
+    "Source": "gizlilik-politikasi.html",
+    "Target": "src/pages/gizlilik-politikasi.html"
+  },
+  {
+    "Source": "googleab0962dbcff887c4.html",
+    "Target": "public/googleab0962dbcff887c4.html"
+  },
+  {
+    "Source": "harf-notu-hesaplama.html",
+    "Target": "src/pages/harf-notu-hesaplama.html"
+  },
+  {
+    "Source": "index.html",
+    "Target": "src/pages/index.html"
+  },
+  {
+    "Source": "ktulogo-dark.png",
+    "Target": "public/ktulogo-dark.png"
+  },
+  {
+    "Source": "ktulogo.png",
+    "Target": "public/ktulogo.png"
+  },
+  {
+    "Source": "KTÜ Eski Not Sistemi.pdf",
+    "Target": "docs/reference/KTÜ Eski Not Sistemi.pdf"
+  },
+  {
+    "Source": "KTÜ Yeni Not Sistemi.pdf",
+    "Target": "docs/reference/KTÜ Yeni Not Sistemi.pdf"
+  },
+  {
+    "Source": "logo-dark.png",
+    "Target": "public/logo-dark.png"
+  },
+  {
+    "Source": "logo-not-hesaplama-dark.png",
+    "Target": "public/logo-not-hesaplama-dark.png"
+  },
+  {
+    "Source": "logo-not-hesaplama.png",
+    "Target": "public/logo-not-hesaplama.png"
+  },
+  {
+    "Source": "logo-not-kutusu-dark.png",
+    "Target": "public/logo-not-kutusu-dark.png"
+  },
+  {
+    "Source": "logo-not-kutusu.png",
+    "Target": "public/logo-not-kutusu.png"
+  },
+  {
+    "Source": "logo.png",
+    "Target": "public/logo.png"
+  },
+  {
+    "Source": "not-kutusu.html",
+    "Target": "src/pages/not-kutusu.html"
+  },
+  {
+    "Source": "not-kutusu.js",
+    "Target": "src/scripts/not-kutusu.js"
+  },
+  {
+    "Source": "og-image.png",
+    "Target": "public/og-image.png"
+  },
+  {
+    "Source": "panel-mtas-7f5t.html",
+    "Target": "src/pages/panel-mtas-7f5t.html"
+  },
+  {
+    "Source": "PROJE_INCELEME_NOTLARI.md",
+    "Target": "docs/PROJE_INCELEME_NOTLARI.md"
+  },
+  {
+    "Source": "robots.txt",
+    "Target": "public/robots.txt"
+  },
+  {
+    "Source": "script.js",
+    "Target": "src/scripts/script.js"
+  },
+  {
+    "Source": "sitemap.xml",
+    "Target": "public/sitemap.xml"
+  },
+  {
+    "Source": "style.css",
+    "Target": "src/styles/style.css"
+  },
+  {
+    "Source": "fonts",
+    "Target": "public/fonts"
+  },
+  {
+    "Source": "Claude outputs/cloudflare-worker",
+    "Target": "worker"
+  },
+  {
+    "Source": "Claude outputs/supabase-birlesik-profil-oyun.sql",
+    "Target": "docs/archive/sql/supabase-birlesik-profil-oyun.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-email-sablonlari.md",
+    "Target": "docs/supabase-email-sablonlari.md"
+  },
+  {
+    "Source": "Claude outputs/supabase-not-kutusu-admin-rpc.sql",
+    "Target": "docs/archive/sql/supabase-not-kutusu-admin-rpc.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-not-kutusu-klasor-sistemi.sql",
+    "Target": "docs/archive/sql/supabase-not-kutusu-klasor-sistemi.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-not-kutusu-kurulum.sql",
+    "Target": "docs/archive/sql/supabase-not-kutusu-kurulum.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-not-yakala-kurulum.sql",
+    "Target": "docs/archive/sql/supabase-not-yakala-kurulum.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-ny-admin-istatistik-guncelle.sql",
+    "Target": "docs/archive/sql/supabase-ny-admin-istatistik-guncelle.sql"
+  },
+  {
+    "Source": "Claude outputs/supabase-soru-fotograflari.sql",
+    "Target": "docs/archive/sql/supabase-soru-fotograflari.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-admin-token-dogrulama.sql",
+    "Target": "docs/diagnostics/tani-admin-token-dogrulama.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-change-admin-password.sql",
+    "Target": "docs/diagnostics/tani-change-admin-password.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-gunah-duvari-ny-oyun-loglari.sql",
+    "Target": "docs/diagnostics/tani-gunah-duvari-ny-oyun-loglari.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-istatistik-ozet.sql",
+    "Target": "docs/diagnostics/tani-istatistik-ozet.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-ny-admin-istatistik-tanimi.sql",
+    "Target": "docs/diagnostics/tani-ny-admin-istatistik-tanimi.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-ny-oyun-loglari-kaynak.sql",
+    "Target": "docs/diagnostics/tani-ny-oyun-loglari-kaynak.sql"
+  },
+  {
+    "Source": "Claude outputs/tani-security-type-kontrol.sql",
+    "Target": "docs/diagnostics/tani-security-type-kontrol.sql"
+  }
+]

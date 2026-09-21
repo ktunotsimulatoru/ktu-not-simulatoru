@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme-boot.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+    <!-- Not Hesaplama ve Not Kutusu sayfalarını arka planda önceden getir (prefetch).
+         Bu SADECE HTML belgesini indirip tarayıcı önbelleğine koyar; sayfadaki
+         script'leri ÇALIŞTIRMAZ. Bu yüzden nk_dersler/sorular gibi hiçbir veri
+         sorgusu (ör. bir dersin soru listesi) tetiklenmez — sadece kullanıcı
+         karta tıkladığında sayfa "yeniden yükleniyormuş" hissi vermesin diye. -->
+    <link rel="prefetch" href="harf-notu-hesaplama.html" as="document">
+    <link rel="prefetch" href="not-kutusu.html" as="document">
+
+    <title>KTÜ Not Simülatörü — Not Hesaplama ve Not Kutusu</title>
+    <meta name="description" content="KTÜ öğrencileri için ücretsiz not hesaplama araçları (harf notu, gerekli final, geçme senaryoları, ANO) ve öğrencilerin paylaştığı çıkmış sorular. Not Hesaplama ve Not Kutusu'ndan birini seçerek başla.">
+    <meta name="keywords" content="KTÜ, Karadeniz Teknik Üniversitesi, not hesaplama, harf notu, bağıl değerlendirme, çan eğrisi, final notu, geçme notu, not simülatörü, ktü not sistemi, çıkmış sorular, not kutusu">
+
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://www.ktunotsimulatoru.com/">
+    <meta property="og:url" content="https://www.ktunotsimulatoru.com/">
+    <meta property="og:title" content="KTÜ Not Simülatörü — Not Hesaplama ve Not Kutusu">
+    <meta property="og:description" content="KTÜ öğrencileri için ücretsiz not hesaplama araçları ve öğrencilerin paylaştığı çıkmış sorular. Not Hesaplama ve Not Kutusu'ndan birini seç.">
+    <meta property="og:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KTÜ Not Simülatörü — Not Hesaplama ve Not Kutusu">
+    <meta name="twitter:description" content="KTÜ öğrencileri için ücretsiz not hesaplama araçları ve öğrencilerin paylaştığı çıkmış sorular.">
+    <meta name="twitter:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+
+    <link rel="stylesheet" href="style.min.css">
+    
+    <script src="vendor-chart.js" defer></script>
+    <script src="vendor-supabase.js" defer></script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="Turkish">
+    <meta name="author" content="Mustafa Taş">
+    <meta http-equiv=Content-Language content=tr>
+    <meta name=theme-color content="#006FEE">
+    <meta name=msapplication-navbutton-color content="#006FEE">
+    <meta name=apple-mobile-web-app-capable content=yes>
+    <meta name=apple-mobile-web-app-status-bar-style content="#006FEE">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "KTÜ Not Simülatörü",
+        "url": "https://www.ktunotsimulatoru.com/",
+        "description": "KTÜ öğrencileri için ücretsiz not hesaplama araçları ve öğrencilerin paylaştığı çıkmış sorular.",
+        "inLanguage": "tr",
+        "isAccessibleForFree": true,
+        "author": {
+            "@type": "Person",
+            "name": "Mustafa Taş"
+        }
+    }
+    </script>
+    <script src="dosya-guvenligi.js"></script>
+    <script src="dosya-erisim.js" defer></script>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1 class="header-logo">
+                    <img class="logo-light" src="logo.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                    <img class="logo-dark" src="logo-dark.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                </h1>
+                <p>Bağıl Değerlendirme Sistemi Not Hesaplama Aracı</p>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir">
+                    <span class="icon-moon">🌙</span>
+                    <span class="icon-sun">☀️</span>
+                    <span class="toggle-label">Karanlık</span>
+                </button>
+                <button class="hesap-buton hb-cikis-yapilmis" id="hesapButonu" data-nk-click="hesapButonTiklandi" data-nk-click-arg0="@event" aria-label="Hesabım">
+                    <span class="hesap-buton-ikon">🔑</span>
+                    <span class="hesap-buton-metin">Giriş Yap</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Duyurular artık tamamen admin panelinden yönetiliyor (Supabase 'duyurular' tablosu) -->
+    <div id="dinamik-duyurular-wrapper"></div>
+
+    <main class="karsilama-ekrani">
+        <div class="karsilama-baslik">
+            <h1>Ne yapmak istersin?</h1>
+            <p>Not hesaplama araçlarını kullan ya da KTÜ öğrencilerinin paylaştığı çıkmış sorulara göz at.</p>
+        </div>
+        <div class="karsilama-kartlar">
+            <a href="harf-notu-hesaplama.html" class="karsilama-kart karsilama-kart-hesaplama">
+                <span class="karsilama-kart-logo">
+                    <img class="logo-light" src="logo-not-hesaplama.png" alt="Not Hesaplama">
+                    <img class="logo-dark" src="logo-not-hesaplama-dark.png" alt="Not Hesaplama">
+                </span>
+                <span class="karsilama-kart-aciklama">Harf notu, gerekli final notu, geçme senaryoları ve dönem ortalaması (ANO) hesapla.</span>
+                <span class="karsilama-kart-ok">Başla →</span>
+            </a>
+            <a href="not-kutusu.html" class="karsilama-kart karsilama-kart-kutusu">
+                <span class="karsilama-kart-logo">
+                    <img class="logo-light" src="logo-not-kutusu.png" alt="Not Kutusu">
+                    <img class="logo-dark" src="logo-not-kutusu-dark.png" alt="Not Kutusu">
+                </span>
+                <span class="karsilama-kart-aciklama">Fakülte, bölüm ve ders klasörlerinde çıkmış soruları keşfet, sen de paylaş. Sadece KTÜ öğrencilerine özel.</span>
+                <span class="karsilama-kart-ok">Gir →</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Anket Modalı — içerik aktif anket varsa JS ile dolduruluyor -->
+    <div class="modal-overlay" id="anketModal" data-nk-click="anketModalKapat" data-nk-click-arg0="@event">
+        <div class="modal-kutu">
+            <div class="modal-baslik">
+                <span id="anket-modal-baslik">📊 Anket</span>
+                <button class="modal-kapat-btn" data-nk-click="anketModalKapat" data-nk-click-arg0="@null">✕</button>
+            </div>
+            <div class="modal-icerik" id="anket-modal-icerik"></div>
+        </div>
+    </div>
+
+    <!-- Anket bildirim butonu — sadece aktif ve henüz yanıtlanmamış bir anket varsa JS ile dolduruluyor -->
+    <div id="anket-pill-wrapper"></div>
+
+    <footer>
+         <div class="footer-logo">
+             <img class="logo-light" src="footer-logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
+             <img class="logo-dark" src="footer-logo-dark.png" alt="KTÜ Not Simülatörü" width="150" height="50">
+         </div>
+         <!-- İstatistiksever -->
+         <div class="footer-stat-wrapper">
+             <div class="footer-stat-baslik">📊 İstatistiksever</div>
+             <div id="footer-istatistikler">
+                 <p class="stat-yukleniyor">Yükleniyor...</p>
+             </div>
+         </div>
+         <div class="footer-ayrac"></div>
+         <p>Bu araç KTÜ Senatosu tarafından belirlenen usul ve esaslara dayanmaktadır. Hesaplamalar bilgilendirme amaçlıdır.</p>
+         <p style="font-style: italic; font-size: 0.9em; margin-top: 5px;">Bu site gönüllü bir oluşumdur ve Karadeniz Teknik Üniversitesi veya başka bir resmi kurumla doğrudan bağlantısı yoktur.</p>
+         <p>İletişim: <a href="mailto:ktunotsimulatoru@gmail.com">ktunotsimulatoru@gmail.com</a></p>
+         <p><a href="gizlilik-politikasi.html">Gizlilik Politikası ve KVKK Aydınlatma Metni</a></p>
+         <p>&copy; <span id="telif-yili">2025</span> KTÜ Not Simülatörü by Mustafa Taş</p>
+    </footer>
+
+    <script src="script.min.js" defer></script>
+
+    <script src="modal-accessibility.js" defer></script>
+    <script src="event-bindings.js" defer></script>
+</body>
+
+</html>

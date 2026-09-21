@@ -1,0 +1,17 @@
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src-elem 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' blob: data:; connect-src 'self' https://tsfscfgwbmiouptsljyi.supabase.co wss://tsfscfgwbmiouptsljyi.supabase.co https://not-kutusu.elements0.workers.dev; media-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Permitted-Cross-Domain-Policies: none
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/panel-mtas-7f5t.html
+  Cache-Control: private, no-store
+  X-Robots-Tag: noindex, nofollow, noarchive

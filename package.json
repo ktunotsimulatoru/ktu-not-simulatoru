@@ -1,0 +1,28 @@
+{
+  "name": "ktu-not-simulatoru",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "preview": "npm run build && node tools/preview.cjs",
+    "build": "node tools/build.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "syntax": "node tools/check-syntax.cjs",
+    "audit:live-anon": "node tools/audit-live-anon.cjs",
+    "drill:restore": "node tools/backup-restore-drill.cjs",
+    "verify:dist": "node tools/verify-dist.cjs",
+    "package": "npm run check && pwsh -NoProfile -File tools/package.ps1",
+    "check": "npm test && npm run build && npm run syntax && npm run verify:dist"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "acorn": "8.15.0",
+    "esbuild": "0.25.10"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0",
+    "chart.js": "4.4.3"
+  }
+}

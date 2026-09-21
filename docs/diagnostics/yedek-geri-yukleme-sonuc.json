@@ -1,0 +1,66 @@
+{
+  "drill": "local-pglite-fixture",
+  "generatedAt": "2026-09-21T08:08:30.740Z",
+  "passed": true,
+  "checks": [
+    {
+      "table": "auth.users",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.fakulteler",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.bolumler",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.nk_dersler",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.sorular",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.nk_dosyalar",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.nk_moderasyon_gecmisi",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    },
+    {
+      "table": "public.kayitli_donemler",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "checksumMatch": true
+    }
+  ],
+  "r2Inventory": {
+    "databasePaths": 1,
+    "objectPaths": 1,
+    "missing": [],
+    "orphans": []
+  },
+  "limitations": [
+    "Gerçek Supabase auth yedeği kullanılmadı.",
+    "Gerçek R2 nesneleri indirilmedi; envanter eşleştirmesi temsili veride yapıldı.",
+    "Canlı geri yükleme için ayrı test projesi ve gerçek yedek gerekir."
+  ]
+}

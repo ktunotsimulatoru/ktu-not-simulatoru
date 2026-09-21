@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme-boot.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>KTÜ Not Kutusu - Çıkmış Soru Paylaşım Sistemi</title>
+    <meta name="description" content="KTÜ öğrencileri için çıkmış soru paylaşım sistemi. Fakülte, bölüm ve dersine göre çıkmış soruları gör, kendi sorularını paylaş. Sadece @ogr.ktu.edu.tr e-postasıyla doğrulanmış üyelere açıktır.">
+    <meta name="keywords" content="KTÜ, Karadeniz Teknik Üniversitesi, not hesaplama, harf notu, bağıl değerlendirme, çan eğrisi, final notu, geçme notu, not simülatörü, ktü not sistemi">
+
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://www.ktunotsimulatoru.com/not-kutusu.html">
+    <meta property="og:url" content="https://www.ktunotsimulatoru.com/not-kutusu.html">
+    <meta property="og:title" content="KTÜ Not Kutusu - Çıkmış Soru Paylaşım Sistemi">
+    <meta property="og:description" content="KTÜ öğrencileri için çıkmış soru paylaşım sistemi. Fakülte, bölüm ve dersine göre çıkmış soruları gör, kendi sorularını paylaş.">
+    <meta property="og:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KTÜ Not Kutusu - Çıkmış Soru Paylaşım Sistemi">
+    <meta name="twitter:description" content="KTÜ öğrencileri için çıkmış soru paylaşım sistemi. Fakülte, bölüm ve dersine göre çıkmış soruları gör, kendi sorularını paylaş.">
+    <meta name="twitter:image" content="https://www.ktunotsimulatoru.com/og-image.png">
+
+    <link rel="stylesheet" href="style.min.css">
+    
+    <script src="vendor-chart.js" defer></script>
+    <script src="vendor-supabase.js" defer></script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="Turkish">
+    <meta name="author" content="Mustafa Taş">
+    <meta http-equiv=Content-Language content=tr>
+    <meta name=theme-color content="#006FEE">
+    <meta name=msapplication-navbutton-color content="#006FEE">
+    <meta name=apple-mobile-web-app-capable content=yes>
+    <meta name=apple-mobile-web-app-status-bar-style content="#006FEE">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "KTÜ Not Simülatörü - Not Kutusu",
+        "url": "https://www.ktunotsimulatoru.com/not-kutusu.html",
+        "description": "KTÜ öğrencileri için çıkmış soru paylaşım sistemi. Fakülte, bölüm ve dersine göre çıkmış soruları gör, kendi sorularını paylaş.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any (Web Browser)",
+        "inLanguage": "tr",
+        "isAccessibleForFree": true,
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "TRY"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Mustafa Taş"
+        }
+    }
+    </script>
+    <script src="dosya-guvenligi.js"></script>
+    <script src="course-code.js"></script>
+    <script src="dosya-erisim.js" defer></script>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="geri-don-btn" aria-label="Ana sayfaya dön">
+                <span aria-hidden="true">←</span>
+                <span class="geri-don-metin">Ana Sayfa</span>
+            </a>
+            <div class="header-text">
+                <h1 class="header-logo">
+                    <a href="index.html" aria-label="Ana sayfa">
+                        <img class="logo-light" src="logo.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                        <img class="logo-dark" src="logo-dark.png" alt="KTÜ Not Simülatörü" width="252" height="80">
+                    </a>
+                </h1>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Temayı değiştir">
+                    <span class="icon-moon">🌙</span>
+                    <span class="icon-sun">☀️</span>
+                    <span class="toggle-label">Karanlık</span>
+                </button>
+                <button class="hesap-buton hb-cikis-yapilmis" id="hesapButonu" data-nk-click="hesapButonTiklandi" data-nk-click-arg0="@event" aria-label="Hesabım">
+                    <span class="hesap-buton-ikon">🔑</span>
+                    <span class="hesap-buton-metin">Giriş Yap</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Duyurular artık tamamen admin panelinden yönetiliyor (Supabase 'duyurular' tablosu) -->
+    <div id="dinamik-duyurular-wrapper"></div>
+
+    <main>
+        <div id="notKutusu" class="tab-content active">
+            <h2><span class="nk-baslik-logo"><img class="logo-light" src="logo-not-kutusu.png" alt="Not Kutusu — Çıkmış Sorular"><img class="logo-dark" src="logo-not-kutusu-dark.png" alt="Not Kutusu — Çıkmış Sorular"></span></h2>
+            <p class="tab-description">
+                Fakülte, bölüm ve dersine göre çıkmış soruları gör, kendi çıkmış sorularını paylaş.
+            </p>
+
+            <!-- Üyelik / Giriş Alanı — giriş/kayıt/şifre sıfırlama artık burada değil,
+                 site geneli paylaşılan modalda (bkz. script.js: hsGirisModalAc). -->
+            <div id="nk-giris-alani">
+                <div class="nk-uyari">
+                    🔒 Bu bölümü kullanmak için KTÜ öğrenci e-postan (<strong>@ogr.ktu.edu.tr</strong>) ile giriş yapman gerekiyor. Bu hesabın, sitedeki Not Yakala oyununun liderlik tablosuyla da ortak — aynı hesapla hem çıkmış paylaşabilir hem oyun oynayabilirsin.
+                </div>
+                <button type="button" class="ny-giris-cta-btn" data-nk-click="hsGirisModalAc" data-nk-click-arg0="giris" style="margin: 14px auto 0 auto; display:flex;">🔑 Giriş Yap / Kayıt Ol</button>
+            </div>
+
+            <!-- Üye Alanı -->
+            <div id="nk-uye-alani" style="display:none;">
+                <nav class="nk-breadcrumb" id="nk-breadcrumb"></nav>
+
+                <div id="nk-klasor-alani"></div>
+
+                <div id="nk-ders-alani" style="display:none;">
+                    <div class="nk-ders-ustbilgi">
+                        <span class="nk-ders-ustbilgi-eyebrow">Ders arşivi</span>
+                        <h3 id="nk-ders-baslik" class="nk-ders-baslik"></h3>
+                    </div>
+
+                    <div class="nk-tab-bar">
+                        <button class="nk-tab-btn active" data-nk-click="nkSwitchTab" data-nk-click-arg0="gor"><span>Arşiv</span><small>Paylaşılan sorular</small></button>
+                        <button class="nk-tab-btn" data-nk-click="nkSwitchTab" data-nk-click-arg0="paylas"><span>Paylaş</span><small>Yeni soru ekle</small></button>
+                    </div>
+
+                    <div id="nk-tab-gor" class="nk-tab-content active">
+                        <div id="nk-soru-listesi">
+                            <p class="veri-bos">Yükleniyor...</p>
+                        </div>
+                    </div>
+
+                    <div id="nk-tab-paylas" class="nk-tab-content">
+                        <p id="nk-kota" role="status">Kota bilgisi yükleniyor…</p>
+                        <form id="nk-soru-form" class="nk-paylas-form" novalidate>
+                            <div class="nk-paylas-baslik">
+                                <span>Yeni paylaşım</span>
+                                <h4>Bu dersin arşivine soru ekle</h4>
+                                <p>Sınav bilgisini seç, varsa görsel veya PDF’ini ekle. Paylaşımın onaydan sonra görünür.</p>
+                            </div>
+                            <div class="nk-paylas-bilgi-grid">
+                                <fieldset class="nk-paylas-kart nk-sinav-turu-kart">
+                                    <legend>Sınav türü</legend>
+                                    <div class="nk-sinav-secimleri">
+                                        <label><input type="radio" id="nkSinavVize" name="nkSinavTuru" value="vize" checked><span>Vize</span></label>
+                                        <label><input type="radio" id="nkSinavFinal" name="nkSinavTuru" value="final"><span>Final</span></label>
+                                        <label><input type="radio" id="nkSinavBut" name="nkSinavTuru" value="butunleme"><span>Bütünleme</span></label>
+                                    </div>
+                                </fieldset>
+                                <div class="nk-paylas-kart form-group">
+                                    <label for="nk-soru-yil">Akademik yıl</label>
+                                    <select id="nk-soru-yil" required></select>
+                                </div>
+                            </div>
+                            <div class="nk-fotograf-alani">
+                                <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" id="nk-soru-foto" multiple>
+                                <label for="nk-soru-foto" class="nk-dosya-birak-alani">
+                                    <span class="nk-dosya-birak-ikon">↥</span>
+                                    <span class="nk-dosya-birak-baslik">Dosyaları seç</span>
+                                    <span class="nk-dosya-birak-aciklama">JPG, PNG, WEBP veya PDF · En fazla 3 dosya · Dosya başına 5 MB</span>
+                                </label>
+                                <div class="nk-fotograf-onizleme" id="nk-fotograf-onizleme"></div>
+                            </div>
+                            <div class="nk-paylas-alt">
+                                <p><strong>Moderasyon:</strong> Paylaşımın admin onayından sonra bu dersi seçen diğer öğrencilere görünür.</p>
+                                <button type="submit">Paylaşımı gönder <span aria-hidden="true">→</span></button>
+                            </div>
+                        </form>
+                        <div id="nk-soru-sonuc" class="result-box" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div class="modal-overlay" id="nk-bildirim-modal" data-nk-click="nkBildirimModalKapat" data-nk-click-arg0="@event">
+        <div class="modal-kutu nk-bildirim-kutu">
+            <div class="modal-baslik"><span>İçeriği bildir</span><button type="button" class="modal-kapat-btn" data-nk-click="nkBildirimModalKapat" data-nk-click-arg0="@null">✕</button></div>
+            <form id="nk-bildirim-form">
+                <div class="form-group"><label for="nk-bildirim-neden">Neden</label><select id="nk-bildirim-neden" name="neden" required>
+                    <option value="okunmuyor">Dosya okunmuyor</option><option value="yanlis_ders">Yanlış derste</option>
+                    <option value="yanlis_bilgi">Yanlış bilgi içeriyor</option><option value="tekrar">Tekrar içerik</option>
+                    <option value="telif">Telif hakkı sorunu</option><option value="kisisel_veri">Kişisel veri içeriyor</option>
+                    <option value="spam">Spam</option><option value="diger">Diğer</option>
+                </select></div>
+                <div class="form-group"><label for="nk-bildirim-aciklama">Açıklama <small>(isteğe bağlı)</small></label><textarea id="nk-bildirim-aciklama" name="aciklama" maxlength="1000" rows="4" placeholder="İncelemeyi kolaylaştıracak kısa bir açıklama"></textarea></div>
+                <button type="submit">Bildirimi gönder</button>
+                <div id="nk-bildirim-sonuc" class="result-box" style="display:none" role="status"></div>
+            </form>
+        </div>
+    </div>
+    <!-- Anket Modalı — içerik aktif anket varsa JS ile dolduruluyor -->
+    <div class="modal-overlay" id="anketModal" data-nk-click="anketModalKapat" data-nk-click-arg0="@event">
+        <div class="modal-kutu">
+            <div class="modal-baslik">
+                <span id="anket-modal-baslik">📊 Anket</span>
+                <button class="modal-kapat-btn" data-nk-click="anketModalKapat" data-nk-click-arg0="@null">✕</button>
+            </div>
+            <div class="modal-icerik" id="anket-modal-icerik"></div>
+        </div>
+    </div>
+
+    <!-- Anket bildirim butonu — sadece aktif ve henüz yanıtlanmamış bir anket varsa JS ile dolduruluyor -->
+    <div id="anket-pill-wrapper"></div>
+
+    <footer>
+         <div class="footer-logo">
+             <img class="logo-light" src="footer-logo.png" alt="KTÜ Not Simülatörü" width="150" height="50">
+             <img class="logo-dark" src="footer-logo-dark.png" alt="KTÜ Not Simülatörü" width="150" height="50">
+         </div>
+         <!-- İstatistiksever -->
+         <div class="footer-stat-wrapper">
+             <div class="footer-stat-baslik">📊 İstatistiksever</div>
+             <div id="footer-istatistikler">
+                 <p class="stat-yukleniyor">Yükleniyor...</p>
+             </div>
+         </div>
+         <div class="footer-ayrac"></div>
+         <p>Bu araç KTÜ Senatosu tarafından belirlenen usul ve esaslara dayanmaktadır. Hesaplamalar bilgilendirme amaçlıdır.</p>
+         <p style="font-style: italic; font-size: 0.9em; margin-top: 5px;">Bu site gönüllü bir oluşumdur ve Karadeniz Teknik Üniversitesi veya başka bir resmi kurumla doğrudan bağlantısı yoktur.</p>
+         <p>İletişim: <a href="mailto:ktunotsimulatoru@gmail.com">ktunotsimulatoru@gmail.com</a></p>
+         <p><a href="gizlilik-politikasi.html">Gizlilik Politikası ve KVKK Aydınlatma Metni</a></p>
+         <p>&copy; <span id="telif-yili">2025</span> KTÜ Not Simülatörü by Mustafa Taş</p>
+    </footer>
+
+    <script src="script.min.js" defer></script>
+    <script src="not-kutusu.min.js" defer></script>
+
+    <script src="modal-accessibility.js" defer></script>
+    <script src="event-bindings.js" defer></script>
+</body>
+
+</html>

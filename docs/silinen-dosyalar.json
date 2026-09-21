@@ -1,0 +1,57 @@
+[
+  {
+    "File": "worker.js",
+    "Bytes": 16153,
+    "SHA256": "F689210EAB36FCF962D72DB33C9CFEFB0DF836F9B11E95541FF4320AF3A2204E"
+  },
+  {
+    "File": "script.min.js",
+    "Bytes": 127458,
+    "SHA256": "44F64B9FD2FD3D5222BFFCFE98D374C9EFD5E154C260E289508DA52012F19A14"
+  },
+  {
+    "File": "not-kutusu.min.js",
+    "Bytes": 20361,
+    "SHA256": "66E0B1601BE8004219C757923FCEF1E9104417110E19CCD62F329A32EB64E7EF"
+  },
+  {
+    "File": "style.min.css",
+    "Bytes": 74697,
+    "SHA256": "E8CFE366F64E56AE0D7D7DB7A32224C87350BBE8538BF2095F1CC6B683EC50CC"
+  },
+  {
+    "File": "Claude outputs/favicon_compare.png",
+    "Bytes": 24009,
+    "SHA256": "C634B0C6144EE75414913569F89466AE090330E36C214A9199ACBF4A3C09CD01"
+  },
+  {
+    "File": "Claude outputs/favicon_full_compare.png",
+    "Bytes": 22823,
+    "SHA256": "6A2A093A52D34D0B5C3A9721339E0ECFA1B13B86DF8A697240D0A33F51E21EF6"
+  },
+  {
+    "File": "Claude outputs/favicon_v2_compare.png",
+    "Bytes": 24454,
+    "SHA256": "D16F21602E10A4413714254398DF40B28095DF26AF142A8660F7B89699D79650"
+  },
+  {
+    "File": "Claude outputs/final_compare_both.png",
+    "Bytes": 38232,
+    "SHA256": "98703914CDF3EBF847826ADC482D747B06F3B377C295D2F34D99CD5F15448B81"
+  },
+  {
+    "File": "Claude outputs/index_after_fontfix.png",
+    "Bytes": 60036,
+    "SHA256": "E299643E240A72EE2EAAE149C41BD877393BD88CD0FC47C24B40E8AF5E7C2D13"
+  },
+  {
+    "File": "Claude outputs/preview-index-dark.png",
+    "Bytes": 77610,
+    "SHA256": "8A6AF82DCA935D3B198FC4A783CDE9C077158C9EFF4CD0D45A443F08E3421F97"
+  },
+  {
+    "File": "Claude outputs/preview-index-light.png",
+    "Bytes": 77515,
+    "SHA256": "F40EA3F7F48C84C9C896E48BC0F547D3490688AE1CB3AEAA5B8370F408E625F7"
+  }
+]
