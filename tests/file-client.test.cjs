@@ -15,10 +15,10 @@ test('Çok dosyalı yüklemede ikinci hata ilk rezervasyonu iptal eder',async()=
     assert.equal(calls[2].options.headers.Authorization,'Bearer test-token');
 });
 test('Özel dosya açma: token sadece başlıkta; yabancı URL reddi ve çıkışta blob temizliği',async()=>{
-    const listeners={},revoked=[],calls=[],popups=[];
+    const listeners={},revoked=[],calls=[],popups=[];let sessionCalls=0;
     const url='https://not-kutusu.elements0.workers.dev/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.pdf';
     class LocalURL extends URL {static createObjectURL(){return 'blob:local-test';}static revokeObjectURL(value){revoked.push(value);}}
-    const window={getSupabase:()=>({auth:{getSession:async()=>({data:{session:{access_token:'secret-user-token'}}})}}),
+    const window={getSupabase:()=>({auth:{getSession:async()=>{sessionCalls++;return {data:{session:{access_token:'secret-user-token'}}};}}}),
         addEventListener:(name,fn)=>{listeners[name]=fn;},open:()=>{const popup={document:{body:{}},location:{replace:value=>popup.destination=value}};popups.push(popup);return popup;}};
     const context=vm.createContext({window,URL:LocalURL,AbortController,console,setTimeout:()=>{},alert:()=>{},
         NKDosya:require('../src/scripts/dosya-guvenligi.js'),
@@ -34,4 +34,5 @@ test('Özel dosya açma: token sadece başlıkta; yabancı URL reddi ve çıkı�
     listeners.pagehide();assert.deepEqual(revoked,['blob:local-test']);
     window.NKDosyaErisim.ayarla({adminToken:()=> 'secret-admin-token'});
     await window.NKDosyaErisim.ac(url);assert.equal(calls[1].options.headers['X-Admin-Token'],'secret-admin-token');
+    assert.equal(sessionCalls,1);
 });

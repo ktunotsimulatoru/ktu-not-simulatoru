@@ -22,7 +22,7 @@ Madde 11 uyarınca sonuç iki ondalığa yuvarlanır. Katsayılar Tablo 3'ten al
 
 ## Canlı kabul kontrolü
 
-1. 004 migrationını 003 sonrasında, 005'i 004 sonrasında ve profil katkıları için 006'yı 005 sonrasında çalıştırın.
+1. 004 migrationını 003 sonrasında, 005'i 004 sonrasında ve profil katkıları için 006'yı 005 sonrasında çalıştırın. Canlı AGNO RLS izinlerini ve PostgREST şema görünürlüğünü onarmak için 007'yi en son uygulayın.
 2. AGNO sayfasında girişsiz ANO ve AGNO hesaplamasını deneyin; ağ isteğinde dönem verisi gönderilmemelidir.
 3. KTÜ hesabıyla giriş yapın; bir dönem kaydedin, sayfayı yenileyin, kaydı açın, güncelleyin ve silin.
 4. Başka bir test hesabının aynı kaydı okuyamadığını doğrulayın.

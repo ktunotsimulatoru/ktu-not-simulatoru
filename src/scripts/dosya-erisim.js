@@ -5,6 +5,7 @@
     let adminToken = null;
     let generation = 0;
     let userId = null;
+    let baslikSozu = null;
     const images = new Map();
     const urls = new Set();
     const requests = new Set();
@@ -16,9 +17,17 @@
     async function basliklar() {
         const token = adminToken?.();
         if (token) return { 'X-Admin-Token': token };
-        const { data: { session } = {} } = await window.getSupabase().auth.getSession();
-        if (!session?.access_token) throw new Error('Dosyayı görmek için giriş yapmalısın.');
-        return { Authorization: `Bearer ${session.access_token}` };
+        // Aynı anda ekrana giren küçük görseller tek bir oturum okumasını paylaşır.
+        // Sonraki grup güncel tokenı alabilsin diye söz tamamlanınca önbelleği bırak.
+        if (!baslikSozu) {
+            baslikSozu = window.getSupabase().auth.getSession().then(({ data: { session } = {} }) => {
+                if (!session?.access_token) throw new Error('Dosyayı görmek için giriş yapmalısın.');
+                return { Authorization: `Bearer ${session.access_token}` };
+            });
+        }
+        const buSoz = baslikSozu;
+        try { return await buSoz; }
+        finally { if (baslikSozu === buSoz) baslikSozu = null; }
     }
     async function getir(value) {
         const url = guvenliUrl(value);
@@ -40,6 +49,7 @@
     function birak(url) { if (url) { URL.revokeObjectURL(url); urls.delete(url); } }
     function temizle() {
         generation++;
+        baslikSozu = null;
         requests.forEach(c => c.abort());
         urls.forEach(url => URL.revokeObjectURL(url));
         urls.clear();
@@ -51,6 +61,9 @@
         if (!key || images.get(img)?.key === key) return;
         birak(images.get(img)?.url);
         img.removeAttribute('src');
+        img.classList.remove('nk-dosya-hazir','nk-dosya-hatali');
+        img.classList.add('nk-dosya-yukleniyor');
+        img.setAttribute('aria-busy','true');
         const state = { key };
         images.set(img, state);
         try {
@@ -58,8 +71,16 @@
             if (!img.isConnected || images.get(img) !== state) { birak(url); return; }
             state.url = url;
             img.src = url;
+            img.classList.remove('nk-dosya-yukleniyor');
+            img.classList.add('nk-dosya-hazir');
+            img.removeAttribute('aria-busy');
         } catch (error) {
-            if (images.get(img) === state) { img.alt = error.message; img.title = error.message; }
+            if (images.get(img) === state) {
+                img.classList.remove('nk-dosya-yukleniyor');
+                img.classList.add('nk-dosya-hatali');
+                img.removeAttribute('aria-busy');
+                img.title = error.message;
+            }
         }
     }
     const observer = new IntersectionObserver(entries => {

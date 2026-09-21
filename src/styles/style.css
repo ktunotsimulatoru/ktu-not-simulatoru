@@ -2376,6 +2376,17 @@ main { margin-top: 1.5rem; }
 .nk-element-onizleme-pdf span { font-size: 0.32em; line-height: 1.1; word-break: break-all; text-align: center; color: var(--small-text); max-height: 2.2em; overflow: hidden; }
 .nk-soru-fotograflar { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
 .nk-soru-fotograf-kucuk { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover; cursor: zoom-in; border: 1px solid var(--input-border); }
+.nk-soru-fotograf-kucuk:not([src]),.nk-soru-fotograf-kucuk.nk-dosya-yukleniyor {
+    color: transparent; font-size: 0; cursor: progress;
+    background: linear-gradient(100deg,var(--input-bg) 30%,var(--result-bg) 50%,var(--input-bg) 70%);
+    background-size: 220% 100%; animation: nk-dosya-parilti 1.15s ease-in-out infinite;
+}
+.nk-soru-fotograf-kucuk.nk-dosya-hatali {
+    color: transparent; font-size: 0; cursor: help; animation: none;
+    background: var(--error-bg);
+}
+@keyframes nk-dosya-parilti { to { background-position-x: -220%; } }
+@media (prefers-reduced-motion:reduce) { .nk-soru-fotograf-kucuk.nk-dosya-yukleniyor { animation:none; } }
 .nk-soru-element-pdf {
     display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em; font-weight: 600; padding: 4px 9px;
     border-radius: var(--radius-sm); border: 1px solid var(--input-border); background: var(--secim-vurgu-bg);

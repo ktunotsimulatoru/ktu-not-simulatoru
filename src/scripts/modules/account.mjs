@@ -526,9 +526,12 @@ async function hsProfilVerileriniYukle() {
         const { data: donemler, error: donemHata } = await sb.from('kayitli_donemler')
             .select('id,ad,akademik_yil,donem,dersler,guncelleme_tarihi').order('guncelleme_tarihi',{ascending:false});
         if (donemHata) {
-            const altyapiEksik=['42P01','42501','42703','PGRST204','PGRST205'].includes(donemHata.code);
+            const altyapiEksik=['42P01','42703','PGRST204','PGRST205'].includes(donemHata.code);
+            const yetkiSorunu=donemHata.code==='42501';
             console.warn('[profil-agno] Kayıt sorgusu başarısız:', donemHata.code || 'bilinmeyen');
-            agnoEl.innerHTML = `<div class="profil-yukleme-hatasi"><strong>${altyapiEksik?'AGNO kayıt altyapısı henüz etkin değil.':'AGNO kayıtları şu anda yüklenemedi.'}</strong><span>${altyapiEksik?'Veritabanı kurulumu tamamlandıktan sonra kayıtların burada görünecek.':'Sayfayı yenileyerek tekrar deneyebilirsin.'}</span><a class="profil-ikincil-buton" href="gano-hesaplama.html">AGNO hesaplayıcıyı aç</a></div>`;
+            const baslik=altyapiEksik?'AGNO kayıt altyapısı henüz etkin değil.':yetkiSorunu?'AGNO kayıt izni tamamlanmamış.':'AGNO kayıtları şu anda yüklenemedi.';
+            const aciklama=altyapiEksik?'Veritabanı kurulumu tamamlandıktan sonra kayıtların burada görünecek.':yetkiSorunu?'Veritabanı yöneticisinin 007 yetki onarımını uygulaması gerekiyor.':'Sayfayı yenileyerek tekrar deneyebilirsin.';
+            agnoEl.innerHTML = `<div class="profil-yukleme-hatasi"><strong>${baslik}</strong><span>${aciklama}</span><a class="profil-ikincil-buton" href="gano-hesaplama.html">AGNO hesaplayıcıyı aç</a></div>`;
         }
         else if (!donemler?.length) agnoEl.innerHTML = '<p class="ny-ipucu">Henüz kaydettiğin bir AGNO dönemi yok. <a href="gano-hesaplama.html">İlk hesabını oluştur</a>.</p>';
         else agnoEl.innerHTML = donemler.map(d => `<article class="hs-liste-satir profil-kayit-satir"><div><strong>${escHtml(d.ad)}</strong><div class="ny-ipucu">${d.akademik_yil}-${d.akademik_yil+1} · ${d.donem==='guz'?'Güz':d.donem==='bahar'?'Bahar':'Yaz'} · ${Array.isArray(d.dersler)?d.dersler.length:0} ders</div></div><div class="profil-kayit-eylemler"><a class="profil-ikincil-buton" href="gano-hesaplama.html?kayit=${encodeURIComponent(d.id)}">Hesaplamayı aç</a></div></article>`).join('');

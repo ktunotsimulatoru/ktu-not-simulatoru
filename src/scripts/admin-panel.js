@@ -104,7 +104,14 @@ async function isletimOzetiYukle() {
     const alan=document.getElementById('isletim-ozeti');if(!alan)return;
     alan.innerHTML='<div class="yukleniyor">Yükleniyor...</div>';
     const {data,error}=await sb.rpc('admin_isletim_ozeti',{p_admin_token:adminToken()});
-    if(error){if(oturumSuresiDolduMuKontrolEt(error.message))return;alan.innerHTML='<div class="bos-mesaj">İşletim özeti alınamadı. 004 migrationını kontrol edin.</div>';return;}
+    if(error){
+        if(oturumSuresiDolduMuKontrolEt(error.message))return;
+        console.warn('[işletim-özeti] RPC başarısız:',error.code||'bilinmeyen');
+        const eksik=['42883','PGRST202'].includes(error.code);
+        const yetki=error.code==='42501'||/yetkisiz/i.test(error.message||'');
+        alan.innerHTML=`<div class="bos-mesaj">${eksik?'İşletim özeti RPC’si bulunamadı. 007 migrationını çalıştırın.':yetki?'İşletim özetine erişim reddedildi. Yönetici oturumunu yenileyin.':'İşletim özeti şu anda alınamadı.'}</div>`;
+        return;
+    }
     const tekrar=data?.tekrarli_hatalar||[];
     alan.innerHTML=`<div class="stat-karti-grid isletim-kartlari"><div class="stat-karti"><div class="stat-karti-baslik">Son 24 saat hata</div><div class="stat-karti-deger">${Number(data?.son_24_saat||0)}</div></div><div class="stat-karti"><div class="stat-karti-baslik">Son 7 gün hata</div><div class="stat-karti-deger">${Number(data?.son_7_gun||0)}</div></div><div class="stat-karti"><div class="stat-karti-baslik">Temizlik bekleyen dosya</div><div class="stat-karti-deger">${Number(data?.temizlik_bekleyen||0)}</div></div></div>${tekrar.length?`<table><thead><tr><th>Kategori</th><th>Kod</th><th>Güvenli mesaj</th><th>Adet</th><th>Son görülme</th></tr></thead><tbody>${tekrar.map(h=>`<tr><td>${escHtml(h.kategori)}</td><td><code>${escHtml(h.kod)}</code></td><td>${escHtml(h.mesaj)}</td><td>${Number(h.adet)}</td><td>${new Date(h.son_tarih).toLocaleString('tr-TR')}</td></tr>`).join('')}</tbody></table>`:'<div class="bos-mesaj">Son 7 günde kayıtlı üye hatası yok.</div>'}`;
 }
