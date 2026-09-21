@@ -51,6 +51,7 @@ function nkSonucGoster(elId, mesaj, hataMi) {
 // =============================================
 window.addEventListener('hesapDurumuDegisti', (e) => {
     const oturum = e.detail && e.detail.oturum;
+    nkMevcutKullaniciId = oturum?.id || null;
     if (oturum) {
         nkUyeGorunumunuAc(oturum.email);
         nkKotaGuncelle();
@@ -94,6 +95,8 @@ let nkTumDersler = [];
 let nkKlasorSayilari = { fakulte: {}, bolum: {} };
 let nkDersSayfa = { sayfa: 0, boyut: 24, toplam: 0, arama: '', siralama: 'ad' };
 let nkSoruSayfa = { sayfa: 0, boyut: 12, toplam: 0, sinav: '', yil: '' };
+let nkMevcutKullaniciId = null;
+const nkIfadeIslemleri = new Set();
 let nkDersAramaZamanlayici;
 let nkVeriYuklendi = false;
 let nkYuklemeSurumu = 0;
@@ -356,6 +359,80 @@ function nkSwitchTab(tab) {
 // =============================================
 const NK_SINAV_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme' };
 const NK_DURUM_ETIKET = { beklemede: '⏳ Onay Bekliyor', onaylandi: '✅ Onaylandı', reddedildi: '❌ Reddedildi' };
+const NK_IFADELER = [
+    { anahtar: 'faydali', emoji: '👍', etiket: 'Faydalı' },
+    { anahtar: 'tesekkur', emoji: '❤️', etiket: 'Teşekkür' },
+    { anahtar: 'zor', emoji: '🤔', etiket: 'Zor' }
+];
+
+function nkIfadeHtml(soru, ozet) {
+    const kendiSorusu = String(soru.kullanici_id) === String(nkMevcutKullaniciId);
+    const aciklama = kendiSorusu ? 'Kendi paylaşımına tepki veremezsin.' : 'Bir tepki seç veya seçili tepkiye yeniden basarak kaldır.';
+    return `<div class="nk-ifade-grubu" aria-label="Soru tepkileri" data-nk-ifade-soru="${nkEscAttr(soru.id)}">
+        ${NK_IFADELER.map(ifade => {
+            const secili = ozet?.benim_ifadem === ifade.anahtar;
+            const sayi = Number(ozet?.[ifade.anahtar] || 0);
+            return `<button type="button" class="nk-ifade-btn${secili ? ' secili' : ''}" data-nk-click="nkSoruIfadeDegistir" data-nk-click-arg0="${nkEscAttr(soru.id)}" data-nk-click-arg1="${ifade.anahtar}" data-ifade="${ifade.anahtar}" aria-pressed="${secili}" aria-label="${ifade.etiket}: ${sayi}" title="${nkEscAttr(kendiSorusu ? aciklama : ifade.etiket)}" ${kendiSorusu ? 'disabled' : ''}><span aria-hidden="true">${ifade.emoji}</span><span class="nk-ifade-etiket">${ifade.etiket}</span><strong>${sayi}</strong></button>`;
+        }).join('')}
+        <span class="nk-ifade-aciklama" role="status" aria-live="polite">${kendiSorusu ? aciklama : ''}</span>
+    </div>`;
+}
+
+async function nkIfadeOzetleriniYukle(sorular) {
+    const onayliSorular = sorular.filter(s => s.durum === 'onaylandi');
+    if (!onayliSorular.length) return;
+    const { data, error } = await nkGetirSupabase().rpc('nk_soru_ifade_ozetleri', {
+        p_soru_ids: onayliSorular.map(s => s.id)
+    });
+    if (error) {
+        console.warn('[Not Kutusu] Tepki özetleri yüklenemedi:', error.message);
+        return;
+    }
+    const ozetler = new Map((Array.isArray(data) ? data : []).map(o => [String(o.soru_id), o]));
+    onayliSorular.forEach(soru => {
+        const yer = document.querySelector(`[data-nk-ifade-yer="${soru.id}"]`);
+        if (yer) yer.innerHTML = nkIfadeHtml(soru, ozetler.get(String(soru.id)));
+    });
+}
+
+async function nkSoruIfadeDegistir(soruId, ifade) {
+    if (!/^[0-9a-f-]{36}$/i.test(soruId) || !NK_IFADELER.some(x => x.anahtar === ifade) || nkIfadeIslemleri.has(soruId)) return;
+    const grup = document.querySelector(`[data-nk-ifade-soru="${soruId}"]`);
+    if (!grup) return;
+    nkIfadeIslemleri.add(soruId);
+    grup.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    grup.classList.add('yukleniyor');
+    try {
+        const { data, error } = await nkGetirSupabase().rpc('nk_soru_ifade_ayarla', { p_soru_id: soruId, p_ifade: ifade });
+        if (error) throw error;
+        const mesajlar = {
+            uyelik_gerekli: 'Tepki vermek için doğrulanmış KTÜ üyeliği gerekiyor.',
+            kendi_icerigin: 'Kendi paylaşımına tepki veremezsin.',
+            soru_kapali: 'Bu soru artık tepkilere açık değil.',
+            gecersiz_ifade: 'Bu tepki kullanılamıyor.'
+        };
+        if (!data?.basarili) throw new Error(mesajlar[data?.hata] || 'Tepki kaydedilemedi.');
+        grup.querySelectorAll('.nk-ifade-btn').forEach(b => {
+            const tur = b.dataset.ifade;
+            const sayi = Number(data[tur] || 0);
+            const secili = data.benim_ifadem === tur;
+            b.classList.toggle('secili', secili);
+            b.setAttribute('aria-pressed', String(secili));
+            b.setAttribute('aria-label', `${NK_IFADELER.find(x => x.anahtar === tur)?.etiket || tur}: ${sayi}`);
+            const sayac = b.querySelector('strong');
+            if (sayac) sayac.textContent = String(sayi);
+        });
+        grup.querySelector('.nk-ifade-aciklama').textContent = data.benim_ifadem ? 'Tepkin kaydedildi.' : 'Tepkin kaldırıldı.';
+        grup.classList.remove('hatali');
+    } catch (error) {
+        grup.querySelector('.nk-ifade-aciklama').textContent = error.message || 'Tepki kaydedilemedi.';
+        grup.classList.add('hatali');
+    } finally {
+        nkIfadeIslemleri.delete(soruId);
+        grup.classList.remove('yukleniyor');
+        grup.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    }
+}
 
 async function nkSoruListele() {
     const alan = document.getElementById('nk-soru-listesi');
@@ -425,10 +502,12 @@ async function nkSoruListele() {
             </div>
             <div class="nk-soru-onizlemeler">${fotoHtml}</div>
             <div class="nk-soru-kart-islem"><span class="nk-soru-durum ${nkEscHtml(durumSinifi)}">${NK_DURUM_ETIKET[durumSinifi] || durumSinifi}</span>${moderasyon}${bildirButonu}</div>
+            ${s.durum === 'onaylandi' ? `<div class="nk-ifade-yer" data-nk-ifade-yer="${nkEscAttr(s.id)}"></div>` : ''}
         </article>`;
     });
     html += `</div>${nkSayfalamaHtml('nkSoruSayfasiDegistir', nkSoruSayfa.sayfa, toplamSayfa)}`;
     alan.innerHTML = html;
+    nkIfadeOzetleriniYukle(data);
 }
 
 const NK_MODERASYON_ETIKET = {

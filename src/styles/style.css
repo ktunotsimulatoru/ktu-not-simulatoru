@@ -2340,6 +2340,17 @@ main { margin-top: 1.5rem; }
 .nk-soru-tarih { width: 48px; padding: 7px 0; border-radius: var(--radius-sm); background: var(--nk-vurgu-arkaplan); color: var(--nk-vurgu); font-size: 0.85em; font-weight: 700; text-align: center; line-height: 1.05; }
 .nk-soru-tarih small { display: block; margin-top: 3px; color: var(--small-text); font-size: 0.76em; font-weight: 600; }
 .nk-soru-kart-sol { display: flex; flex-direction: column; gap: 3px; }
+.nk-ifade-yer { grid-column: 2 / -1; min-width: 0; }
+.nk-ifade-grubu { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-top: 7px; border-top: 1px solid var(--tab-border); }
+.nk-ifade-btn { width: auto; min-height: 32px; margin: 0; padding: 5px 9px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--input-border); border-radius: 999px; background: var(--input-bg); color: var(--small-text); box-shadow: none; font: 600 .75em 'Poppins', sans-serif; cursor: pointer; }
+.nk-ifade-btn:hover:not(:disabled) { border-color: var(--nk-vurgu); color: var(--nk-vurgu); background: var(--nk-vurgu-arkaplan); }
+.nk-ifade-btn.secili { border-color: var(--nk-vurgu); color: var(--nk-vurgu); background: var(--nk-vurgu-arkaplan); }
+.nk-ifade-btn strong { min-width: 1ch; color: inherit; font-size: .95em; }
+.nk-ifade-btn:disabled { cursor: not-allowed; opacity: .55; }
+.nk-ifade-grubu.yukleniyor { opacity: .65; }
+.nk-ifade-aciklama { flex-basis: 100%; color: var(--small-text); font-size: .7em; }
+.nk-ifade-aciklama:empty { display: none; }
+.nk-ifade-grubu.hatali .nk-ifade-aciklama { color: var(--error-text); }
 .nk-soru-etiket { font-weight: 700; color: var(--content-title); font-size: 0.95em; }
 .nk-soru-alt { font-size: 0.82em; color: var(--small-text); }
 .nk-soru-durum { font-size: 0.75em; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
@@ -2552,6 +2563,10 @@ main { margin-top: 1.5rem; }
     .nk-kod-satiri button { width: 100%; }
     .nk-soru-kart { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 9px; }
     .nk-soru-onizlemeler { grid-column: 1 / -1; min-width: 0; }
+    .nk-ifade-yer { grid-column: 1 / -1; }
+    .nk-ifade-grubu { gap: 5px; }
+    .nk-ifade-btn { flex: 1 1 82px; padding-inline: 7px; }
+    .nk-ifade-etiket { display: none; }
     .nk-soru-onizlemeler .nk-soru-fotograflar { margin-top: 0; }
     .nk-arsiv-ust small { display: none; }
     .nk-paylas-bilgi-grid { grid-template-columns: 1fr; }
