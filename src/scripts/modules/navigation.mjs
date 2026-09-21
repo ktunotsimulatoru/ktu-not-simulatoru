@@ -2,10 +2,8 @@
 
 
 
-// Site çoklu-sayfa yapısını korur. Bağlantıya basmayı 140 ms geciktiren eski
-// yapay fade kaldırıldı; bunun yerine kullanıcı bir iç bağlantıya yöneldiğinde
-// hedef HTML tarayıcı önbelleğine alınır. CSS View Transition destekleyen
-// tarayıcılar navigasyonu ayrıca yerleşik olarak yumuşatır.
+// Site çoklu-sayfa yapısını korur. Bağlantıya basmayı geciktirmeden, kullanıcı
+// bir iç bağlantıya yöneldiğinde hedef HTML tarayıcı önbelleğine alınır.
 (function () {
     const getirilenler = new Set();
     function adayUrl(e) {

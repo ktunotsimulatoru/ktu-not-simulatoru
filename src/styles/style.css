@@ -59,7 +59,7 @@
     /* HeroUI (v2) esinli tasarım dili — admin paneliyle aynı paleti kullanır:
        Primary #006FEE, Success #17c964, Danger #f31260, Warning #f5a524, zinc nötrleri. */
     --bg-color: #fafafa; --text-color: #18181b;
-    --header-bg: rgba(255, 255, 255, 0.85); --header-text: #006FEE;
+    --header-bg: #ffffff; --header-text: #006FEE;
     --header-subtext: #71717a; --header-border: #e4e4e7; --main-bg: #ffffff;
     --tab-bg: #fafafa; --tab-border: #e4e4e7; --tab-text: #71717a;
     --tab-hover-bg: #f4f4f5; --tab-active-text: #006FEE; --tab-active-border: #006FEE;
@@ -98,7 +98,7 @@
 /* --- Karanlık Mod Değişkenleri --- */
 [data-theme="dark"] {
     --bg-color: #0d1117; --text-color: #c9d1d9;
-    --header-bg: rgba(22, 27, 34, 0.92); --header-text: #338ef7;
+    --header-bg: #161b22; --header-text: #338ef7;
     --header-subtext: #8b949e; --header-border: #30363d; --main-bg: #161b22;
     --tab-bg: #0d1117; --tab-border: #30363d; --tab-text: #8b949e;
     --tab-hover-bg: #21262d; --tab-active-text: #338ef7; --tab-active-border: #338ef7;
@@ -126,16 +126,9 @@ body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
     color: var(--text-color); background-color: var(--bg-color);
 }
-/* Destekleyen tarayıcılarda gerçek çoklu sayfa navigasyonunu geciktirmeden
-   kısa bir yerleşik geçiş kullan. Desteklemeyenlerde normal, anlık navigasyon olur. */
-@view-transition { navigation: auto; }
-::view-transition-old(root) { animation: 0.12s ease-out both nk-sayfa-eski; }
-::view-transition-new(root) { animation: 0.16s ease-out both nk-sayfa-yeni; }
-@keyframes nk-sayfa-eski { to { opacity: 0.88; } }
-@keyframes nk-sayfa-yeni { from { opacity: 0.88; } }
-@media (prefers-reduced-motion:reduce) {
-    ::view-transition-old(root),::view-transition-new(root) { animation:none; }
-}
+/* Sayfalar arası geçiş tarayıcının doğal navigasyonuyla anında gerçekleşir.
+   Tam belgeyi görüntü olarak yakalayan cross-document view transition, özellikle
+   düşük güçlü telefonlarda gereksiz GPU işi ve takılma hissi oluşturuyordu. */
 /* Not: Sayfa arka planındaki büyük KTÜ Not Simülatörü logosu (body::before,
    ktulogo.png/ktulogo-dark.png) KALDIRILDI — sayfa geçişlerindeki fade
    efektinde (body'nin opacity animasyonu ::before'u da etkilediği için)
@@ -148,7 +141,6 @@ body {
     border-bottom: 1px solid var(--header-border);
     margin-bottom: 0;
     background-color: var(--header-bg);
-    backdrop-filter: blur(3px);
     position: sticky;
     top: 0;
     z-index: 100;

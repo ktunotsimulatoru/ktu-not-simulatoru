@@ -627,10 +627,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Sayfa görüntüleme logu --- (her sayfada çalışsın: hesap makinesi, Not Kutusu, karşılama ekranı)
     sayfaGoruntulemeLogKaydet();
 
-    // Footer'daki "İstatistiksever" widget'ı tüm sayfalarda ortak (footer paylaşılıyor) — bu yüzden
-    // hesap makinesine özel guard'ın DIŞINDA, her sayfada çalışıyor. istatistikleriGoster() zaten
-    // 'footer-istatistikler' elementi yoksa sessizce çıkıyor.
-    istatistikleriYukle();
+    // Ağır istatistik sorgusu ve grafik, kullanıcı footer'a yaklaşana kadar ana
+    // sayfa açılışındaki işler ve kaynak indirmeleriyle yarışmasın.
+    const istatistikAlani = document.getElementById('footer-istatistikler');
+    if (istatistikAlani) {
+        let baslatildi = false;
+        const baslat = () => {
+            if (baslatildi) return;
+            baslatildi = true;
+            istatistikleriYukle();
+        };
+        if ('IntersectionObserver' in window) {
+            const gozlemci = new IntersectionObserver((kayitlar) => {
+                if (!kayitlar.some(kayit => kayit.isIntersecting)) return;
+                gozlemci.disconnect();
+                baslat();
+            }, { rootMargin: '400px 0px' });
+            gozlemci.observe(istatistikAlani);
+        } else if ('requestIdleCallback' in window) {
+            requestIdleCallback(baslat, { timeout: 2000 });
+        } else {
+            setTimeout(baslat, 600);
+        }
+    }
 
     // Aşağıdaki başlatma kodu (form toggle'ları, AGNO dersleri, Ders Verileri sekmesi vb.)
     // SADECE hesap makinesi sekmelerinin bulunduğu sayfalarda gerekli. index.html (artık sadece

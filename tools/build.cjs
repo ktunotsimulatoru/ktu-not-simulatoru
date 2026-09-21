@@ -1,6 +1,7 @@
 const esbuild = require('esbuild');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { renderPage } = require('./templates.cjs');
 const { verifyFiles } = require('./verify-dist.cjs');
 const root = path.resolve(__dirname, '..');
@@ -16,6 +17,30 @@ function collect(directory, prefix = '') {
         } else files.set(name, fs.readFileSync(path.join(directory, entry.name)));
     }
     return files;
+}
+
+function contentHash(data) {
+    return crypto.createHash('sha256').update(data).digest('hex').slice(0, 12);
+}
+
+function versionHtmlAssets(files) {
+    const versions = new Map();
+    for (const [name, data] of files) {
+        if (/\.(?:js|css)$/i.test(name)) versions.set(name, contentHash(data));
+    }
+    for (const [name, data] of files) {
+        if (!name.endsWith('.html')) continue;
+        const html = data.toString().replace(/\b(src|href)=(['"])([^'"?#]+\.(?:js|css))\2/gi,
+            (match, attr, quote, url) => {
+                if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(url)) return match;
+                const target = path.posix.normalize(url.startsWith('/')
+                    ? url.slice(1)
+                    : path.posix.join(path.posix.dirname(name), url));
+                const version = versions.get(target);
+                return version ? `${attr}=${quote}${url}?v=${version}${quote}` : match;
+            });
+        files.set(name, Buffer.from(html));
+    }
 }
 async function main() {
     const files = collect(path.join(root, 'public'));
@@ -48,19 +73,24 @@ async function main() {
         });
         add(output, result.code);
     }
-    const bundle = await esbuild.build({
-        absWorkingDir: root, entryPoints: [path.join(root, 'src/scripts/app.mjs')], bundle: true,
-        format: 'iife', write: false, minify: true, target: 'es2020', charset: 'utf8', legalComments: 'none'
-    });
-    add('script.min.js', bundle.outputFiles[0].contents);
+    const vendorOutputs = new Map();
     for (const [entry, output] of [
         ['src/scripts/vendor-supabase.mjs', 'vendor-supabase.js'],
         ['src/scripts/vendor-chart.mjs', 'vendor-chart.js']
     ]) {
         const vendor = await esbuild.build({ absWorkingDir: root, entryPoints: [path.join(root, entry)], bundle: true,
             format: 'iife', write: false, minify: true, target: 'es2020', charset: 'utf8', legalComments: 'none' });
+        vendorOutputs.set(output, vendor.outputFiles[0].contents);
         add(output, vendor.outputFiles[0].contents);
     }
+    const chartUrl = `vendor-chart.js?v=${contentHash(vendorOutputs.get('vendor-chart.js'))}`;
+    const bundle = await esbuild.build({
+        absWorkingDir: root, entryPoints: [path.join(root, 'src/scripts/app.mjs')], bundle: true,
+        format: 'iife', write: false, minify: true, target: 'es2020', charset: 'utf8', legalComments: 'none',
+        define: { __NK_CHART_URL__: JSON.stringify(chartUrl) }
+    });
+    add('script.min.js', bundle.outputFiles[0].contents);
+    versionHtmlAssets(files);
     verifyFiles(files);
     // Yalnızca bu projenin ürettiği dist klasörü yeniden oluşturulabilir.
     if (path.dirname(dist) !== root || path.basename(dist) !== 'dist') throw new Error('Güvensiz çıktı yolu');

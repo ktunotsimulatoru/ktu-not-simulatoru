@@ -12,6 +12,15 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /panel-mtas-7f5t.html
   Cache-Control: private, no-store
   X-Robots-Tag: noindex, nofollow, noarchive

@@ -1,6 +1,20 @@
 import { getSupabase } from './api.mjs';
 import { sbOnbellekOku, sbOnbellekYaz } from './cache.mjs';
 
+let grafikKutuphaneSozu = null;
+function grafikKutuphaneYukle() {
+    if (window.Chart) return Promise.resolve(window.Chart);
+    if (grafikKutuphaneSozu) return grafikKutuphaneSozu;
+    grafikKutuphaneSozu = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = typeof __NK_CHART_URL__ === 'string' ? __NK_CHART_URL__ : 'vendor-chart.js';
+        script.async = true;
+        script.onload = () => window.Chart ? resolve(window.Chart) : reject(new Error('Grafik kütüphanesi başlatılamadı.'));
+        script.onerror = () => reject(new Error('Grafik kütüphanesi yüklenemedi.'));
+        document.head.appendChild(script);
+    });
+    return grafikKutuphaneSozu;
+}
 
 async function sayfaGoruntulemeLogKaydet() {
     try {
@@ -243,11 +257,14 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
     `;
 
     if (grafikEtiketler.length > 0) {
-        setTimeout(() => {
+        setTimeout(async () => {
             const canvas = document.getElementById('harfDagilimChart');
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            new Chart(ctx, {
+            try {
+                const Chart = await grafikKutuphaneYukle();
+                if (!canvas.isConnected) return;
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: grafikEtiketler,
@@ -277,7 +294,10 @@ function istatistikleriGoster(toplam, sekmeler, topHarfler, topVize, topFinal, h
                         }
                     }
                 }
-            });
+                });
+            } catch (e) {
+                console.error('Grafik yükleme hatası:', e);
+            }
         }, 100);
     }
 }
