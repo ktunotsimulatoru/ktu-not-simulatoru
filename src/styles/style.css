@@ -125,19 +125,16 @@ html { background-color: var(--bg-color); scroll-behavior: smooth; }
 body {
     font-family: 'Poppins', sans-serif; line-height: 1.6; margin: 0; padding: 0;
     color: var(--text-color); background-color: var(--bg-color);
-    animation: sayfaGirisFadeIn 0.18s ease;
 }
-/* Sayfa geçişlerini yumuşatma — bkz. script.js'teki sayfaGecisiUygula(). Bir sayfa-içi linke
-   tıklandığında 'sayfa-cikis' sınıfı eklenip kısa bir fade-out oluyor, gerçek navigasyon
-   ONDAN SONRA gerçekleşiyor; yeni sayfa da açılışta yukarıdaki animasyonla saydamlıktan
-   görünür hale geliyor. Sonuç: sert bir "kesme" yerine yumuşak bir crossfade hissi. */
-@keyframes sayfaGirisFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-body.sayfa-cikis {
-    opacity: 0 !important;
-    transition: opacity 0.14s ease;
+/* Destekleyen tarayıcılarda gerçek çoklu sayfa navigasyonunu geciktirmeden
+   kısa bir yerleşik geçiş kullan. Desteklemeyenlerde normal, anlık navigasyon olur. */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: 0.12s ease-out both nk-sayfa-eski; }
+::view-transition-new(root) { animation: 0.16s ease-out both nk-sayfa-yeni; }
+@keyframes nk-sayfa-eski { to { opacity: 0.88; } }
+@keyframes nk-sayfa-yeni { from { opacity: 0.88; } }
+@media (prefers-reduced-motion:reduce) {
+    ::view-transition-old(root),::view-transition-new(root) { animation:none; }
 }
 /* Not: Sayfa arka planındaki büyük KTÜ Not Simülatörü logosu (body::before,
    ktulogo.png/ktulogo-dark.png) KALDIRILDI — sayfa geçişlerindeki fade
@@ -230,6 +227,18 @@ body.sayfa-cikis {
 }
 .hesap-buton:active { transform: scale(0.97); }
 .hesap-buton-metin { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Oturum henüz okunurken yanlış "Giriş Yap" durumunu göstermeyen, genişliği
+   koruyan kısa bir iskelet. theme-boot.js bu sınıfı ilk boyamadan önce ekler. */
+html.hs-auth-bekleniyor .hesap-buton {
+    min-width: 104px; pointer-events: none; cursor: wait;
+    background: var(--tab-bg); border: 1px solid var(--input-border); color: transparent;
+}
+html.hs-auth-bekleniyor .hesap-buton > span { visibility: hidden; }
+html.hs-auth-bekleniyor .hesap-buton::after {
+    content: ''; width: 70px; height: 12px; border-radius: 999px;
+    background: linear-gradient(100deg,var(--input-border) 30%,var(--result-bg) 50%,var(--input-border) 70%);
+    background-size: 220% 100%; animation: nk-dosya-parilti 1.15s ease-in-out infinite;
+}
 /* Giriş yapılmamış durum: vurgulu, mavi CTA */
 .hesap-buton.hb-cikis-yapilmis {
     background: var(--button-bg);
@@ -1239,6 +1248,8 @@ main { margin-top: 1.5rem; }
     .header-actions { gap: 6px; }
     .hesap-buton { font-size: 0.76em; padding: 5px 9px; max-width: 40px; }
     .hesap-buton-metin { display: none; }
+    html.hs-auth-bekleniyor .hesap-buton { min-width: 36px; }
+    html.hs-auth-bekleniyor .hesap-buton::after { width: 16px; height: 16px; }
 
     .degisiklik-kart { margin: 1rem 10px 0 10px; padding: 13px 14px; font-size: 0.85em; }
 

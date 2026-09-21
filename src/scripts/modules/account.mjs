@@ -22,6 +22,7 @@ import { hsGaleriKaydet } from './gallery.mjs';
 // =============================================================
 
 const HS_EPOSTA_REGEX = /^[^\s@]+@ogr\.ktu\.edu\.tr$/i;
+const HS_PROFIL_CACHE_KEY = 'ktu-hesap-profili-v1';
 
 let hsBekleyenKayitEposta = '';
 
@@ -34,6 +35,27 @@ let hsMevcutProfil = null;
 let hsModalEnjekteEdildiMi = false;
 let hsDuzeltmeHedefleri = new Map();
 let hsAktifDuzeltme = null;
+let hsOturumSurumu = 0;
+
+function hsProfilOnbelleginiOku(kullaniciId) {
+    try {
+        const kayit = JSON.parse(localStorage.getItem(HS_PROFIL_CACHE_KEY) || 'null');
+        return kayit?.kullanici_id === kullaniciId && typeof kayit.profil === 'object' ? kayit.profil : null;
+    } catch { return null; }
+}
+
+function hsProfilOnbelleginiYaz() {
+    try {
+        if (hsMevcutOturum && hsMevcutProfil) localStorage.setItem(HS_PROFIL_CACHE_KEY, JSON.stringify({ kullanici_id: hsMevcutOturum.id, profil: hsMevcutProfil }));
+        else localStorage.removeItem(HS_PROFIL_CACHE_KEY);
+    } catch { /* Gizli mod veya kapalı depolama hesabı engellemez. */ }
+}
+
+function hsAuthBeklemesiniBitir() {
+    document.documentElement.classList.remove('hs-auth-bekleniyor');
+    const btn = document.getElementById('hesapButonu');
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+}
 
 
 function hsSonucGoster(elId, mesaj, hataMi) {
@@ -53,16 +75,32 @@ function hsSonucGoster(elId, mesaj, hataMi) {
 // diğer dosyaların dinleyebileceği bir event yayınlar.
 // -------------------------------------------------------------
 async function hsOturumDegistiHandler(_event, session) {
+    const surum = ++hsOturumSurumu;
     if (session && session.user && HS_EPOSTA_REGEX.test(session.user.email || '')) {
         hsMevcutOturum = { id: session.user.id, email: session.user.email };
+        hsMevcutProfil = hsProfilOnbelleginiOku(hsMevcutOturum.id);
+        // Oturum tarayıcıda yerel olarak hazırdır. Profil ağ sorgusunu beklemeden
+        // header'ı ve üyeye özel ana görünümü doğru duruma getir.
+        hsHeaderButonuGuncelle();
+        hsAuthBeklemesiniBitir();
+        window.dispatchEvent(new CustomEvent('hesapDurumuDegisti', { detail: { oturum: hsMevcutOturum, profil: hsMevcutProfil } }));
+
         // Kullanıcı adını profil sayfası açılmasa da yükle; oyun ve ilerideki
         // topluluk özellikleri aynı genel profil kimliğini kullanır.
+        const oncekiAd = hsMevcutProfil?.kullanici_adi || null;
         try {
             const { data } = await getSupabase().from('kullanici_profilleri')
                 .select('kullanici_adi, en_yuksek_skor').eq('id', hsMevcutOturum.id).maybeSingle();
+            if (surum !== hsOturumSurumu || hsMevcutOturum?.id !== session.user.id) return;
             hsMevcutProfil = data || null;
+            hsProfilOnbelleginiYaz();
         } catch (e) {
-            hsMevcutProfil = null;
+            // Ağ geçici olarak yoksa önceki sayfadan kalan güvenli profil
+            // önizlemesini koru; oturum ve yetki yine Supabase tarafından belirlenir.
+        }
+        hsHeaderButonuGuncelle();
+        if (oncekiAd !== (hsMevcutProfil?.kullanici_adi || null)) {
+            window.dispatchEvent(new CustomEvent('kullaniciAdiDegisti', { detail: { kullanici_adi: hsMevcutProfil?.kullanici_adi || null } }));
         }
     } else {
         if (session) {
@@ -71,10 +109,12 @@ async function hsOturumDegistiHandler(_event, session) {
         }
         hsMevcutOturum = null;
         hsMevcutProfil = null;
+        hsProfilOnbelleginiYaz();
+        hsHeaderButonuGuncelle();
+        hsAuthBeklemesiniBitir();
+        window.dispatchEvent(new CustomEvent('hesapDurumuDegisti', { detail: { oturum: null, profil: null } }));
     }
-    hsHeaderButonuGuncelle();
     hsProfilSayfasiBaslat();
-    window.dispatchEvent(new CustomEvent('hesapDurumuDegisti', { detail: { oturum: hsMevcutOturum, profil: hsMevcutProfil } }));
 }
 
 
@@ -662,6 +702,8 @@ async function hsKullaniciAdiFormSubmit(e) {
             return;
         }
         hsMevcutProfil = { ...(hsMevcutProfil || {}), kullanici_adi: data.kullanici_adi };
+        hsProfilOnbelleginiYaz();
+        hsHeaderButonuGuncelle();
         hsSonucGoster('hs-kullanici-adi-sonuc', 'Kullanıcı adın kaydedildi: ' + data.kullanici_adi, false);
         const gorunenAd = document.getElementById('hs-profil-kullanici-adi');
         if (gorunenAd) gorunenAd.textContent = data.kullanici_adi;
@@ -675,7 +717,7 @@ async function hsKullaniciAdiFormSubmit(e) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('hesapButonu');
-    if (btn) hsHeaderButonuGuncelle();
+    if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
     getSupabase().auth.onAuthStateChange((event, session) => hsOturumDegistiHandler(event, session));
 });
 function hsProfilAta(profil) { hsMevcutProfil = profil; }
