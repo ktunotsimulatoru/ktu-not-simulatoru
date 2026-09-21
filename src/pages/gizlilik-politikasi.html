@@ -71,7 +71,7 @@
             <h3>3.1. KTÜ Üye Hesabı (isteğe bağlı)</h3>
             <p>Üye hesabı açarsanız KTÜ öğrenci e-posta adresiniz, kimlik doğrulama bilgileri, isteğe bağlı kullanıcı adınız ve en yüksek oyun skorunuz Supabase altyapısında tutulur. Kullanıcı adı liderlik tablosunda ve hesabınıza bağlı topluluk özelliklerinde herkese açık görünebilir. E-posta doğrulama ve şifre sıfırlama kodları yalnızca bu işlemler için gönderilir.</p>
             <ul>
-                <li>Şifreniz uygulama veritabanında düz metin olarak tutulmaz; kimlik doğrulama Supabase Auth tarafından yürütülür.</li>
+                <li>Şifreniz uygulama veritabanında veya tarayıcıda düz metin olarak tutulmaz; kimlik doğrulama Supabase Auth tarafından yürütülür ve yalnızca şifrenin tek yönlü özeti saklanır.</li>
                 <li>Üyelik için yalnızca <strong>@ogr.ktu.edu.tr</strong> uzantılı adresler kabul edilir.</li>
                 <li>Gerçek isim ve telefon numarası istenmez.</li>
             </ul>
@@ -107,9 +107,10 @@
                 <li>Kapattığınız duyurular,</li>
                 <li>Yanıtladığınız veya kapattığınız anketler,</li>
                 <li>"Not Yakala" oyununda cihazınızdaki en yüksek skor.</li>
+                <li>Girişte “Beni hatırla” seçilirse Supabase erişim ve yenileme oturum belirteçleri.</li>
             </ul>
             <div class="legal-not-kutu">
-                <strong>Üyelik oturumu hakkında:</strong> Giriş yaptığınızda Supabase oturum bilgisi, tekrar giriş yapmadan kullanabilmeniz için tarayıcınızda saklanabilir. Şifreniz bu oturum bilgisinin içinde yer almaz. "Çıkış" yaptığınızda yerel oturum ve tarayıcıda açılmış özel dosya kopyaları temizlenir. Paylaşımlı bir bilgisayarda işiniz bitince çıkış yapın.
+                <strong>Üyelik oturumu hakkında:</strong> “Beni hatırla” seçilirse Supabase oturum belirteçleri tekrar giriş yapmadan kullanabilmeniz için cihazınızın yerel deposunda tutulur. Seçenek kapatılırsa oturum yalnızca açık sekmenin geçici deposunda kalır ve sekme kapatıldığında silinir. Şifreniz bu oturum bilgisinin içinde yer almaz. "Çıkış" yaptığınızda her iki depodaki oturum ve tarayıcıda açılmış özel dosya kopyaları temizlenir. Paylaşımlı bir bilgisayarda seçeneği kapatın ve işiniz bitince çıkış yapın.
             </div>
 
             <h2>8. Verileri Hangi Amaçla İşliyoruz?</h2>
@@ -129,7 +130,7 @@
             <ul>
                 <li><strong>Supabase</strong> — üyelik, kimlik doğrulama ve uygulama verilerinin saklandığı altyapı sağlayıcısı.</li>
                 <li><strong>Cloudflare Workers ve R2</strong> — Not Kutusu dosyalarının yetkili yükleme, indirme ve saklama altyapısı.</li>
-                <li><strong>GitHub Pages</strong> — sitenin statik HTML, CSS, JavaScript, font ve görsel dosyalarını sunan barındırma altyapısı.</li>
+                <li><strong>Cloudflare Pages</strong> — sitenin statik HTML, CSS, JavaScript, font ve görsel dosyalarını sunan barındırma altyapısı.</li>
             </ul>
             <p>Chart.js ve Supabase tarayıcı kitaplığı site paketinin içinden sunulur; ayrı bir JavaScript CDN'ine bağlanılmaz. Altyapı sağlayıcıları standart teknik erişim kayıtlarını kendi koşulları kapsamında işleyebilir. Verileriniz pazarlama amacıyla satılmaz veya kiralanmaz.</p>
 

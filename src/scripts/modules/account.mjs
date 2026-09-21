@@ -1,4 +1,4 @@
-import { getSupabase, hsElementPdfMi, NK_ELEMENT_WORKER_URL } from './api.mjs';
+import { getSupabase, hsElementPdfMi, NK_ELEMENT_WORKER_URL, hsBeniHatirlaSeciliMi, hsOturumKaliciliginiAyarla } from './api.mjs';
 import { escHtml } from './dom.mjs';
 import { hsGaleriKaydet } from './gallery.mjs';
 
@@ -179,12 +179,13 @@ function hsModallariEnjekteEt() {
                         <form id="hs-giris-form" novalidate>
                             <div class="form-group">
                                 <label for="hs-giris-eposta">KTÜ Öğrenci E-postan:</label>
-                                <input type="email" id="hs-giris-eposta" placeholder="ornek@ogr.ktu.edu.tr" required>
+                                <input type="email" id="hs-giris-eposta" placeholder="ornek@ogr.ktu.edu.tr" autocomplete="username" required>
                             </div>
                             <div class="form-group">
                                 <label for="hs-giris-sifre">Şifre:</label>
-                                <input type="password" id="hs-giris-sifre" required>
+                                <input type="password" id="hs-giris-sifre" autocomplete="current-password" required>
                             </div>
+                            <label class="hs-beni-hatirla"><input type="checkbox" id="hs-beni-hatirla" checked><span><strong>Beni hatırla</strong><small>Bu cihazda oturumum açık kalsın.</small></span></label>
                             <button type="submit">Giriş Yap</button>
                             <p style="text-align:center; margin-top:0.75rem;">
                                 <a href="#" class="nk-geri-link" data-nk-click="hsAuthGoster" data-nk-click-arg0="sifirlama" data-nk-click-arg1="@event" data-nk-click-prevent="true">Şifremi unuttum</a>
@@ -202,12 +203,12 @@ function hsModallariEnjekteEt() {
                             </div>
                             <div class="form-group">
                                 <label for="hs-kayit-sifre">Şifre:</label>
-                                <input type="password" id="hs-kayit-sifre" minlength="6" required>
-                                <small>En az 6 karakter.</small>
+                                <input type="password" id="hs-kayit-sifre" minlength="8" autocomplete="new-password" required>
+                                <small>En az 8 karakter; başka sitelerde kullanmadığın bir şifre seç.</small>
                             </div>
                             <div class="form-group">
                                 <label for="hs-kayit-sifre-tekrar">Şifre (Tekrar):</label>
-                                <input type="password" id="hs-kayit-sifre-tekrar" minlength="6" required>
+                                <input type="password" id="hs-kayit-sifre-tekrar" minlength="8" autocomplete="new-password" required>
                             </div>
                             <button type="submit">Kayıt Ol</button>
                         </form>
@@ -242,7 +243,7 @@ function hsModallariEnjekteEt() {
                             </div>
                             <div class="form-group">
                                 <label for="hs-sifirlama-yeni-sifre">Yeni Şifre:</label>
-                                <input type="password" id="hs-sifirlama-yeni-sifre" minlength="6" required>
+                                <input type="password" id="hs-sifirlama-yeni-sifre" minlength="8" autocomplete="new-password" required>
                             </div>
                             <button type="submit">Şifreyi Güncelle</button>
                         </form>
@@ -267,6 +268,8 @@ function hsModallariEnjekteEt() {
         const form = document.getElementById(id);
         if (form) form.addEventListener('submit', handler);
     });
+    const beniHatirla = document.getElementById('hs-beni-hatirla');
+    if (beniHatirla) beniHatirla.checked = hsBeniHatirlaSeciliMi();
 }
 
 
@@ -306,6 +309,7 @@ async function hsGirisFormSubmit(e) {
     const btn = e.target.querySelector('button[type="submit"]');
     const eposta = document.getElementById('hs-giris-eposta').value.trim().toLowerCase();
     const sifre = document.getElementById('hs-giris-sifre').value;
+    const beniHatirla = document.getElementById('hs-beni-hatirla')?.checked !== false;
 
     if (!HS_EPOSTA_REGEX.test(eposta)) {
         hsSonucGoster('hs-giris-sonuc', 'Lütfen geçerli bir @ogr.ktu.edu.tr adresi gir.', true);
@@ -316,6 +320,7 @@ async function hsGirisFormSubmit(e) {
     const eskiMetin = btn.textContent;
     btn.textContent = 'Giriş yapılıyor...';
     try {
+        hsOturumKaliciliginiAyarla(beniHatirla);
         const { data, error } = await getSupabase().auth.signInWithPassword({ email: eposta, password: sifre });
         if (error) {
             const mesaj = /email not confirmed/i.test(error.message)
@@ -344,8 +349,8 @@ async function hsKayitFormSubmit(e) {
         hsSonucGoster('hs-kayit-sonuc', 'Lütfen geçerli bir @ogr.ktu.edu.tr adresi gir.', true);
         return;
     }
-    if (sifre.length < 6) {
-        hsSonucGoster('hs-kayit-sonuc', 'Şifre en az 6 karakter olmalıdır.', true);
+    if (sifre.length < 8) {
+        hsSonucGoster('hs-kayit-sonuc', 'Şifre en az 8 karakter olmalıdır.', true);
         return;
     }
     if (sifre !== sifreTekrar) {
@@ -462,8 +467,8 @@ async function hsSifirlamaKodFormSubmit(e) {
         hsSonucGoster('hs-sifirlama-sonuc', 'Kod 6-8 haneli bir sayı olmalıdır.', true);
         return;
     }
-    if (yeniSifre.length < 6) {
-        hsSonucGoster('hs-sifirlama-sonuc', 'Yeni şifre en az 6 karakter olmalıdır.', true);
+    if (yeniSifre.length < 8) {
+        hsSonucGoster('hs-sifirlama-sonuc', 'Yeni şifre en az 8 karakter olmalıdır.', true);
         return;
     }
 
