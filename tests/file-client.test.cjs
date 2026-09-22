@@ -36,3 +36,21 @@ test('Özel dosya açma: token sadece başlıkta; yabancı URL reddi ve çıkı�
     await window.NKDosyaErisim.ac(url);assert.equal(calls[1].options.headers['X-Admin-Token'],'secret-admin-token');
     assert.equal(sessionCalls,1);
 });
+test('Dosya indirme açık kullanıcı onayı ister ve kimlikli blob bağlantısı üretir',async()=>{
+    const calls=[],links=[];let accepted=false;
+    const url='https://not-kutusu.elements0.workers.dev/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.pdf';
+    class LocalURL extends URL {static createObjectURL(){return 'blob:download-test';}static revokeObjectURL(){}}
+    const context=vm.createContext({window:{getSupabase:()=>({auth:{getSession:async()=>({data:{session:{access_token:'test-token'}}})}}),addEventListener(){}},
+        URL:LocalURL,AbortController,console,setTimeout:()=>{},alert:()=>{},confirm:()=>accepted,
+        NKDosya:require('../src/scripts/dosya-guvenligi.js'),IntersectionObserver:class {observe(){} unobserve(){}},MutationObserver:class {observe(){}},
+        document:{addEventListener(){},querySelectorAll:()=>[],body:{appendChild(link){links.push(link);}},createElement:()=>({click(){this.clicked=true;},remove(){this.removed=true;}})},
+        fetch:async(value,options)=>{calls.push({value,options});return {ok:true,blob:async()=>new Blob(['%PDF-1.7'])};}});
+    vm.runInContext(fs.readFileSync('src/scripts/dosya-erisim.js','utf8'),context);
+    await context.window.NKDosyaErisim.indir(url);
+    assert.equal(calls.length,0);
+    accepted=true;
+    await context.window.NKDosyaErisim.indir(url);
+    assert.equal(calls.length,1);assert.equal(calls[0].options.headers.Authorization,'Bearer test-token');
+    assert.equal(links[0].href,'blob:download-test');assert.equal(links[0].download,'22222222-2222-4222-8222-222222222222.pdf');
+    assert.equal(links[0].clicked,true);assert.equal(links[0].removed,true);
+});

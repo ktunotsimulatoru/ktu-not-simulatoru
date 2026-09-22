@@ -4,9 +4,9 @@
 
 Onaylı dosyaları yalnızca e-postası doğrulanmış, engellenmemiş KTÜ öğrenci hesabı okuyabilir. Bekleyen ve reddedilmiş dosyaları sahibi veya mevcut yönetici oturumuyla yönetici okuyabilir. Silinmiş, süresi dolmuş ve soruya bağlanmamış dosyalar okunamaz. Kontrol her istekte Worker ve veritabanında yapılır; dosya adresini bilmek yetmez. Token URL'ye eklenmez, yanıtlar `private, no-store` taşır.
 
-Üye başına **100 MiB (arayüzde MB), 100 dosya, kayan son 24 saatte 30 yükleme** sınırı vardır. Dosya başına 5 MiB ve soru başına en fazla 3 farklı ek korunur. Başarısız/iptal edilmiş rezervasyonlar günlük sayaca dahildir; silip tekrar yükleyerek günlük sınır aşılamaz. Eski dosyalar ve eski sahipsiz dosya temizliği günlük yeni yükleme sayılmaz. Kota değerlerinin tek kaynağı `nk_dosya_ayarlari` tablosudur.
+Üye başına **100 MiB (arayüzde MB), 100 dosya, kayan son 24 saatte 30 yükleme** sınırı vardır. Dosya başına 5 MiB ve paylaşım başına en fazla 5 farklı ek korunur. Başarısız/iptal edilmiş rezervasyonlar günlük sayaca dahildir; silip tekrar yükleyerek günlük sınır aşılamaz. Eski dosyalar ve eski sahipsiz dosya temizliği günlük yeni yükleme sayılmaz. Kota değerlerinin tek kaynağı `nk_dosya_ayarlari` tablosudur.
 
-Akış: dosya içeriği ve JWT kontrolü → kullanıcıya özel veritabanı kilidiyle kota rezervasyonu → R2 PUT ve HEAD doğrulaması → `ready` kaydı → soru INSERT tetikleyicisiyle tek soruya bağlama (`attached`). Tarayıcı veritabanına sahte dosya yolu yazarak bu süreci atlayamaz. Nesnenin boyutu, MIME türü ve ETag bilgisi kaydedilir; sonraki okumada eşleşmeyen nesne servis edilmez.
+Akış: dosya içeriği ve JWT kontrolü → harici zararlı yazılım taraması → yalnızca kesin `clean` sonucunda kullanıcıya özel veritabanı kilidiyle kota rezervasyonu → R2 PUT ve HEAD doğrulaması → `ready` kaydı → paylaşım INSERT tetikleyicisiyle tek paylaşıma bağlama (`attached`). Tarama yapılandırılmamışsa, zaman aşımına uğrarsa veya belirsiz sonuç verirse dosya R2'ye yazılmadan yükleme reddedilir. Tarayıcı veritabanına sahte dosya yolu yazarak bu süreci atlayamaz. Nesnenin boyutu, MIME türü ve ETag bilgisi kaydedilir; sonraki okumada eşleşmeyen nesne servis edilmez.
 
 Dosyalar 1 saat içinde soruya bağlanmazsa temizliğe alınır. İstemci hata aldığında önceden yüklenen ekler için iptal ister; yanıtı kaybolmuş başarılı soru kaydının bağlı ekleri iptal edilmez. İptal isteği de başarısız olursa süre sonu temizliği devreye girer.
 
@@ -28,25 +28,31 @@ Bu değişiklik site, Worker ve veritabanının birlikte güncellenmesini gerekt
 
 1. Supabase yedeğini ve mevcut site/Worker sürümünü saklayın. SQL'i önce test projesinde deneyin. `001_not_kutusu_guvenlik.sql` zaten uygulanmış olmalı; yeniden çalıştırmak gerekmez.
 2. R2 bucket'ının **public r2.dev erişimini ve doğrudan public custom domain erişimini kapatın**. Dosyalara tek erişim yolu bu Worker olmalı. Harici açık bucket adresi varsa Worker kontrolü onu korumaz.
-3. Worker için Supabase'in legacy **service_role API anahtarını** `SUPABASE_SERVICE_ROLE_KEY` secret adıyla ekleyin. Anahtarı kaynak dosyaya, `wrangler.toml` vars bölümüne, tarayıcıya veya sohbet mesajına koymayın. Mevcut ES256 doğrulaması için `SUPABASE_JWT_SECRET` gerekmez; yalnızca eski HS256 token desteği için mevcutsa korunur.
+3. Worker için Supabase'in legacy **service_role API anahtarını** `SUPABASE_SERVICE_ROLE_KEY` secret adıyla ekleyin. Tarama hizmeti için `MALWARE_SCAN_PROVIDER` ve `MALWARE_SCAN_TOKEN` secret'larını ekleyin. `cloudmersive` seçimi yerleşik adaptörü kullanır. `generic` seçiminde ayrıca ham dosya kabul eden HTTPS adresini `MALWARE_SCAN_URL` olarak ekleyin; bu uç nokta `Authorization: Bearer`, gerçek MIME ve `X-Content-SHA256` almalı, JSON olarak `clean`, `malicious` veya `suspicious` kararı döndürmelidir. Anahtarları kaynak dosyaya, `wrangler.toml` vars bölümüne, tarayıcıya veya sohbet mesajına koymayın. Sağlayıcının adı, saklama bölgesi ve koşulları gizlilik metnine yazılmadan canlı dosya yüklemeyi açmayın.
 4. Bakım aralığında yeni Worker'ı yayımlayın; migration hazır değilse API güvenli biçimde 503 döner. Ardından Supabase SQL Editor'da yalnızca `migrations/002_dosya_yasam_dongusu.sql` çalıştırın ve sondaki geçiş raporunu inceleyin. Eski açık Worker sürümünü bu aralıkta erişimde bırakmayın.
 5. `release/site.zip` içeriğini statik siteye yayımlayın. Bu pakette yeni dosya istemcisi ve yönetici depolama ekranı vardır. Kaynak `src` veya migration dosyalarını siteye yüklemeyin.
 6. Cloudflare Worker cron tetikleyicisinin `*/10 * * * *` olarak kurulduğunu ve başarılı çalıştığını kontrol edin. Eski public dosya yanıtlarını tutan CDN önbelleğini temizleyin; eski sürüm tarayıcılara 1 saatlik cache verdiğinden önceden indirilmiş/önbelleğe alınmış kopyalar uzaktan geri alınamaz.
-7. Aşağıdaki canlı kabul kontrollerini yapın. Sorun varsa eski herkese açık Worker'a dönmeyin; dosya API'sini kapalı tutup düzeltin. DB migrationını kaldırmak yükleme güvencelerini kaldırır; geri dönüş ayrı planlanmalıdır.
+7. Tarama altyapısından önce R2'ye yazılmış dosyalar otomatik olarak geriye dönük taranmış sayılmaz. Bu dosyalar için ayrı bir envanter ve yeniden tarama çalışması tamamlanana kadar kullanıcı uyarısını kaldırmayın.
+8. Aşağıdaki canlı kabul kontrollerini yapın. Sorun varsa eski herkese açık Worker'a dönmeyin; dosya API'sini kapalı tutup düzeltin. DB migrationını kaldırmak yükleme güvencelerini kaldırır; geri dönüş ayrı planlanmalıdır.
 
 Worker klasöründe kullanılacak komutlar (sır etkileşimli girilir):
 
 ```powershell
 wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+wrangler secret put MALWARE_SCAN_PROVIDER
+wrangler secret put MALWARE_SCAN_URL
+wrangler secret put MALWARE_SCAN_TOKEN
 wrangler deploy
 ```
+
+`MALWARE_SCAN_PROVIDER=cloudmersive` kullanıldığında `MALWARE_SCAN_URL` komutunu atlayın. `generic` kullanıldığında üç tarama secret'ı da gerekir.
 
 `worker.zip` sadece Worker kodu ve wrangler yapılandırmasını taşır; secret'ı içermez. Canlı secret ekleme, migration uygulama veya dağıtım bu çalışma sırasında yapılmadı.
 
 ## Canlı kabul kontrolleri
 
 - İki farklı doğrulanmış test hesabı kullanın. A'nın bekleyen dosyasını A ve yönetici açabilmeli, B açamamalı. Onay sonrasında B açabilmeli. Oturumsuz doğrudan URL 401 vermeli.
-- 1–3 ekli soru yükleyin. `nk_dosyalar` kayıtları `attached` olmalı. Bir dosyanın yolunu ikinci soruda kullanma girişimi reddedilmeli.
+- 1–5 ekli paylaşım yükleyin. `nk_dosyalar` kayıtları `attached` olmalı; altıncı ek reddedilmeli. Bir dosyanın yolunu ikinci paylaşımda kullanma girişimi reddedilmeli.
 - Kaydı tamamlanmayan yükleme, süresi dolduktan sonra temizlenmeli. Soru silindikten sonra URL hemen kapanmalı, sonraki cron turlarında R2 nesnesi silinmeli ve kota azalmalı.
 - `anon` ve `authenticated` rolleri `nk_dosyalar` tablosunu veya `nk_dosya_islem` RPC'sini doğrudan kullanamamalı. Admin token'ı geçersizken envanter ve bekleyen dosya erişimi reddedilmeli.
 - Yönetici envanterini önce okuyun. Bağlı soru eklerinin temizleme adayı olmadığını doğrulayın. Temizlik için yalnızca geri alınmasına gerek olmayan test dosyasını seçin.

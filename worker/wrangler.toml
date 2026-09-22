@@ -20,3 +20,9 @@ crons = ["*/10 * * * *"]
 
 # Worker-only secret: wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 # Legacy Supabase service_role API anahtarı. Tarayıcıya veya vars'a yazılmaz.
+# Zorunlu antivirüs bağlantısı:
+#   wrangler secret put MALWARE_SCAN_PROVIDER
+#   wrangler secret put MALWARE_SCAN_URL
+#   wrangler secret put MALWARE_SCAN_TOKEN
+# cloudmersive seçiminde URL kullanılmaz; generic seçiminde URL zorunludur.
+# Tarayıcı kesin "clean" sonucu vermeden dosya R2'ye yazılmaz.

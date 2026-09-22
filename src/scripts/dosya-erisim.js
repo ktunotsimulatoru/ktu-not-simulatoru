@@ -106,7 +106,26 @@
             else alert(error.message);
         }
     }
+    async function indir(value) {
+        const kabul = confirm('Yeni yüklemeler otomatik zararlı yazılım taramasından geçirilir; tarama sistemi kurulmadan önce paylaşılmış eski dosyalar bu denetimden geçmemiş olabilir. Hiçbir tarama yüzde 100 güvence vermez. Dosyayı indirmek ve cihazında açmak kendi sorumluluğundadır. Devam edilsin mi?');
+        if (!kabul) return;
+        let objectUrl;
+        try {
+            const guvenli = guvenliUrl(value);
+            objectUrl = await getir(guvenli);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = decodeURIComponent(new URL(guvenli).pathname.split('/').pop()) || 'not-kutusu-dosyasi';
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => birak(objectUrl), 60 * 1000);
+        } catch (error) { if (objectUrl) birak(objectUrl); alert(error.message); }
+    }
     document.addEventListener('click', event => {
+        const download = event.target.closest('[data-nk-download]');
+        if (download) { event.preventDefault(); indir(download.dataset.nkDownload); return; }
         const link = event.target.closest('a[data-nk-url]');
         if (!link) return;
         event.preventDefault();
@@ -121,5 +140,5 @@
         new MutationObserver(tara).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-nk-url'] });
         tara();
     });
-    window.NKDosyaErisim = { ac, temizle, basliklar, ayarla: options => { temizle(); adminToken = options.adminToken || null; } };
+    window.NKDosyaErisim = { ac, indir, temizle, basliklar, ayarla: options => { temizle(); adminToken = options.adminToken || null; } };
 })();

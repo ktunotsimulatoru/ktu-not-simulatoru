@@ -86,6 +86,10 @@
             <p>Giriş yapmışken kapattığın duyuruların tekrar gösterilmemesi için duyuru kimliği hesabına bağlı bir tercih olarak saklanır. Duyuruyu kapatma tarihi ve duyuru kimliği dışında bir etkileşim içeriği kaydedilmez.</p>
             <p>Giriş yapmış kullanıcıda teknik bir hata oluştuğunda hata kategorisi, kişisel veri ayıklanmış kısa hata mesajı, sayfa yolu, uygulama sürümü ve zaman bilgisi işletim takibi için kaydedilebilir. E-posta adresi, erişim tokenı, URL sorgusu, girilen notların tamamı ve dosya içeriği hata kaydına alınmaz.</p>
 
+            <h3>3.4. Dosya Güvenlik Taraması ve Hesap İncelemesi</h3>
+            <p>Not Kutusu'na yüklediğiniz dosyanın içeriği, MIME türü ve SHA-256 özeti zararlı yazılım denetimi amacıyla yapılandırılmış güvenlik tarama altyapısına iletilir. Tarama hizmetine hesap şifreniz veya oturum belirteciniz gönderilmez. Yalnızca kesin “temiz” sonucu alan dosya depolamaya yazılır; tarama yapılamazsa yükleme güvenli biçimde reddedilir.</p>
+            <p>Zararlı veya şüpheli sonuçta dosya saklanmaz ve yayımlanmaz. Dosya özeti, türü, tarama motoru sonucu ve olay zamanı güvenlik kaydı olarak hesabınıza bağlanır; paylaşım erişiminiz inceleme süresince dondurulur. Yanlış tespit olduğunu düşünürseniz profilinizden itiraz edebilir veya <a href="mailto:ktunotsimulatoru@gmail.com">ktunotsimulatoru@gmail.com</a> adresine yazabilirsiniz. Otomatik tespit tek başına kalıcı hesap kapatma kararı değildir; itiraz ve yönetici incelemesi sonucunda erişim açılabilir.</p>
+
             <h2>4. Anonim Kullanım İstatistikleri</h2>
             <p>Sitenin hangi araçların ne sıklıkla kullanıldığını anlayabilmek ve footer'daki "İstatistiksever" bölümündeki genel rakamları (toplam hesaplama sayısı, en çok çıkan notlar vb.) üretebilmek için bazı anonim kullanım kayıtları tutulur:</p>
             <ul>
@@ -133,18 +137,21 @@
                 <li><strong>Supabase</strong> — üyelik, kimlik doğrulama ve uygulama verilerinin saklandığı altyapı sağlayıcısı.</li>
                 <li><strong>Cloudflare Workers ve R2</strong> — Not Kutusu dosyalarının yetkili yükleme, indirme ve saklama altyapısı.</li>
                 <li><strong>Cloudflare Pages</strong> — sitenin statik HTML, CSS, JavaScript, font ve görsel dosyalarını sunan barındırma altyapısı.</li>
+                <li><strong>Yapılandırılmış zararlı yazılım tarama altyapısı</strong> — Not Kutusu dosyalarını depolanmadan önce güvenlik açısından inceleyen hizmet. Kullanılan sağlayıcının adı ve koşulları hizmet canlıya alınmadan önce bu metinde ayrıca belirtilecektir.</li>
             </ul>
             <p>Chart.js ve Supabase tarayıcı kitaplığı site paketinin içinden sunulur; ayrı bir JavaScript CDN'ine bağlanılmaz. Altyapı sağlayıcıları standart teknik erişim kayıtlarını kendi koşulları kapsamında işleyebilir. Verileriniz pazarlama amacıyla satılmaz veya kiralanmaz.</p>
 
             <h2>11. Saklama Süresi</h2>
-            <p>Üye hesabınız, kaydettiğiniz dönem planları ve hesabınıza bağlı içerikler hesabınız silinene, sizin tarafınızdan silinene veya silme talebiniz sonuçlandırılana kadar saklanır. Teknik hata kayıtları en fazla 90 gün tutulur. Silinen ya da iptal edilen dosyalar erişime hemen kapatılır; depolamadaki fiziksel temizleme güvenli silme kuyruğuyla tamamlanır. Anonim kullanım istatistikleri ve anonim ders verileri toplu istatistik amacıyla saklanabilir.</p>
+            <p>Üye hesabınız, kaydettiğiniz dönem planları ve hesabınıza bağlı içerikler hesabınız silinene, sizin tarafınızdan silinene veya silme talebiniz sonuçlandırılana kadar saklanır. Teknik hata kayıtları en fazla 90 gün tutulur. Güvenlik olay kayıtları itiraz, kötüye kullanımın önlenmesi ve denetim amacıyla hesap silinene veya olayın saklanma gereği sona erene kadar tutulabilir; reddedilen dosyanın kendisi saklanmaz. Silinen ya da iptal edilen dosyalar erişime hemen kapatılır; depolamadaki fiziksel temizleme güvenli silme kuyruğuyla tamamlanır. Anonim kullanım istatistikleri ve anonim ders verileri toplu istatistik amacıyla saklanabilir.</p>
 
             <h2>12. Veri Güvenliği</h2>
             <ul>
                 <li>Kimlik doğrulama Supabase Auth tarafından yürütülür; uygulama şifreyi düz metin olarak saklamaz.</li>
                 <li>Veritabanı erişimi satır düzeyi güvenlik (RLS) politikaları ve sınırlı sunucu fonksiyonlarıyla denetlenir.</li>
                 <li>Not Kutusu dosyaları kalıcı açık bağlantılarla sunulmaz; her istek sunucuda üyelik, sahiplik ve moderasyon durumuna göre denetlenir.</li>
+                <li>Yeni dosyalar depolamaya alınmadan önce zararlı yazılım taramasından geçirilir. Tarama hizmeti kapalıysa yüklemeye izin verilmez.</li>
             </ul>
+            <div class="legal-not-kutu"><strong>İndirme güvenliği:</strong> Zararlı yazılım taraması riski azaltır ancak hiçbir tarama sistemi yüzde 100 güvence sağlayamaz. Tarama altyapısı devreye alınmadan önce paylaşılmış eski dosyalar otomatik denetimden geçmemiş olabilir. İndirdiğiniz dosyayı güncel işletim sistemi ve güvenlik yazılımıyla açmanız önerilir; dosyayı indirme ve cihazınızda açma kararı size aittir.</div>
 
             <h2>13. KVKK Madde 11 Kapsamındaki Haklarınız</h2>
             <p>KVKK'nın 11. maddesi uyarınca, kişisel verilerinizle ilgili olarak şu haklara sahipsiniz:</p>

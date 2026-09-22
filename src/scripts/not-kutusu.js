@@ -492,6 +492,10 @@ async function nkSoruListele() {
                 return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Paylaşım görseli" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
             }).join('')}</div>`
             : '<span class="nk-soru-alt">Dosya eklenmemiş</span>';
+        const indirmeHtml = elementler.length ? `<div class="nk-dosya-indirmeler">${elementler.map((yol,index) => {
+            const url = nkElementUrlAl(yol);
+            return `<button type="button" class="nk-dosya-indir-btn" data-nk-download="${nkEscAttr(url)}">↓ Ek ${index + 1}'i indir</button>`;
+        }).join('')}</div>` : '';
         const bildirButonu = s.durum === 'onaylandi' ? `<button type="button" class="nk-bildir-btn" data-nk-click="nkBildirimModalAc" data-nk-click-arg0="${s.id}">⚑ Bildir</button>` : '';
         const moderasyon = s.durum === 'reddedildi' && s.moderasyon_nedeni
             ? `<span class="nk-soru-alt">Neden: ${nkEscHtml(NK_MODERASYON_ETIKET[s.moderasyon_nedeni] || s.moderasyon_nedeni)}</span>` : '';
@@ -501,7 +505,7 @@ async function nkSoruListele() {
                 <span class="nk-soru-etiket">${NK_SINAV_ETIKET[s.sinav_turu] || s.sinav_turu}</span>
                 <span class="nk-soru-alt">${elementler.length ? `${elementler.length} ek` : 'Ek yok'}</span>
             </div>
-            <div class="nk-soru-onizlemeler">${fotoHtml}</div>
+            <div class="nk-soru-onizlemeler">${fotoHtml}${indirmeHtml}</div>
             <div class="nk-soru-kart-islem"><span class="nk-soru-durum ${nkEscHtml(durumSinifi)}">${NK_DURUM_ETIKET[durumSinifi] || durumSinifi}</span>${moderasyon}${bildirButonu}</div>
             ${s.durum === 'onaylandi' ? `<div class="nk-ifade-yer" data-nk-ifade-yer="${nkEscAttr(s.id)}"></div>` : ''}
         </article>`;
@@ -712,7 +716,13 @@ async function nkElementleriYukle(dosyalar) {
             sonuc = null;
         }
         if (!yanit.ok || !sonuc?.basarili) {
-            throw new Error(sonuc?.hata === 'kota_asildi' ? 'Yükleme kotan doldu. Depolama ve günlük sınırları kontrol et.' : `Dosya yüklenemedi (${dosya.name}): ${sonuc?.hata || yanit.status}`);
+            const mesajlar = {
+                kota_asildi: 'Yükleme kotan doldu. Depolama ve günlük sınırları kontrol et.',
+                virus_taramasi_kullanilamiyor: 'Güvenlik taraması şu anda kullanılamıyor. Dosya kaydedilmedi; daha sonra tekrar dene.',
+                zararli_dosya_algilandi: 'Dosya zararlı veya şüpheli bulundu. Dosya kaydedilmedi ve hesabın güvenlik incelemesine alındı. Yanlış tespit olduğunu düşünüyorsan profilinden itiraz edebilirsin.',
+                ktu_uyesi_degil: 'Hesabın güvenlik incelemesinde veya yükleme yetkin bulunmuyor.'
+            };
+            throw new Error(mesajlar[sonuc?.hata] || `Dosya yüklenemedi (${dosya.name}): ${sonuc?.hata || yanit.status}`);
         }
         yollar.push(sonuc.yol);
     }
@@ -779,6 +789,10 @@ async function nkSoruFormSubmit(e) {
     }
     if (!nkSecilenElementler.length) {
         nkSonucGoster('nk-soru-sonuc', 'En az bir görsel veya PDF ekle.', true);
+        return;
+    }
+    if (!document.getElementById('nk-guvenlik-onayi')?.checked) {
+        nkSonucGoster('nk-soru-sonuc', 'Dosya güvenliği ve hesap incelemesi bilgilendirmesini kabul etmelisin.', true);
         return;
     }
 

@@ -128,6 +128,7 @@
                     </div>
 
                     <div id="nk-tab-gor" class="nk-tab-content active">
+                        <div class="nk-guvenlik-bildirimi" role="note"><strong>Dosya güvenliği</strong><span>Yeni yüklemeler yayımlanmadan önce otomatik zararlı yazılım taramasından geçirilir. Tarama sistemi kurulmadan önce paylaşılmış eski dosyalar bu denetimden geçmemiş olabilir. Hiçbir tarama yüzde 100 güvence vermez; indirdiğin dosyayı cihazında açmak kendi sorumluluğundadır.</span></div>
                         <div id="nk-soru-listesi">
                             <p class="veri-bos">Yükleniyor...</p>
                         </div>
@@ -168,7 +169,8 @@
                                 <div class="nk-fotograf-onizleme" id="nk-fotograf-onizleme"></div>
                             </div>
                             <div class="nk-paylas-alt">
-                                <p><strong>Moderasyon:</strong> Paylaşımın admin onayından sonra bu dersi seçen diğer öğrencilere görünür.</p>
+                                <label class="nk-guvenlik-onayi"><input type="checkbox" id="nk-guvenlik-onayi" required><span>Dosyaların otomatik zararlı yazılım taramasından geçirileceğini; zararlı veya şüpheli tespitte paylaşım yetkimin inceleme süresince dondurulacağını kabul ediyorum.</span></label>
+                                <p><strong>Moderasyon:</strong> Paylaşımın antivirüs taraması ve admin onayından sonra bu dersi seçen diğer öğrencilere görünür. Yanlış tespit olduğunu düşünürsen profilinden itiraz edebilirsin.</p>
                                 <button type="submit">Paylaşımı gönder <span aria-hidden="true">→</span></button>
                             </div>
                         </form>

@@ -31,6 +31,7 @@ test('Dosya yaşam döngüsü: gerçek SQL + Worker + bellek R2',async t=>{
         await db.exec(fs.readFileSync('migrations/002_dosya_yasam_dongusu.sql','utf8'));
         async function rpc(op,data={}){return (await db.query('select public.nk_dosya_islem($1,$2::jsonb) as r',[op,JSON.stringify(data)])).rows[0].r;}
         global.fetch=async(url,options)=>{
+            if(url==='https://scanner.example/scan')return Response.json({verdict:'clean',engine:'test-av'});
             if(url==='https://tsfscfgwbmiouptsljyi.supabase.co/rest/v1/rpc/uygulama_hatasi_temizle'){
                 assert.equal(options.headers.apikey,'test-service');assert.equal(options.body,'{}');errorPurges++;return Response.json(0);
             }
@@ -40,7 +41,7 @@ test('Dosya yaşam döngüsü: gerçek SQL + Worker + bellek R2',async t=>{
             if(failComplete && p_islem==='complete')return new Response('',{status:503});
             return Response.json(await rpc(p_islem,p_veri));
         };
-        const env={SUPABASE_JWT_SECRET:secret,SUPABASE_SERVICE_ROLE_KEY:'test-service',NK_ELEMENT_BUCKET:{
+        const env={SUPABASE_JWT_SECRET:secret,SUPABASE_SERVICE_ROLE_KEY:'test-service',MALWARE_SCAN_URL:'https://scanner.example/scan',MALWARE_SCAN_TOKEN:'test-scan-token',NK_ELEMENT_BUCKET:{
             put:async(yol,bytes,meta)=>{puts++;objects.set(yol,{bytes:new Uint8Array(bytes),size:bytes.length,etag:randomUUID(),uploaded:new Date(),...meta});},
             head:async yol=>missingHead?null:objects.get(yol),
             get:async yol=>{const o=objects.get(yol);return o?{...o,body:new Response(o.bytes).body}:null;},

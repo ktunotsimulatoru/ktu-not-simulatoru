@@ -47,6 +47,75 @@ function dosyaImzasiGecerli(bytes, tip) {
   return false;
 }
 
+async function sha256Hex(bytes) {
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
+}
+
+// Harici tarayıcı sözleşmesi: ham dosya gövdesine karşılık
+// { verdict: 'clean'|'malicious'|'suspicious', engine?, signature?, scan_id? }.
+// Tarayıcı tanımlı değilse veya kesin "clean" üretemezse yükleme kapalı kalır.
+async function zararliYazilimTara(bytes, mime, env) {
+  const provider = String(env.MALWARE_SCAN_PROVIDER || 'generic').toLowerCase();
+  if (!env.MALWARE_SCAN_TOKEN || (provider === 'generic' && !env.MALWARE_SCAN_URL)) return { verdict: 'unavailable' };
+  const hash = await sha256Hex(bytes);
+  let response;
+  try {
+    if (provider === 'cloudmersive') {
+      const form = new FormData();
+      form.append('inputFile', new Blob([bytes], { type: mime }), `upload.${IZINLI_TIPLER[mime]}`);
+      response = await fetch('https://api.cloudmersive.com/virus/scan/file/advanced', {
+        method: 'POST',
+        headers: {
+          Apikey: env.MALWARE_SCAN_TOKEN,
+          fileName: `upload.${IZINLI_TIPLER[mime]}`,
+          allowExecutables: 'false', allowInvalidFiles: 'false', allowScripts: 'false',
+        },
+        body: form,
+        signal: AbortSignal.timeout(30000),
+      });
+    } else if (provider === 'generic') {
+      response = await fetch(env.MALWARE_SCAN_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.MALWARE_SCAN_TOKEN}`,
+          'Content-Type': mime,
+          'X-Content-SHA256': hash,
+        },
+        body: bytes,
+        signal: AbortSignal.timeout(30000),
+      });
+    } else return { verdict: 'unavailable', hash };
+  } catch { return { verdict: 'unavailable', hash }; }
+  if (!response.ok) return { verdict: 'unavailable', hash };
+  let result;
+  try { result = await response.json(); }
+  catch { return { verdict: 'unavailable', hash }; }
+  if (provider === 'cloudmersive') {
+    if (typeof result?.CleanResult !== 'boolean') return { verdict: 'unavailable', hash };
+    const viruses = Array.isArray(result.FoundViruses) ? result.FoundViruses : [];
+    const reasons = [
+      ...viruses.map(value => value?.VirusName).filter(Boolean),
+      ...['ContainsExecutable','ContainsInvalidFile','ContainsScript','ContainsPasswordProtectedFile','ContainsUnsafeArchive']
+        .filter(key => result[key] === true),
+    ];
+    return {
+      verdict: result.CleanResult ? 'clean' : (viruses.length ? 'malicious' : 'suspicious'),
+      hash, engine: 'Cloudmersive Advanced Virus Scan',
+      signature: reasons.join(', ').slice(0, 160) || null,
+      scan_id: null,
+    };
+  }
+  const verdict = String(result?.verdict || '').toLowerCase();
+  if (!['clean', 'malicious', 'suspicious'].includes(verdict)) return { verdict: 'unavailable', hash };
+  return {
+    verdict, hash,
+    engine: String(result.engine || 'harici-tarayici').slice(0, 80),
+    signature: String(result.signature || '').slice(0, 160) || null,
+    scan_id: String(result.scan_id || '').slice(0, 160) || null,
+  };
+}
+
 // Supabase projesi ES256 (asimetrik) imzalama anahtarları kullanıyor (canlıda
 // doğrulandı — bkz. proje notları). Bu yüzden JWT doğrulaması JWKS (herkese
 // açık anahtar seti) üzerinden yapılıyor, HS256 paylaşılan sır ARTIK BİRİNCİL
@@ -253,6 +322,18 @@ async function rpc(env, islem, veri = {}) {
   if (data === null) throw new Error('veritabani_yaniti_gecersiz');
   return data;
 }
+async function guvenlikRpc(env, islem, veri = {}) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('worker_yapilandirmasi_eksik');
+  const response = await fetch(`${SUPABASE_API_URL}/rest/v1/rpc/nk_guvenlik_islem`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json',
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+    body: JSON.stringify({ p_islem: islem, p_veri: veri }), signal: AbortSignal.timeout(15000)
+  });
+  if (!response.ok) throw new Error('guvenlik_kaydi_yazilamadi');
+  const data = await response.json();
+  if (data === null) throw new Error('guvenlik_yaniti_gecersiz');
+  return data;
+}
 async function kimlik(request, env, adminIzinli = false) {
   const admin = request.headers.get('X-Admin-Token');
   if (adminIzinli && admin && admin.length <= 4096) return { admin_token: admin };
@@ -272,6 +353,13 @@ async function uploadIsle(request, env) {
   if (Number(request.headers.get('Content-Length')) > MAKS_BOYUT) return yanit(request, { hata: 'dosya_cok_buyuk' }, 413);
   const bytes = await sinirliGovdeOku(request.body);
   if (!dosyaImzasiGecerli(bytes, mime)) return yanit(request, { hata: 'dosya_icerigi_gecersiz' }, 400);
+  const tarama = await zararliYazilimTara(bytes, mime, env);
+  if (tarama.verdict === 'unavailable') return yanit(request, { hata: 'virus_taramasi_kullanilamiyor' }, 503);
+  if (tarama.verdict !== 'clean') {
+    const kayit = await guvenlikRpc(env, 'zararli_dosya', { ...user, mime, ...tarama });
+    if (!kayit.basarili) throw new Error('guvenlik_kaydi_yazilamadi');
+    return yanit(request, { hata: 'zararli_dosya_algilandi', hesap_durumu: 'incelemede' }, 422);
+  }
   // Kota kilidi veritabanında; R2 yazma ancak rezervasyon başarılıysa başlar.
   const reservation = await rpc(env, 'reserve', { ...user, mime, boyut: bytes.length });
   if (reservation.hata) return yanit(request, reservation, reservation.hata === 'kota_asildi' ? 429 : 403);
@@ -391,7 +479,7 @@ export default {
         if (!user) return yanit(request, { hata: 'giris_gerekli' }, 401);
         // Küçük yönetim gövdesi; dosya yükleme sınırını burada da aşamaz.
         const data = await jsonGovdeOku(request);
-        if (!Array.isArray(data.yollar) || data.yollar.length > 3 || !data.yollar.every(p => typeof p === 'string' && yolGecerli(p))) return yanit(request, { hata: 'gecersiz_yol' }, 400);
+        if (!Array.isArray(data.yollar) || data.yollar.length > 5 || !data.yollar.every(p => typeof p === 'string' && yolGecerli(p))) return yanit(request, { hata: 'gecersiz_yol' }, 400);
         for (const yol of data.yollar) {
           const result = await rpc(env, 'cancel', { ...user, yol });
           if (result.hata) return yanit(request, result, 403);

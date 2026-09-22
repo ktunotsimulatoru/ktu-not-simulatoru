@@ -91,7 +91,7 @@ function sekmeDegistir(bolum, btn) {
     document.getElementById('bolum-' + bolum).classList.add('aktif');
     btn.classList.add('aktif');
     if (bolum === 'dersler') { dersFiltreFakulteDoldur(); dersleriYukle(); }
-    else if (bolum === 'sorular') { sorulariYukle(); tumSorulariYukle(); nkAdminDersleriYukle(); bildirimleriYukle(); adminDuzeltmeTalepleriniYukle(); }
+    else if (bolum === 'sorular') { sorulariYukle(); tumSorulariYukle(); nkAdminDersleriYukle(); bildirimleriYukle(); adminDuzeltmeTalepleriniYukle(); guvenlikOlaylariniYukle(); }
     else if (bolum === 'veriler') { veriFiltreFakulteDoldur(); }
     else if (bolum === 'duyurular') { duyurulariYukle(); duyuruKutulariRenderla(); }
     else if (bolum === 'anketler') { anketleriYukle(); anketSorulariRenderla(); }
@@ -747,6 +747,34 @@ function soruDurumRozeti(durum) {
 }
 
 const SINAV_TURU_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme', ders_notu: 'Ders Notu', diger: 'Diğer' };
+
+async function guvenlikOlaylariniYukle() {
+    const alan = document.getElementById('nk-guvenlik-olaylari');
+    if (!alan) return;
+    alan.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    const { data, error } = await sb.rpc('admin_nk_guvenlik_olaylari', { p_admin_token: adminToken(), p_durum: null, p_limit: 50, p_offset: 0 });
+    if (error) {
+        if (oturumSuresiDolduMuKontrolEt(error.message)) return;
+        alan.innerHTML = `<div class="bos-mesaj">${['42883','PGRST202'].includes(error.code) ? 'Güvenlik incelemesi için 011 migrationını çalıştırın.' : 'Güvenlik olayları alınamadı.'}</div>`;
+        return;
+    }
+    const satirlar = data?.satirlar || [];
+    if (!satirlar.length) { alan.innerHTML = '<div class="bos-mesaj">Zararlı veya şüpheli dosya tespiti yok.</div>'; return; }
+    alan.innerHTML = `<table><thead><tr><th>Kullanıcı</th><th>Tarama</th><th>Durum</th><th>İtiraz</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody>${satirlar.map(o => {
+        const acik = ['acik','itirazda'].includes(o.durum);
+        return `<tr><td>${escHtml(o.email || o.kullanici_id)}<br><small>${Number(o.tespit_sayisi || 0)} tespit · hesap: ${escHtml(o.hesap_durumu || '—')}</small></td><td>${escHtml(o.tarama_sonucu)}<br><small>${escHtml(o.tarayici)}${o.imza ? ' · '+escHtml(o.imza) : ''}</small></td><td>${escHtml(o.durum)}</td><td>${escHtml(o.kullanici_aciklamasi || '—')}</td><td>${new Date(o.olusturulma_tarihi).toLocaleString('tr-TR')}</td><td>${acik ? `<div class="aksiyonlar"><button class="btn btn-yesil" data-nk-click="guvenlikOlayiKarar" data-nk-click-arg0="${o.id}" data-nk-click-arg1="yanlis_pozitif">Yanlış pozitif</button><button class="btn btn-kirmizi" data-nk-click="guvenlikOlayiKarar" data-nk-click-arg0="${o.id}" data-nk-click-arg1="onaylandi">Tespiti doğrula</button></div>` : escHtml(o.yonetici_notu || 'Sonuçlandı')}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+async function guvenlikOlayiKarar(id, karar) {
+    const soru = karar === 'yanlis_pozitif' ? 'Yanlış pozitif kararının gerekçesi:' : 'Tespiti doğrulama ve hesap dondurma gerekçesi:';
+    const not = prompt(soru);
+    if (!not || not.trim().length < 5) return;
+    const { data, error } = await sb.rpc('admin_nk_guvenlik_sonuclandir', { p_admin_token: adminToken(), p_id: id, p_karar: karar, p_not: not.trim() });
+    if (error || !data?.basarili) { bildirimGoster('Güvenlik olayı sonuçlandırılamadı.', 'hata'); return; }
+    bildirimGoster(karar === 'yanlis_pozitif' ? 'Hesabın paylaşım erişimi yeniden değerlendirildi.' : 'Tespit doğrulandı; hesap donduruldu.', karar === 'yanlis_pozitif' ? 'basari' : 'hata');
+    guvenlikOlaylariniYukle();
+}
 const MODERASYON_NEDEN_ETIKET = { uygun:'Uygun',okunmuyor:'Okunmuyor',yanlis_ders:'Yanlış ders',yanlis_bilgi:'Yanlış bilgi',tekrar:'Tekrar içerik',telif:'Telif hakkı',kisisel_veri:'Kişisel veri',spam:'Spam',diger:'Diğer' };
 const ADMIN_SAYFA_BOYUTU = 25;
 let soruBekleyenSayfa = 0, soruTumSayfa = 0, soruAramaZamanlayici;

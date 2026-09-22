@@ -23,7 +23,7 @@
 | Üyelik, oyun, anket ve istatistik | `src/scripts/modules/account.mjs`, `game.mjs`, `surveys.mjs`, `statistics.mjs` |
 | Ders verileri ve dosya görüntüleme | `src/scripts/modules/courses.mjs`, `gallery.mjs` |
 | Supabase bağlantısı | `src/scripts/modules/api.mjs` |
-| Not Kutusu ekranı, paylaşım türleri ve soru tepkileri | `src/scripts/not-kutusu.js`, `migrations/008_soru_emoji_tepkileri.sql`, `migrations/010_admin_istatistik_ve_not_kutusu_genisletme.sql` |
+| Not Kutusu ekranı, paylaşım türleri, tepkiler ve zararlı dosya incelemesi | `src/scripts/not-kutusu.js`, `worker/worker.js`, `migrations/008_soru_emoji_tepkileri.sql`, `migrations/010_admin_istatistik_ve_not_kutusu_genisletme.sql`, `migrations/011_zararli_dosya_karantinasi.sql` |
 | Özel dosya erişimi ve oturum temizliği | `src/scripts/dosya-erisim.js` |
 | Yönetici depolama taraması | `src/scripts/admin-storage.js` |
 | Ortak dosya yolu güvenliği | `src/scripts/dosya-guvenligi.js` |

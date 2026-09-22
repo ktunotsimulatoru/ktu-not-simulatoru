@@ -549,6 +549,8 @@ function hsProfilSayfasiBaslat() {
     if (form && !form.dataset.hazir) { form.dataset.hazir = 'true'; form.addEventListener('submit', hsKullaniciAdiFormSubmit); }
     const duzeltmeFormu = document.getElementById('hs-duzeltme-form');
     if (duzeltmeFormu && !duzeltmeFormu.dataset.hazir) { duzeltmeFormu.dataset.hazir = 'true'; duzeltmeFormu.addEventListener('submit', hsDuzeltmeFormSubmit); }
+    const guvenlikFormu = document.getElementById('hs-guvenlik-itiraz-form');
+    if (guvenlikFormu && !guvenlikFormu.dataset.hazir) { guvenlikFormu.dataset.hazir = 'true'; guvenlikFormu.addEventListener('submit', hsGuvenlikItiraziGonder); }
     hsProfilSekmeGoster('genel');
     hsProfilVerileriniYukle();
 }
@@ -557,6 +559,18 @@ function hsProfilSayfasiBaslat() {
 async function hsProfilVerileriniYukle() {
     if (!hsMevcutOturum) return;
     const sb = getSupabase();
+
+    const guvenlikEl = document.getElementById('hs-guvenlik-durumu');
+    if (guvenlikEl) {
+        const { data: guvenlik, error: guvenlikHata } = await sb.rpc('nk_guvenlik_durumum');
+        if (!guvenlikHata && guvenlik?.durum && guvenlik.durum !== 'aktif') {
+            const itirazAcik = guvenlik.durum === 'incelemede';
+            guvenlikEl.hidden = false;
+            guvenlikEl.innerHTML = `<strong>Hesabın güvenlik incelemesinde</strong><p>Zararlı veya şüpheli dosya tespiti nedeniyle yeni paylaşım ve Not Kutusu erişimin geçici olarak donduruldu. Dosya kaydedilmedi ve diğer kullanıcılara açılmadı.</p>${itirazAcik ? `<form id="hs-guvenlik-itiraz-form" class="profil-form"><label for="hs-guvenlik-itiraz">Tespitin hatalı olduğunu düşünüyorsan dosyanın kaynağını ve neden güvenli olduğunu açıkla.</label><textarea id="hs-guvenlik-itiraz" minlength="20" maxlength="2000" rows="4" required></textarea><button type="submit" class="profil-birincil-buton">İtirazı gönder</button><div id="hs-guvenlik-itiraz-sonuc" class="result-box" role="status" style="display:none"></div></form>` : `<p>Durum: <strong>${guvenlik.durum === 'itirazda' ? 'İtirazın inceleniyor' : 'Tespit doğrulandı'}</strong>. Ek bilgi için <a href="mailto:ktunotsimulatoru@gmail.com?subject=Hesap%20güvenlik%20incelemesi">ktunotsimulatoru@gmail.com</a> adresine yazabilirsin.</p>`}`;
+            const form = document.getElementById('hs-guvenlik-itiraz-form');
+            if (form) { form.dataset.hazir = 'true'; form.addEventListener('submit', hsGuvenlikItiraziGonder); }
+        } else guvenlikEl.hidden = true;
+    }
 
     const { data: profilData } = await sb.from('kullanici_profilleri')
         .select('kullanici_adi, en_yuksek_skor').eq('id', hsMevcutOturum.id).maybeSingle();
@@ -611,11 +625,12 @@ async function hsProfilVerileriniYukle() {
                         return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Paylaşım görseli" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
                     }).join('')}</div>`
                     : '';
+                const indirmeHtml = elementler.length ? `<div class="nk-dosya-indirmeler">${elementler.map((yol,index) => `<button type="button" class="nk-dosya-indir-btn" data-nk-download="${escHtml(NKDosya.dosyaUrl(yol, NK_ELEMENT_WORKER_URL))}">↓ Ek ${index + 1}'i indir</button>`).join('')}</div>` : '';
                 return `
                 <div class="hs-liste-satir">
                     <div><strong>${escHtml(s.nk_dersler?.ders_adi || 'Ders')}</strong> <span class="ny-ipucu">${escHtml(s.nk_dersler?.bolumler?.ad || '')}</span></div>
                     <div class="ny-ipucu">${turEtiketi[s.sinav_turu] || escHtml(s.sinav_turu)} · ${s.akademik_yil}-${s.akademik_yil + 1} · ${durumRozeti[s.durum] || escHtml(s.durum)}</div>
-                    ${fotoHtml}
+                    ${fotoHtml}${indirmeHtml}
                 </div>
             `;
             }).join('');
@@ -649,6 +664,22 @@ async function hsProfilVerileriniYukle() {
         else verilerEl.innerHTML=veriler.map(v=>{hsDuzeltmeHedefleri.set(`ders_verisi:${v.id}`,v);return `<article class="hs-liste-satir profil-kayit-satir"><div><strong>${escHtml(v.dersler?.ders_kodu?v.dersler.ders_kodu+' — ':'')}${escHtml(v.dersler?.ders_adi||'Ders')}</strong><div class="ny-ipucu">${v.yil}-${v.yil+1} ${escHtml(v.donem)} · ${v.can_turu==='but'?'Bütünleme':'Final'} · HBN ${v.ortalama??'—'} · Std. ${v.std_sapma??'—'} · ${v.ogrenci_sayisi??'—'} öğrenci</div></div><div class="profil-kayit-eylemler"><button type="button" class="profil-ikincil-buton" data-nk-click="hsDuzeltmeModalAc" data-nk-click-arg0="ders_verisi" data-nk-click-arg1="#${v.id}">Düzeltme iste</button></div></article>`}).join('');
     }
     await hsDuzeltmeTalepleriniYukle();
+}
+
+async function hsGuvenlikItiraziGonder(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const aciklama = form.querySelector('#hs-guvenlik-itiraz')?.value.trim() || '';
+    const btn = form.querySelector('button[type="submit"]');
+    if (aciklama.length < 20) { hsSonucGoster('hs-guvenlik-itiraz-sonuc','Açıklama en az 20 karakter olmalı.',true); return; }
+    btn.disabled = true;
+    try {
+        const { data, error } = await getSupabase().rpc('nk_guvenlik_itirazi_gonder',{p_aciklama:aciklama});
+        if (error || !data?.basarili) throw new Error('İtiraz gönderilemedi.');
+        hsSonucGoster('hs-guvenlik-itiraz-sonuc','İtirazın yönetici incelemesine gönderildi.',false);
+        setTimeout(hsProfilVerileriniYukle,800);
+    } catch (error) { hsSonucGoster('hs-guvenlik-itiraz-sonuc',error.message,true); }
+    finally { btn.disabled=false; }
 }
 
 async function hsDuzeltmeTalepleriniYukle(){
