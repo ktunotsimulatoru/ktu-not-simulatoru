@@ -79,6 +79,7 @@ if (sessionStorage.getItem('admin_token')) {
 async function panelBaslat() {
     await duyuruSuresiBitenleriKapat();
     await istatistikleriYukle();
+    platformOzetiYukle();
     onayBekleyenSayisiGoster();
     soruOnayBekleyenSayisiGoster();
     isletimOzetiYukle();
@@ -95,9 +96,34 @@ function sekmeDegistir(bolum, btn) {
     else if (bolum === 'duyurular') { duyurulariYukle(); duyuruKutulariRenderla(); }
     else if (bolum === 'anketler') { anketleriYukle(); anketSorulariRenderla(); }
     else if (bolum === 'fakulteler') { fakulteleriYukle(); bolumleriYukle(); fakulteSelectDoldur(); }
-    else if (bolum === 'istatistik') { istatistikleriYukle(); isletimOzetiYukle(); }
+    else if (bolum === 'istatistik') { istatistikleriYukle(); platformOzetiYukle(); isletimOzetiYukle(); }
     else if (bolum === 'anodersler') anoDersAnalizYukle();
     else if (bolum === 'oyun') oyunIstatistikYukle();
+}
+
+async function platformOzetiYukle() {
+    const alan = document.getElementById('platform-ozeti');
+    if (!alan) return;
+    alan.innerHTML = '<div class="yukleniyor">Yükleniyor...</div>';
+    const { data, error } = await sb.rpc('admin_platform_ozeti', { p_admin_token: adminToken() });
+    if (error) {
+        if (oturumSuresiDolduMuKontrolEt(error.message)) return;
+        const eksik = ['42883', 'PGRST202'].includes(error.code);
+        alan.innerHTML = `<div class="bos-mesaj">${eksik ? 'Platform özeti için 010 migrationını çalıştırın.' : 'Platform özeti şu anda alınamadı.'}</div>`;
+        return;
+    }
+    const kartlar = [
+        ['👤', 'Kayıtlı kullanıcı', data?.kayitli_kullanici, `${Number(data?.kullanici_adi || 0).toLocaleString('tr-TR')} kullanıcı adı belirledi`],
+        ['📚', 'Ders', data?.ders, 'Hesaplama bölümündeki dersler'],
+        ['📈', 'Ders verisi', data?.ders_verisi, 'Paylaşılan ortalama ve sınıf verileri'],
+        ['🎓', 'Kayıtlı AGNO dönemi', data?.kayitli_agno_donemi, 'Kullanıcıların kaydettiği dönemler'],
+        ['🗂️', 'Not Kutusu dersi', data?.not_kutusu_dersi, 'Arşivdeki ders klasörleri'],
+        ['📝', 'Toplam paylaşım', data?.paylasim, `${Number(data?.onayli_paylasim || 0).toLocaleString('tr-TR')} onaylı · ${Number(data?.bekleyen_paylasim || 0).toLocaleString('tr-TR')} bekliyor`],
+        ['📎', 'Saklanan dosya', data?.saklanan_dosya, 'Silinmiş ve temizliktekiler hariç'],
+        ['💬', 'Emoji tepkisi', data?.emoji_tepkisi, 'Paylaşımlara verilen tepkiler'],
+        ['🚩', 'Açık bildirim', data?.acik_bildirim, `${Number(data?.bekleyen_duzeltme || 0).toLocaleString('tr-TR')} düzeltme talebi bekliyor`]
+    ];
+    alan.innerHTML = `<div class="stat-karti-grid platform-ozet-kartlari">${kartlar.map(([ikon, baslik, deger, alt]) => `<div class="stat-karti"><div class="stat-karti-baslik">${ikon} ${baslik}</div><div class="stat-karti-deger">${Number(deger || 0).toLocaleString('tr-TR')}</div><div class="stat-karti-alt">${alt}</div></div>`).join('')}</div>`;
 }
 
 async function isletimOzetiYukle() {
@@ -720,7 +746,7 @@ function soruDurumRozeti(durum) {
     return '<span class="rozet rozet-turuncu">Beklemede</span>';
 }
 
-const SINAV_TURU_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme' };
+const SINAV_TURU_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme', ders_notu: 'Ders Notu', diger: 'Diğer' };
 const MODERASYON_NEDEN_ETIKET = { uygun:'Uygun',okunmuyor:'Okunmuyor',yanlis_ders:'Yanlış ders',yanlis_bilgi:'Yanlış bilgi',tekrar:'Tekrar içerik',telif:'Telif hakkı',kisisel_veri:'Kişisel veri',spam:'Spam',diger:'Diğer' };
 const ADMIN_SAYFA_BOYUTU = 25;
 let soruBekleyenSayfa = 0, soruTumSayfa = 0, soruAramaZamanlayici;

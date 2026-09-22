@@ -123,8 +123,8 @@
                     </div>
 
                     <div class="nk-tab-bar">
-                        <button class="nk-tab-btn active" data-nk-click="nkSwitchTab" data-nk-click-arg0="gor"><span>Arşiv</span><small>Paylaşılan sorular</small></button>
-                        <button class="nk-tab-btn" data-nk-click="nkSwitchTab" data-nk-click-arg0="paylas"><span>Paylaş</span><small>Yeni soru ekle</small></button>
+                        <button class="nk-tab-btn active" data-nk-click="nkSwitchTab" data-nk-click-arg0="gor"><span>Arşiv</span><small>Paylaşılan içerikler</small></button>
+                        <button class="nk-tab-btn" data-nk-click="nkSwitchTab" data-nk-click-arg0="paylas"><span>Paylaş</span><small>Yeni içerik ekle</small></button>
                     </div>
 
                     <div id="nk-tab-gor" class="nk-tab-content active">
@@ -138,16 +138,18 @@
                         <form id="nk-soru-form" class="nk-paylas-form" novalidate>
                             <div class="nk-paylas-baslik">
                                 <span>Yeni paylaşım</span>
-                                <h4>Bu dersin arşivine soru ekle</h4>
-                                <p>Sınav bilgisini seç, varsa görsel veya PDF’ini ekle. Paylaşımın onaydan sonra görünür.</p>
+                                <h4>Bu dersin arşivine içerik ekle</h4>
+                                <p>Paylaşım türünü seç, görsel veya PDF’ini ekle. Paylaşımın onaydan sonra görünür.</p>
                             </div>
                             <div class="nk-paylas-bilgi-grid">
                                 <fieldset class="nk-paylas-kart nk-sinav-turu-kart">
-                                    <legend>Sınav türü</legend>
+                                    <legend>Paylaşım türü</legend>
                                     <div class="nk-sinav-secimleri">
                                         <label><input type="radio" id="nkSinavVize" name="nkSinavTuru" value="vize" checked><span>Vize</span></label>
                                         <label><input type="radio" id="nkSinavFinal" name="nkSinavTuru" value="final"><span>Final</span></label>
                                         <label><input type="radio" id="nkSinavBut" name="nkSinavTuru" value="butunleme"><span>Bütünleme</span></label>
+                                        <label><input type="radio" id="nkSinavDersNotu" name="nkSinavTuru" value="ders_notu"><span>Ders Notu</span></label>
+                                        <label><input type="radio" id="nkSinavDiger" name="nkSinavTuru" value="diger"><span>Diğer</span></label>
                                     </div>
                                 </fieldset>
                                 <div class="nk-paylas-kart form-group">
@@ -160,7 +162,8 @@
                                 <label for="nk-soru-foto" class="nk-dosya-birak-alani">
                                     <span class="nk-dosya-birak-ikon">↥</span>
                                     <span class="nk-dosya-birak-baslik">Dosyaları seç</span>
-                                    <span class="nk-dosya-birak-aciklama">JPG, PNG, WEBP veya PDF · En fazla 3 dosya · Dosya başına 5 MB</span>
+                                    <span class="nk-dosya-birak-aciklama">JPG, PNG, WEBP veya PDF · En fazla 5 dosya · Dosya başına 5 MB</span>
+                                    <span class="nk-dosya-birak-aciklama">Büyük görseller okunabilirliği koruyan yüksek kalite ayarıyla optimize edilir.</span>
                                 </label>
                                 <div class="nk-fotograf-onizleme" id="nk-fotograf-onizleme"></div>
                             </div>

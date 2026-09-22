@@ -85,7 +85,7 @@ function nkUyeGorunumunuAc(eposta) {
 // fakulteler/bolumler tabloları "Ders Verileri" özelliğiyle ortak; nk_dersler
 // ise Not Kutusu'na özel, moderasyonsuz bir tablo — kullanıcılar "Dersim
 // listede yok" diyerek kendi ekliyor (bkz. supabase-not-kutusu-klasor-sistemi.sql).
-// Sayaçlar (X soru) sadece durum='onaylandi' olan sorulara göre hesaplanıyor,
+// Sayaçlar (X paylaşım) sadece durum='onaylandi' olan paylaşımlara göre hesaplanıyor,
 // yani başkalarının GERÇEKTEN görebileceği sayı gösteriliyor.
 // =============================================
 let nkState = { fakulteId: null, bolumId: null, dersId: null };
@@ -172,7 +172,7 @@ function nkFakulteGridiGoster() {
         <button type="button" class="nk-klasor-karti" data-nk-click="nkFakulteSec" data-nk-click-arg0="${f.id}">
             <span class="nk-klasor-ikon">🏫</span>
             <span class="nk-klasor-adi">${nkEscHtml(f.ad)}</span>
-            <span class="nk-klasor-sayi">${nkKlasorSayisi('fakulte', f.id)} soru</span>
+            <span class="nk-klasor-sayi">${nkKlasorSayisi('fakulte', f.id)} paylaşım</span>
         </button>`).join('')}</div>`;
 }
 
@@ -191,7 +191,7 @@ function nkBolumGridiGoster() {
         <button type="button" class="nk-klasor-karti" data-nk-click="nkBolumSec" data-nk-click-arg0="${b.id}">
             <span class="nk-klasor-ikon">📁</span>
             <span class="nk-klasor-adi">${nkEscHtml(b.ad)}</span>
-            <span class="nk-klasor-sayi">${nkKlasorSayisi('bolum', b.id)} soru</span>
+            <span class="nk-klasor-sayi">${nkKlasorSayisi('bolum', b.id)} paylaşım</span>
         </button>`).join('')}</div>`;
 }
 
@@ -222,13 +222,13 @@ async function nkDersGridiGoster() {
         <button type="button" class="nk-ders-katalog-satir" data-nk-click="nkDersSec" data-nk-click-arg0="${d.id}">
             <span class="nk-ders-katalog-ikon">▤</span>
             <span class="nk-ders-katalog-bilgi"><strong>${nkEscHtml(d.ders_adi)}</strong><small>${d.ders_kodu ? nkEscHtml(d.ders_kodu) : 'Ders kodu belirtilmemiş'}</small></span>
-            <span class="nk-ders-katalog-sayi">${nkKlasorSayisi('ders', d.id)} <small>soru</small></span>
+            <span class="nk-ders-katalog-sayi">${nkKlasorSayisi('ders', d.id)} <small>paylaşım</small></span>
             <span class="nk-ders-katalog-ok" aria-hidden="true">→</span>
         </button>`).join('');
     const bosDurum = nkTumDersler.length ? '' : '<div class="nk-katalog-bos"><strong>Aramana uygun ders bulunamadı.</strong><span>Ders yoksa aşağıdaki bağlantıdan ekleyebilirsin.</span></div>';
     const toplamSayfa = Math.max(1, Math.ceil(nkDersSayfa.toplam / nkDersSayfa.boyut));
     alan.innerHTML = nkKatalogBaslik(bolum ? bolum.ad : 'Dersler', 'Arama ve sayaçlar sunucuda hesaplanır.', nkDersSayfa.toplam, 'Ders kataloğu') + `
-        <div class="nk-ders-katalog-araclar"><label class="nk-ders-arama"><span aria-hidden="true">⌕</span><input id="nk-ders-arama-input" type="search" value="${nkEscAttr(nkDersSayfa.arama)}" placeholder="Ders adı veya kodu ara" data-nk-input="nkDersListesiniFiltrele" data-nk-input-arg0="@value"></label><select class="nk-ders-siralama" data-nk-change="nkDersleriSirala" data-nk-change-arg0="@value" aria-label="Dersleri sırala"><option value="ad" ${nkDersSayfa.siralama === 'ad' ? 'selected' : ''}>Ada göre sırala</option><option value="soru" ${nkDersSayfa.siralama === 'soru' ? 'selected' : ''}>En çok soru</option></select></div>
+        <div class="nk-ders-katalog-araclar"><label class="nk-ders-arama"><span aria-hidden="true">⌕</span><input id="nk-ders-arama-input" type="search" value="${nkEscAttr(nkDersSayfa.arama)}" placeholder="Ders adı veya kodu ara" data-nk-input="nkDersListesiniFiltrele" data-nk-input-arg0="@value"></label><select class="nk-ders-siralama" data-nk-change="nkDersleriSirala" data-nk-change-arg0="@value" aria-label="Dersleri sırala"><option value="ad" ${nkDersSayfa.siralama === 'ad' ? 'selected' : ''}>Ada göre sırala</option><option value="soru" ${nkDersSayfa.siralama === 'soru' ? 'selected' : ''}>En çok paylaşım</option></select></div>
         <div class="nk-ders-katalog" id="nk-ders-katalog">${dersSatirlari}</div>${bosDurum}
         ${nkSayfalamaHtml('nkDersSayfasiDegistir', nkDersSayfa.sayfa, toplamSayfa)}
         <button type="button" class="nk-ders-ekle-satir" data-nk-click="nkYeniDersFormunuGoster"><span>＋</span><strong>Dersin listede yok mu?</strong><small>Yeni ders ekle</small></button><div id="nk-yeni-ders-form-alani"></div>`;
@@ -358,7 +358,7 @@ function nkSwitchTab(tab) {
 // =============================================
 // SORULARI LİSTELE
 // =============================================
-const NK_SINAV_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme' };
+const NK_SINAV_ETIKET = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme', ders_notu: 'Ders Notu', diger: 'Diğer' };
 const NK_DURUM_ETIKET = { beklemede: '⏳ Onay Bekliyor', onaylandi: '✅ Onaylandı', reddedildi: '❌ Reddedildi' };
 const NK_IFADELER = [
     { anahtar: 'faydali', emoji: '👍', etiket: 'Faydalı' },
@@ -369,7 +369,7 @@ const NK_IFADELER = [
 function nkIfadeHtml(soru, ozet) {
     const kendiSorusu = String(soru.kullanici_id) === String(nkMevcutKullaniciId);
     const aciklama = kendiSorusu ? 'Kendi paylaşımına tepki veremezsin.' : 'Bir tepki seç veya seçili tepkiye yeniden basarak kaldır.';
-    return `<div class="nk-ifade-grubu" aria-label="Soru tepkileri" data-nk-ifade-soru="${nkEscAttr(soru.id)}">
+    return `<div class="nk-ifade-grubu" aria-label="Paylaşım tepkileri" data-nk-ifade-soru="${nkEscAttr(soru.id)}">
         ${NK_IFADELER.map(ifade => {
             const secili = ozet?.benim_ifadem === ifade.anahtar;
             const sayi = Number(ozet?.[ifade.anahtar] || 0);
@@ -409,7 +409,7 @@ async function nkSoruIfadeDegistir(soruId, ifade) {
         const mesajlar = {
             uyelik_gerekli: 'Tepki vermek için doğrulanmış KTÜ üyeliği gerekiyor.',
             kendi_icerigin: 'Kendi paylaşımına tepki veremezsin.',
-            soru_kapali: 'Bu soru artık tepkilere açık değil.',
+            soru_kapali: 'Bu paylaşım artık tepkilere açık değil.',
             gecersiz_ifade: 'Bu tepki kullanılamıyor.'
         };
         if (!data?.basarili) throw new Error(mesajlar[data?.hata] || 'Tepki kaydedilemedi.');
@@ -464,15 +464,15 @@ async function nkSoruListele() {
         .map(y => `<option value="${y}" ${String(y) === String(nkSoruSayfa.yil) ? 'selected' : ''}>${y}-${y + 1}</option>`).join('');
     const toplamSayfa = Math.max(1, Math.ceil(nkSoruSayfa.toplam / nkSoruSayfa.boyut));
     let html = `<div class="nk-arsiv-ust">
-        <div><span>Paylaşılan sorular</span><strong>${nkSoruSayfa.toplam} kayıt</strong></div>
+        <div><span>Paylaşımlar</span><strong>${nkSoruSayfa.toplam} kayıt</strong></div>
         <small>Süzme ve sayfalama sunucuda uygulanır.</small>
     </div><div class="nk-arsiv-filtreleri">
-        <select aria-label="Sınav türü" data-nk-change="nkSoruFiltresiDegistir" data-nk-change-arg0="sinav" data-nk-change-arg1="@value"><option value="">Tüm sınavlar</option><option value="vize" ${nkSoruSayfa.sinav === 'vize' ? 'selected' : ''}>Vize</option><option value="final" ${nkSoruSayfa.sinav === 'final' ? 'selected' : ''}>Final</option><option value="butunleme" ${nkSoruSayfa.sinav === 'butunleme' ? 'selected' : ''}>Bütünleme</option></select>
+        <select aria-label="Paylaşım türü" data-nk-change="nkSoruFiltresiDegistir" data-nk-change-arg0="sinav" data-nk-change-arg1="@value"><option value="">Tüm türler</option><option value="vize" ${nkSoruSayfa.sinav === 'vize' ? 'selected' : ''}>Vize</option><option value="final" ${nkSoruSayfa.sinav === 'final' ? 'selected' : ''}>Final</option><option value="butunleme" ${nkSoruSayfa.sinav === 'butunleme' ? 'selected' : ''}>Bütünleme</option><option value="ders_notu" ${nkSoruSayfa.sinav === 'ders_notu' ? 'selected' : ''}>Ders Notu</option><option value="diger" ${nkSoruSayfa.sinav === 'diger' ? 'selected' : ''}>Diğer</option></select>
         <select aria-label="Akademik yıl" data-nk-change="nkSoruFiltresiDegistir" data-nk-change-arg0="yil" data-nk-change-arg1="@value"><option value="">Tüm yıllar</option>${yilSecenekleri}</select>
     </div>`;
     if (!data || data.length === 0) {
         const filtreVar = nkSoruSayfa.sinav || nkSoruSayfa.yil;
-        alan.innerHTML = html + `<p class="veri-bos">${filtreVar ? 'Bu filtrelere uyan soru bulunamadı.' : 'Bu ders için henüz soru paylaşılmamış. “Soru Paylaş” sekmesinden ilk sen paylaş!'}</p>`;
+        alan.innerHTML = html + `<p class="veri-bos">${filtreVar ? 'Bu filtrelere uyan paylaşım bulunamadı.' : 'Bu ders için henüz içerik paylaşılmamış. “Paylaş” sekmesinden ilk sen paylaş!'}</p>`;
         return;
     }
     html += '<div class="nk-soru-kart-wrapper">';
@@ -489,7 +489,7 @@ async function nkSoruListele() {
                     return `<a class="nk-soru-element-pdf" href="#" data-nk-url="${url}" title="PDF'i aç">PDF</a>`;
                 }
                 gorselSira++;
-                return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Soru fotoğrafı" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
+                return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Paylaşım görseli" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
             }).join('')}</div>`
             : '<span class="nk-soru-alt">Dosya eklenmemiş</span>';
         const bildirButonu = s.durum === 'onaylandi' ? `<button type="button" class="nk-bildir-btn" data-nk-click="nkBildirimModalAc" data-nk-click-arg0="${s.id}">⚑ Bildir</button>` : '';
@@ -561,12 +561,13 @@ async function nkBildirimGonder(event) {
 // (bkz. supabase-soru-fotograflari.sql ve cloudflare-worker/worker.js: sadece
 // giriş yapmış KTÜ üyeleri kendi klasörüne (auth.uid()) yükleyebiliyor.)
 // =============================================
-const NK_ELEMENT_MAX_ADET = 3;
-const NK_ELEMENT_MAX_BOYUT = 5 * 1024 * 1024; // 5MB — bu, kullanıcının SEÇEBİLECEĞİ orijinal dosya için üst sınır
+const NK_ELEMENT_MAX_ADET = 5;
+const NK_ELEMENT_MAX_BOYUT = 5 * 1024 * 1024;
+const NK_FOTO_KAYNAK_MAX_BOYUT = 20 * 1024 * 1024;
 const NK_ELEMENT_IZINLI_TIPLER = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const NK_ELEMENT_UZANTI = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
-const NK_FOTO_MAX_KENAR = 1920; // en uzun kenar bunu aşarsa küçültülüyor (sadece fotoğraflar için, PDF'e uygulanmıyor)
-const NK_FOTO_JPEG_KALITE = 0.85; // metin okunabilirliği için bilerek yüksek tutuldu (sadece fotoğraflar için)
+const NK_FOTO_MAX_KENAR = 3200;
+const NK_FOTO_KALITE = 0.94;
 
 // NK_ELEMENT_WORKER_URL: script.js'te tanımlı, aynı sayfada paylaşılan global
 // (script.min.js, not-kutusu.min.js'ten önce yükleniyor — bkz. not-kutusu.html).
@@ -584,19 +585,15 @@ function nkElementPdfMi(yolVeyaDosya) {
     return /\.pdf$/i.test(ad) || yolVeyaDosya?.type === 'application/pdf';
 }
 
-// Yükleme öncesi fotoğrafı tarayıcıda küçültüp yeniden JPEG olarak kodluyor —
-// amaç Supabase Storage'ın (özellikle ücretsiz plandaki 1GB depolama / 5GB
-// aylık trafik) kotasını gereksiz yere hızlı tüketmemek. En uzun kenar
-// 1920px'i aşmıyorsa ve dosya zaten makul boyuttaysa dokunulmuyor; sıkıştırma
-// bir nedenle işe yaramaz/başarısız olursa (ör. tarayıcı desteklemiyor)
-// orijinal dosya olduğu gibi kullanılıyor — hiçbir zaman yükleme engellenmiyor.
+// Küçük görsellere dokunulmaz. Büyük görseller aynı en-boy oranıyla, yüksek
+// kalite WebP olarak kodlanır; yalnızca gerçekten küçülürse yeni dosya kullanılır.
 async function nkFotografSikistir(dosya) {
     if (typeof createImageBitmap !== 'function') return dosya;
     let bitmap;
     try {
         bitmap = await createImageBitmap(dosya);
         const enBuyukKenar = Math.max(bitmap.width, bitmap.height);
-        const zatenKucuk = enBuyukKenar <= NK_FOTO_MAX_KENAR && dosya.size <= 1.5 * 1024 * 1024;
+        const zatenKucuk = enBuyukKenar <= NK_FOTO_MAX_KENAR && dosya.size <= 1024 * 1024;
         if (zatenKucuk) return dosya;
 
         const olcek = Math.min(1, NK_FOTO_MAX_KENAR / enBuyukKenar);
@@ -606,12 +603,14 @@ async function nkFotografSikistir(dosya) {
         canvas.width = genislik;
         canvas.height = yukseklik;
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(bitmap, 0, 0, genislik, yukseklik);
 
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', NK_FOTO_JPEG_KALITE));
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', NK_FOTO_KALITE));
         if (!blob || blob.size >= dosya.size) return dosya; // sıkıştırma faydalı olmadıysa orijinali kullan
-        const yeniAd = dosya.name.replace(/\.\w+$/, '') + '.jpg';
-        const yeniDosya = new File([blob], yeniAd, { type: 'image/jpeg' });
+        const yeniAd = dosya.name.replace(/\.\w+$/, '') + '.webp';
+        const yeniDosya = new File([blob], yeniAd, { type: 'image/webp' });
         yeniDosya._nkOrijinalBoyut = dosya.size;
         return yeniDosya;
     } catch (e) {
@@ -670,12 +669,17 @@ async function nkElementSecildi(e) {
             nkSonucGoster('nk-soru-sonuc', `${dosya.name}: sadece JPG/PNG/WEBP/PDF kabul ediliyor.`, true);
             continue;
         }
-        if (dosya.size > NK_ELEMENT_MAX_BOYUT) {
-            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: dosya 5MB'tan büyük olamaz.`, true);
+        const fotograf = dosya.type.startsWith('image/');
+        const secimSiniri = fotograf ? NK_FOTO_KAYNAK_MAX_BOYUT : NK_ELEMENT_MAX_BOYUT;
+        if (dosya.size > secimSiniri) {
+            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: ${fotograf ? 'görsel 20MB' : 'dosya 5MB'} sınırını aşıyor.`, true);
             continue;
         }
-        // Sıkıştırma sadece fotoğraflara uygulanıyor — PDF olduğu gibi yükleniyor.
-        const islenmisDosya = dosya.type.startsWith('image/') ? await nkFotografSikistir(dosya) : dosya;
+        const islenmisDosya = fotograf ? await nkFotografSikistir(dosya) : dosya;
+        if (islenmisDosya.size > NK_ELEMENT_MAX_BOYUT) {
+            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: yüksek kaliteli optimizasyondan sonra da 5MB sınırını aşıyor.`, true);
+            continue;
+        }
         nkSecilenElementler.push(islenmisDosya);
         nkElementOnizlemeGuncelle();
     }
@@ -774,7 +778,7 @@ async function nkSoruFormSubmit(e) {
         return;
     }
     if (!nkSecilenElementler.length) {
-        nkSonucGoster('nk-soru-sonuc', 'En az bir soru fotoğrafı veya PDF ekle.', true);
+        nkSonucGoster('nk-soru-sonuc', 'En az bir görsel veya PDF ekle.', true);
         return;
     }
 
@@ -808,7 +812,7 @@ async function nkSoruFormSubmit(e) {
             return;
         }
         kaydedildi = true;
-        nkSonucGoster('nk-soru-sonuc', 'Soru bilgin kaydedildi! Admin onayından sonra diğer üyelere görünecek. 🎉', false);
+        nkSonucGoster('nk-soru-sonuc', 'Paylaşımın kaydedildi! Admin onayından sonra diğer üyelere görünecek. 🎉', false);
         document.getElementById('nk-soru-form').reset();
         nkSecilenElementler = [];
         nkElementOnizlemeGuncelle();

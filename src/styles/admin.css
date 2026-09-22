@@ -53,6 +53,7 @@
         .stat-karti-baslik { font-size: 0.73em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
         .stat-karti-deger { font-size: 1.9em; font-weight: 700; color: var(--accent); line-height: 1; }
         .stat-karti-alt { font-size: 0.78em; color: var(--muted); margin-top: 4px; }
+        .platform-ozet-kartlari { padding: 16px; margin-bottom: 0; }
 
         .grafik-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .grafik-wrapper { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 20px; overflow: hidden; }

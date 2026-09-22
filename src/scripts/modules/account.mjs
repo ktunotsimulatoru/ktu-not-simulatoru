@@ -505,7 +505,7 @@ async function hesapCikisYap() {
 
 
 // -------------------------------------------------------------
-// PROFİL SAYFASI — genel kullanıcı adı + "Paylaştığım Çıkmışlar" +
+// PROFİL SAYFASI — genel kullanıcı adı + Not Kutusu paylaşımları +
 // "Paylaştığım Ders Verileri". Veriler sayfaya girildiğinde taze çekilir.
 // -------------------------------------------------------------
 function hsProfilModalAc() {
@@ -592,9 +592,10 @@ async function hsProfilVerileriniYukle() {
         if (sorularHata) {
             cikmislarEl.innerHTML = '<p class="ny-form-hata">Yüklenemedi, tekrar dene.</p>';
         } else if (!sorularData || !sorularData.length) {
-            cikmislarEl.innerHTML = '<p class="ny-ipucu">Henüz bir çıkmış soru paylaşmadın.</p>';
+            cikmislarEl.innerHTML = '<p class="ny-ipucu">Henüz Not Kutusu içeriği paylaşmadın.</p>';
         } else {
             const durumRozeti = { onaylandi: '✅ Onaylandı', beklemede: '⏳ Beklemede', reddedildi: '❌ Reddedildi' };
+            const turEtiketi = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme', ders_notu: 'Ders Notu', diger: 'Diğer' };
             cikmislarEl.innerHTML = sorularData.map(s => {
                 const elementler = NKDosya.guvenliYollar(s.element_yollari);
                 const galeriId = `hs-soru-${s.id}`;
@@ -607,13 +608,13 @@ async function hsProfilVerileriniYukle() {
                             return `<a class="nk-soru-element-pdf" href="#" data-nk-url="${url}">📄 PDF</a>`;
                         }
                         gorselSira++;
-                        return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Soru fotoğrafı" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
+                        return `<img class="nk-soru-fotograf-kucuk" data-nk-url="${url}" alt="Paylaşım görseli" data-nk-click="hsElementAc" data-nk-click-arg0="${galeriId}" data-nk-click-arg1="${gorselSira}">`;
                     }).join('')}</div>`
                     : '';
                 return `
                 <div class="hs-liste-satir">
                     <div><strong>${escHtml(s.nk_dersler?.ders_adi || 'Ders')}</strong> <span class="ny-ipucu">${escHtml(s.nk_dersler?.bolumler?.ad || '')}</span></div>
-                    <div class="ny-ipucu">${escHtml(s.sinav_turu)} · ${s.akademik_yil}-${s.akademik_yil + 1} · ${durumRozeti[s.durum] || escHtml(s.durum)}</div>
+                    <div class="ny-ipucu">${turEtiketi[s.sinav_turu] || escHtml(s.sinav_turu)} · ${s.akademik_yil}-${s.akademik_yil + 1} · ${durumRozeti[s.durum] || escHtml(s.durum)}</div>
                     ${fotoHtml}
                 </div>
             `;
