@@ -63,7 +63,7 @@
                     <div id="hs-profil-genel" class="nk-tab-content active">
                         <div class="profil-panel-baslik"><span>Profil bilgisi</span><h2>Kullanıcı adın</h2><p>Bu ad Not Yakala liderlik tablosunda görünür ve ileride hesabına bağlı topluluk özelliklerinde kullanılabilir. E-posta adresin herkese gösterilmez.</p></div>
                         <form id="hs-kullanici-adi-form" class="profil-form" novalidate>
-                            <div class="form-group"><label for="hs-kullanici-adi">Kullanıcı adı</label><input type="text" id="hs-kullanici-adi" minlength="3" maxlength="20" autocomplete="username" placeholder="ornek_kullanici" aria-describedby="hs-kullanici-adi-yardim"><small id="hs-kullanici-adi-yardim">3-20 karakter; harf, rakam ve alt çizgi kullanabilirsin.</small></div>
+                            <div class="form-group"><label for="hs-kullanici-adi">Kullanıcı adı</label><input type="text" id="hs-kullanici-adi" minlength="3" maxlength="20" pattern="[A-Za-z0-9ÇĞİÖŞÜçğıöşü_]{3,20}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ornek_kullanici" aria-describedby="hs-kullanici-adi-yardim"><small id="hs-kullanici-adi-yardim">3-20 karakter; boşluk kullanmadan harf, rakam ve alt çizgi kullanabilirsin. Kullanıcı adları benzersizdir.</small></div>
                             <button type="submit" class="profil-birincil-buton">Değişiklikleri kaydet</button>
                         </form>
                         <div id="hs-kullanici-adi-sonuc" class="result-box" role="status" aria-live="polite" style="display:none"></div>

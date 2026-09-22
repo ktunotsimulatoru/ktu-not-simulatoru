@@ -202,6 +202,7 @@ function nkBolumSec(id) {
 }
 
 async function nkDersGridiGoster() {
+    const aramaOdakliydi = document.activeElement?.id === 'nk-ders-arama-input';
     nkState.dersId = null;
     document.getElementById('nk-ders-alani').style.display = 'none';
     document.getElementById('nk-klasor-alani').style.display = '';
@@ -231,7 +232,7 @@ async function nkDersGridiGoster() {
         <div class="nk-ders-katalog" id="nk-ders-katalog">${dersSatirlari}</div>${bosDurum}
         ${nkSayfalamaHtml('nkDersSayfasiDegistir', nkDersSayfa.sayfa, toplamSayfa)}
         <button type="button" class="nk-ders-ekle-satir" data-nk-click="nkYeniDersFormunuGoster"><span>＋</span><strong>Dersin listede yok mu?</strong><small>Yeni ders ekle</small></button><div id="nk-yeni-ders-form-alani"></div>`;
-    document.getElementById('nk-ders-arama-input')?.focus();
+    if (aramaOdakliydi) document.getElementById('nk-ders-arama-input')?.focus({ preventScroll: true });
 }
 
 function nkDersListesiniFiltrele(arama) {

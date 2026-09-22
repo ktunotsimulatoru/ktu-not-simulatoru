@@ -2563,6 +2563,7 @@ main { margin-top: 1.5rem; }
     .nk-kod-satiri button { width: 100%; }
     .nk-soru-kart { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 9px; }
     .nk-soru-onizlemeler { grid-column: 1 / -1; min-width: 0; }
+    .nk-soru-kart-islem { grid-column: 1 / -1; width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
     .nk-ifade-yer { grid-column: 1 / -1; }
     .nk-ifade-grubu { gap: 5px; }
     .nk-ifade-btn { flex: 1 1 82px; padding-inline: 7px; }
@@ -2584,13 +2585,31 @@ main { margin-top: 1.5rem; }
 .agno-hedef-uyari { background:rgba(245,165,36,.1); border-color:rgba(245,165,36,.35); }
 .agno-kayit-alani { margin-top:26px; padding:20px; border:1px solid var(--border-color); border-radius:var(--radius-lg); background:var(--card-bg); }
 .agno-kayit-alani h3 { margin:0 0 12px; }
+.agno-giris-cagrisi[hidden],#agno-kayit-paneli[hidden] { display:none !important; }
 .agno-giris-cagrisi { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:16px; border-radius:var(--radius-md); background:var(--input-bg); }
 .agno-giris-cagrisi > div { min-width:0; }
 .agno-giris-cagrisi p { margin:4px 0 0; color:var(--small-text); font-size:.88em; }
 .agno-giris-cagrisi button { flex:0 0 auto; min-height:40px; padding:9px 15px; border:0; border-radius:var(--radius-md); background:var(--button-bg); color:var(--button-text); box-shadow:none; font:600 .82rem 'Poppins',sans-serif; white-space:nowrap; cursor:pointer; }
 .agno-giris-cagrisi button:hover { background:var(--button-hover-bg); }
 .agno-giris-cagrisi button,.agno-kayit-karti button { width:auto; }
-.agno-kayit-karti { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border-color); }
+#agno-kayit-paneli { display:grid; gap:14px; }
+.agno-kayit-formu { margin:0; padding:14px; border:1px solid var(--tab-border); border-radius:var(--radius-md); background:var(--surface2); }
+.agno-kayit-formu .form-group { min-width:0; margin:0; }
+.agno-kayit-formu input,.agno-kayit-formu select { min-height:46px; border-color:transparent; border-radius:var(--radius-md); background:var(--input-bg); }
+.agno-kayit-formu input:focus,.agno-kayit-formu select:focus { background:var(--main-bg); box-shadow:var(--focus-ring); }
+.agno-kayit-listesi-baslik { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-top:4px; }
+.agno-kayit-listesi-baslik span { color:var(--content-title); font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.agno-kayit-listesi-baslik strong { color:var(--label-color); font-size:.9rem; }
+#agno-kayitli-donemler { display:grid; gap:8px; }
+.agno-kayit-karti { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 14px; border:1px solid transparent; border-radius:var(--radius-md); background:var(--input-bg); transition:border-color .15s ease,background-color .15s ease; }
+.agno-kayit-karti:hover { border-color:var(--input-border); background:var(--surface2); }
+.agno-kayit-bilgi { min-width:0; }
+.agno-kayit-karti strong { display:block; overflow-wrap:anywhere; color:var(--label-color); }
 .agno-kayit-karti small { display:block; color:var(--small-text); margin-top:3px; }
+.agno-kayit-eylemler { display:flex; flex:0 0 auto; gap:7px; }
+.agno-kayit-ac-btn,.agno-kayit-sil-btn { min-height:34px; margin:0; padding:7px 12px; border-radius:var(--radius-sm); box-shadow:none; font:600 .76rem 'Poppins',sans-serif; cursor:pointer; }
+.agno-kayit-ac-btn { border:1px solid var(--input-border); background:var(--main-bg); color:var(--content-title); }
+.agno-kayit-ac-btn:hover { border-color:var(--button-bg); background:var(--result-bg); }
+.agno-kayit-sil-btn { border:1px solid var(--error-border); background:var(--error-bg); color:var(--error-text); }
 #agno-kayit-mesaj:not(:empty) { margin:12px 0; }
-@media(max-width:720px){.agno-girdi-grid,.agno-kayit-formu{grid-template-columns:1fr}.agno-giris-cagrisi,.agno-kayit-karti{align-items:flex-start;flex-direction:column}}
+@media(max-width:720px){.agno-girdi-grid,.agno-kayit-formu{grid-template-columns:1fr}.agno-giris-cagrisi,.agno-kayit-karti{align-items:flex-start;flex-direction:column}.agno-kayit-eylemler{width:100%}.agno-kayit-ac-btn,.agno-kayit-sil-btn{flex:1}.agno-kayit-listesi-baslik{align-items:flex-start;flex-direction:column;gap:2px}}

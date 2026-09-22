@@ -63,11 +63,12 @@ function agnoHesapla(){
 
 function agnoKayitMesaji(mesaj,hata=false){const el=document.getElementById('agno-kayit-mesaj');if(!el)return;el.textContent=mesaj;el.className=hata?'error-message':'nk-basari';}
 function agnoGirisAc(){hsGirisModalAc('giris');}
-async function agnoKayitDurumunuGuncelle(){
+async function agnoKayitDurumunuGuncelle(event){
     const giris=document.getElementById('agno-giris-cagrisi'),panel=document.getElementById('agno-kayit-paneli');
     if(!giris||!panel)return;
-    giris.hidden=!!hsMevcutOturum; panel.hidden=!hsMevcutOturum;
-    if(hsMevcutOturum)await agnoKayitliDonemleriYukle();
+    const oturum=event?.detail?.oturum ?? hsMevcutOturum;
+    giris.hidden=!!oturum; panel.hidden=!oturum;
+    if(oturum)await agnoKayitliDonemleriYukle();
 }
 async function agnoKayitliDonemleriYukle(){
     const alan=document.getElementById('agno-kayitli-donemler');if(!alan||!hsMevcutOturum)return;
@@ -75,7 +76,7 @@ async function agnoKayitliDonemleriYukle(){
     const {data,error}=await getSupabase().from('kayitli_donemler').select('id,ad,akademik_yil,donem,dersler,mevcut_agno,mevcut_kredi,hedef_agno,guncelleme_tarihi').order('guncelleme_tarihi',{ascending:false});
     if(error){alan.innerHTML='<p class="error-message">Dönemler yüklenemedi.</p>';hataKaydet('veritabani','donem_listele',error.message);return;}
     if(!data?.length){alan.innerHTML='<p class="veri-bos">Henüz kaydedilmiş dönem yok.</p>';return;}
-    alan.innerHTML=data.map(d=>`<article class="agno-kayit-karti"><div><strong>${escHtml(d.ad)}</strong><small>${d.akademik_yil}-${d.akademik_yil+1} · ${d.donem==='guz'?'Güz':d.donem==='bahar'?'Bahar':'Yaz'} · ${d.dersler.length} ders</small></div><div class="gano-alt-butonlar"><button type="button" data-nk-click="agnoDonemYukle" data-nk-click-arg0="${d.id}">Aç</button><button type="button" class="gano-ders-sil-btn" data-nk-click="agnoDonemSil" data-nk-click-arg0="${d.id}">Sil</button></div></article>`).join('');
+    alan.innerHTML=data.map(d=>`<article class="agno-kayit-karti"><div class="agno-kayit-bilgi"><strong>${escHtml(d.ad)}</strong><small>${d.akademik_yil}-${d.akademik_yil+1} · ${d.donem==='guz'?'Güz':d.donem==='bahar'?'Bahar':'Yaz'} · ${d.dersler.length} ders</small></div><div class="agno-kayit-eylemler"><button type="button" class="agno-kayit-ac-btn" data-nk-click="agnoDonemYukle" data-nk-click-arg0="${d.id}">Aç</button><button type="button" class="agno-kayit-sil-btn" data-nk-click="agnoDonemSil" data-nk-click-arg0="${d.id}">Sil</button></div></article>`).join('');
     alan._agnoVeri=data;
     const url=new URL(location.href),profilKaydi=url.searchParams.get('kayit');
     if(profilKaydi&&data.some(d=>String(d.id)===profilKaydi)){

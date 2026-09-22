@@ -691,6 +691,10 @@ async function hsKullaniciAdiFormSubmit(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const ad = document.getElementById('hs-kullanici-adi').value.trim();
+    if (!/^[A-Za-z0-9ÇĞİÖŞÜçğıöşü_]{3,20}$/.test(ad)) {
+        hsSonucGoster('hs-kullanici-adi-sonuc', 'Kullanıcı adı 3-20 karakter olmalı; boşluk kullanmadan harf, rakam veya alt çizgi içermeli. Örnek: Mustafa_TAŞ', true);
+        return;
+    }
     btn.disabled = true;
     const eskiMetin = btn.textContent;
     btn.textContent = 'Kaydediliyor...';
@@ -703,7 +707,13 @@ async function hsKullaniciAdiFormSubmit(e) {
                 ad_alinmis: 'Bu kullanıcı adı alınmış.',
                 giris_gerekli: 'Bu işlem için giriş yapmalısın.'
             };
-            hsSonucGoster('hs-kullanici-adi-sonuc', hatalar[data?.hata] || 'Kaydedilemedi, tekrar dene.', true);
+            const teknikHatalar = {
+                '23505': 'Bu kullanıcı adı alınmış.',
+                '42501': 'Kullanıcı adı kaydetme izni etkin değil. Son veritabanı migrationını kontrol et.',
+                '42883': 'Kullanıcı adı altyapısı bulunamadı. Son veritabanı migrationını çalıştır.',
+                PGRST202: 'Kullanıcı adı altyapısı Supabase şemasında görünmüyor. Son migrationı çalıştır.'
+            };
+            hsSonucGoster('hs-kullanici-adi-sonuc', hatalar[data?.hata] || teknikHatalar[error?.code] || 'Kullanıcı adı kaydedilemedi. Bağlantını kontrol edip tekrar dene.', true);
             return;
         }
         hsMevcutProfil = { ...(hsMevcutProfil || {}), kullanici_adi: data.kullanici_adi };

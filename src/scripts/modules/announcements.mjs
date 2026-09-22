@@ -1,6 +1,49 @@
 import { sbOnbellekOku, sbOnbellekYaz } from './cache.mjs';
 import { getSupabase } from './api.mjs';
 
+const DUYURU_KAPATMA_ANAHTARI = 'ktu-kapatilan-duyurular-v2';
+let duyuruKullaniciId = null;
+
+function duyuruDepoAnahtari() {
+    return `${DUYURU_KAPATMA_ANAHTARI}:${duyuruKullaniciId || 'misafir'}`;
+}
+
+function kapatilanDuyurulariOku() {
+    try {
+        const yeniler = JSON.parse(localStorage.getItem(duyuruDepoAnahtari()) || '[]');
+        const eskiler = JSON.parse(sessionStorage.getItem('kapatilanDuyurular') || '[]');
+        return [...new Set([...yeniler, ...eskiler].map(String))];
+    } catch { return []; }
+}
+
+function kapatilanDuyurulariYaz(idler) {
+    try { localStorage.setItem(duyuruDepoAnahtari(), JSON.stringify([...new Set(idler.map(String))])); }
+    catch { /* Depolama kapalıysa sunucu kaydı yine denenir. */ }
+}
+
+function kapatilanlariEkrandanKaldir(idler) {
+    idler.forEach(id => document.getElementById('dinamik-duyuru-' + id)?.remove());
+}
+
+async function hesapDuyuruTercihleriniEsitle() {
+    if (!duyuruKullaniciId) return;
+    const yerel = kapatilanDuyurulariOku();
+    if (yerel.length) {
+        await Promise.allSettled(yerel.map(id => getSupabase().rpc('duyuru_kapat', { p_duyuru_id: id })));
+    }
+    const { data, error } = await getSupabase().rpc('kapatilan_duyurularim');
+    if (error) return;
+    const birlesik = [...new Set([...yerel, ...(Array.isArray(data) ? data : [])].map(String))];
+    kapatilanDuyurulariYaz(birlesik);
+    try { sessionStorage.removeItem('kapatilanDuyurular'); } catch { /* eski kayıt sonraki açılışta yeniden birleştirilir */ }
+    kapatilanlariEkrandanKaldir(birlesik);
+}
+
+window.addEventListener('hesapDurumuDegisti', event => {
+    duyuruKullaniciId = event.detail?.oturum?.id || null;
+    if (duyuruKullaniciId) hesapDuyuruTercihleriniEsitle();
+});
+
 
 // --- Karanlık Mod Yönetimi ---
 // Not: Duyurular artık tamamen admin panelinden (Supabase 'duyurular' tablosu) yönetiliyor,
@@ -11,15 +54,9 @@ function dinamikDuyuruKapat(id) {
     el.style.transition = 'opacity 0.25s ease';
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 260);
-    // Kapatılan duyuruyu sessionStorage'a kaydet
-    try {
-        const kapatilanlar = JSON.parse(sessionStorage.getItem('kapatilanDuyurular') || '[]');
-        kapatilanlar.push(id);
-        sessionStorage.setItem('kapatilanDuyurular', JSON.stringify(kapatilanlar));
-    } catch (e) {
-        // Bozuk/eski formatlı bir değer varsa sıfırdan başlat — en azından bu kapatma kaydedilsin.
-        sessionStorage.setItem('kapatilanDuyurular', JSON.stringify([id]));
-    }
+    const kapatilanlar = [...kapatilanDuyurulariOku(), String(id)];
+    kapatilanDuyurulariYaz(kapatilanlar);
+    if (duyuruKullaniciId) getSupabase().rpc('duyuru_kapat', { p_duyuru_id: String(id) });
 }
 
 
@@ -52,8 +89,8 @@ async function dinamikDuyurulariYukle() {
 
         if (data.length === 0) return;
 
-        const kapatilanlar = JSON.parse(sessionStorage.getItem('kapatilanDuyurular') || '[]');
-        const gosterilecekler = data.filter(d => !kapatilanlar.includes(d.id));
+        const kapatilanlar = kapatilanDuyurulariOku();
+        const gosterilecekler = data.filter(d => !kapatilanlar.includes(String(d.id)));
         if (gosterilecekler.length === 0) return;
 
         const wrapper = document.getElementById('dinamik-duyurular-wrapper');
