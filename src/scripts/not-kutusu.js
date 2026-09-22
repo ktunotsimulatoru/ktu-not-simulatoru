@@ -367,12 +367,12 @@ function nkYeniDersFormunuGoster() {
                 <input type="text" id="nk-yeni-ders-adi" placeholder="Örn. Bilgisayar Ağları" maxlength="120" required>
             </div>
             <div class="form-group">
-                <label for="nk-yeni-ders-kodu">Ders Kodu <small>(opsiyonel)</small>:</label>
+                <label for="nk-yeni-ders-kodu">Ders kodu <small>(isteğe bağlı)</small></label>
                 <input type="text" id="nk-yeni-ders-kodu" placeholder="Örn. BLM301" maxlength="20">
             </div>
-            <div class="btn-grup">
+            <div class="nk-yeni-ders-eylemler">
                 <button type="submit">Ekle</button>
-                <button type="button" data-nk-click="nkElementBosalt" data-nk-click-arg0="nk-yeni-ders-form-alani">Vazgeç</button>
+                <button type="button" class="nk-ikincil-buton" data-nk-click="nkElementBosalt" data-nk-click-arg0="nk-yeni-ders-form-alani">Vazgeç</button>
             </div>
         </form>
         <div id="nk-yeni-ders-sonuc" class="result-box" style="display:none;"></div>`;
