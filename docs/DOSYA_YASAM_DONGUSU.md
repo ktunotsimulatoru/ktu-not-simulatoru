@@ -28,7 +28,7 @@ Bu değişiklik site, Worker ve veritabanının birlikte güncellenmesini gerekt
 
 1. Supabase yedeğini ve mevcut site/Worker sürümünü saklayın. SQL'i önce test projesinde deneyin. `001_not_kutusu_guvenlik.sql` zaten uygulanmış olmalı; yeniden çalıştırmak gerekmez.
 2. R2 bucket'ının **public r2.dev erişimini ve doğrudan public custom domain erişimini kapatın**. Dosyalara tek erişim yolu bu Worker olmalı. Harici açık bucket adresi varsa Worker kontrolü onu korumaz.
-3. Worker için Supabase'in legacy **service_role API anahtarını** `SUPABASE_SERVICE_ROLE_KEY` secret adıyla ekleyin. Tarama hizmeti için `MALWARE_SCAN_PROVIDER` ve `MALWARE_SCAN_TOKEN` secret'larını ekleyin. `cloudmersive` seçimi yerleşik adaptörü kullanır. `generic` seçiminde ayrıca ham dosya kabul eden HTTPS adresini `MALWARE_SCAN_URL` olarak ekleyin; bu uç nokta `Authorization: Bearer`, gerçek MIME ve `X-Content-SHA256` almalı, JSON olarak `clean`, `malicious` veya `suspicious` kararı döndürmelidir. Anahtarları kaynak dosyaya, `wrangler.toml` vars bölümüne, tarayıcıya veya sohbet mesajına koymayın. Sağlayıcının adı, saklama bölgesi ve koşulları gizlilik metnine yazılmadan canlı dosya yüklemeyi açmayın.
+3. Worker için Supabase'in legacy **service_role API anahtarını** `SUPABASE_SERVICE_ROLE_KEY` secret adıyla ekleyin. Tarama hizmeti için `MALWARE_SCAN_PROVIDER` ve `MALWARE_SCAN_TOKEN` secret'larını ekleyin. `cloudmersive` seçimi yerleşik adaptörü kullanır. `generic` seçiminde ayrıca ham dosya kabul eden HTTPS adresini `MALWARE_SCAN_URL` olarak ekleyin; bu uç nokta `Authorization: Bearer`, gerçek MIME ve `X-Content-SHA256` almalı, JSON olarak `clean`, `malicious` veya `suspicious` kararı döndürmelidir. Cloudmersive yedeği olarak Scanii kullanıldığında `MALWARE_SCAN_FALLBACK_PROVIDER=scanii`, `MALWARE_SCAN_FALLBACK_KEY` ve `MALWARE_SCAN_FALLBACK_SECRET` eklenir. Anahtarları kaynak dosyaya, `wrangler.toml` vars bölümüne, tarayıcıya veya sohbet mesajına koymayın. Sağlayıcının adı, saklama bölgesi ve koşulları gizlilik metnine yazılmadan canlı dosya yüklemeyi açmayın.
 4. Bakım aralığında yeni Worker'ı yayımlayın; migration hazır değilse API güvenli biçimde 503 döner. Ardından Supabase SQL Editor'da yalnızca `migrations/002_dosya_yasam_dongusu.sql` çalıştırın ve sondaki geçiş raporunu inceleyin. Eski açık Worker sürümünü bu aralıkta erişimde bırakmayın.
 5. `release/site.zip` içeriğini statik siteye yayımlayın. Bu pakette yeni dosya istemcisi ve yönetici depolama ekranı vardır. Kaynak `src` veya migration dosyalarını siteye yüklemeyin.
 6. Cloudflare Worker cron tetikleyicisinin `*/10 * * * *` olarak kurulduğunu ve başarılı çalıştığını kontrol edin. Eski public dosya yanıtlarını tutan CDN önbelleğini temizleyin; eski sürüm tarayıcılara 1 saatlik cache verdiğinden önceden indirilmiş/önbelleğe alınmış kopyalar uzaktan geri alınamaz.
@@ -41,10 +41,13 @@ wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 wrangler secret put MALWARE_SCAN_PROVIDER
 wrangler secret put MALWARE_SCAN_URL
 wrangler secret put MALWARE_SCAN_TOKEN
+wrangler secret put MALWARE_SCAN_FALLBACK_PROVIDER
+wrangler secret put MALWARE_SCAN_FALLBACK_KEY
+wrangler secret put MALWARE_SCAN_FALLBACK_SECRET
 wrangler deploy
 ```
 
-`MALWARE_SCAN_PROVIDER=cloudmersive` kullanıldığında `MALWARE_SCAN_URL` komutunu atlayın. `generic` kullanıldığında üç tarama secret'ı da gerekir.
+`MALWARE_SCAN_PROVIDER=cloudmersive` kullanıldığında `MALWARE_SCAN_URL` komutunu atlayın. `generic` kullanıldığında üç birincil tarama secret'ı da gerekir. Scanii yedeği kullanılmıyorsa üç `MALWARE_SCAN_FALLBACK_*` komutunu atlayın. Ayrıntılı geçiş ve test adımları `docs/ZARARLI_DOSYA_GUVENLIGI.md` içindedir.
 
 `worker.zip` sadece Worker kodu ve wrangler yapılandırmasını taşır; secret'ı içermez. Canlı secret ekleme, migration uygulama veya dağıtım bu çalışma sırasında yapılmadı.
 

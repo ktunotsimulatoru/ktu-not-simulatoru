@@ -21,12 +21,22 @@ const secret = 'test-only-secret-not-a-deployed-key';
 const originalNetworkFetch = global.fetch;
 let scanVerdict = 'clean';
 let cloudmersiveResult = {CleanResult:true,FoundViruses:[]};
+let cloudmersiveStatus = 200;
+let scaniiResult = {id:'scanii-clean-id',findings:[]};
+let scaniiStatus = 201;
+let scaniiCalls = 0;
 const securityEvents = [];
 async function rpcMock(url, options) {
     if (url === 'https://scanner.example/scan') return Response.json({verdict:scanVerdict,engine:'test-av',signature:scanVerdict==='clean'?null:'EICAR-Test'});
     if (url === 'https://api.cloudmersive.com/virus/scan/file/advanced') {
         assert.equal(options.headers.Apikey,'cloud-test-key');assert.ok(options.body instanceof FormData);
-        return Response.json(cloudmersiveResult);
+        return Response.json(cloudmersiveResult,{status:cloudmersiveStatus});
+    }
+    if (url === 'https://api-eu1.scanii.com/v2.2/files') {
+        scaniiCalls++;
+        assert.equal(options.headers.Authorization,`Basic ${btoa('scanii-key:scanii-secret')}`);
+        assert.ok(options.body instanceof FormData);
+        return Response.json(scaniiResult,{status:scaniiStatus});
     }
     if (url === 'https://tsfscfgwbmiouptsljyi.supabase.co/rest/v1/rpc/nk_guvenlik_islem') {
         securityEvents.push(JSON.parse(options.body)); return Response.json({basarili:true});
@@ -92,6 +102,31 @@ test('Cloudmersive adaptörü temiz sonucu kabul eder, tehdidi R2 öncesinde dur
     assert.equal(securityEvents.at(-1).p_veri.engine,'Cloudmersive Advanced Virus Scan');
     assert.equal(securityEvents.at(-1).p_veri.signature,'EICAR-Test-File');
     cloudmersiveResult={CleanResult:true,FoundViruses:[]};
+});
+test('Cloudmersive kota veya geçici hatasında Scanii yedeğine geçilir', async () => {
+    const env={MALWARE_SCAN_PROVIDER:'cloudmersive',MALWARE_SCAN_TOKEN:'cloud-test-key',
+        MALWARE_SCAN_FALLBACK_PROVIDER:'scanii',MALWARE_SCAN_FALLBACK_KEY:'scanii-key',
+        MALWARE_SCAN_FALLBACK_SECRET:'scanii-secret'};
+    cloudmersiveStatus=429;scaniiStatus=201;scaniiResult={id:'scanii-clean-id',findings:[]};scaniiCalls=0;
+    const clean=await upload('%PDF-1.7','application/pdf',{},undefined,false,env);
+    assert.equal(clean.response.status,200);assert.equal(clean.saved.length,1);assert.equal(scaniiCalls,1);
+
+    scaniiResult={id:'scanii-malware-id',findings:['av.test.eicar']};
+    const malicious=await upload('%PDF-1.7 EICAR','application/pdf',{},undefined,false,env);
+    assert.equal(malicious.response.status,422);assert.equal(malicious.saved.length,0);
+    assert.equal(securityEvents.at(-1).p_veri.engine,'Scanii Content Identification');
+    assert.equal(securityEvents.at(-1).p_veri.failover,true);
+    assert.equal(securityEvents.at(-1).p_veri.signature,'av.test.eicar');
+    cloudmersiveStatus=200;scaniiResult={id:'scanii-clean-id',findings:[]};
+});
+test('Kalıcı Cloudmersive kimlik hatası yedek sağlayıcıyla gizlenmez', async () => {
+    const env={MALWARE_SCAN_PROVIDER:'cloudmersive',MALWARE_SCAN_TOKEN:'cloud-test-key',
+        MALWARE_SCAN_FALLBACK_PROVIDER:'scanii',MALWARE_SCAN_FALLBACK_KEY:'scanii-key',
+        MALWARE_SCAN_FALLBACK_SECRET:'scanii-secret'};
+    cloudmersiveStatus=401;scaniiCalls=0;
+    const failed=await upload('%PDF-1.7','application/pdf',{},undefined,false,env);
+    assert.equal(failed.response.status,503);assert.equal(failed.saved.length,0);assert.equal(scaniiCalls,0);
+    cloudmersiveStatus=200;
 });
 test('Sahte MIME ve boş dosya R2’ye yazılmaz', async () => {
     for (const body of ['<html>not a PDF</html>', '']) {

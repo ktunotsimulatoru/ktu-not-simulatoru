@@ -55,10 +55,42 @@ async function sha256Hex(bytes) {
 // Harici tarayıcı sözleşmesi: ham dosya gövdesine karşılık
 // { verdict: 'clean'|'malicious'|'suspicious', engine?, signature?, scan_id? }.
 // Tarayıcı tanımlı değilse veya kesin "clean" üretemezse yükleme kapalı kalır.
-async function zararliYazilimTara(bytes, mime, env) {
-  const provider = String(env.MALWARE_SCAN_PROVIDER || 'generic').toLowerCase();
-  if (!env.MALWARE_SCAN_TOKEN || (provider === 'generic' && !env.MALWARE_SCAN_URL)) return { verdict: 'unavailable' };
-  const hash = await sha256Hex(bytes);
+function tarayiciAyari(env, yedek = false) {
+  if (yedek) return {
+    provider: String(env.MALWARE_SCAN_FALLBACK_PROVIDER || '').toLowerCase(),
+    token: env.MALWARE_SCAN_FALLBACK_TOKEN,
+    url: env.MALWARE_SCAN_FALLBACK_URL,
+    key: env.MALWARE_SCAN_FALLBACK_KEY,
+    secret: env.MALWARE_SCAN_FALLBACK_SECRET,
+  };
+  return {
+    provider: String(env.MALWARE_SCAN_PROVIDER || 'generic').toLowerCase(),
+    token: env.MALWARE_SCAN_TOKEN,
+    url: env.MALWARE_SCAN_URL,
+  };
+}
+
+function tarayiciHazir(ayar) {
+  if (ayar.provider === 'cloudmersive') return Boolean(ayar.token);
+  if (ayar.provider === 'generic') return Boolean(ayar.token && ayar.url);
+  if (ayar.provider === 'scanii') return Boolean(ayar.key && ayar.secret);
+  return false;
+}
+
+function taramaSonucu(result) {
+  const { retryable, ...publicResult } = result;
+  return publicResult;
+}
+
+function scaniiBulguMetni(finding) {
+  if (typeof finding === 'string') return finding;
+  if (!finding || typeof finding !== 'object') return '';
+  return String(finding.name || finding.description || finding.type || '');
+}
+
+async function tekTarayiciIleTara(bytes, mime, ayar, hash) {
+  const provider = ayar.provider;
+  if (!tarayiciHazir(ayar)) return { verdict: 'unavailable', hash, retryable: false };
   let response;
   try {
     if (provider === 'cloudmersive') {
@@ -67,7 +99,7 @@ async function zararliYazilimTara(bytes, mime, env) {
       response = await fetch('https://api.cloudmersive.com/virus/scan/file/advanced', {
         method: 'POST',
         headers: {
-          Apikey: env.MALWARE_SCAN_TOKEN,
+          Apikey: ayar.token,
           fileName: `upload.${IZINLI_TIPLER[mime]}`,
           allowExecutables: 'false', allowInvalidFiles: 'false', allowScripts: 'false',
         },
@@ -75,24 +107,36 @@ async function zararliYazilimTara(bytes, mime, env) {
         signal: AbortSignal.timeout(30000),
       });
     } else if (provider === 'generic') {
-      response = await fetch(env.MALWARE_SCAN_URL, {
+      response = await fetch(ayar.url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${env.MALWARE_SCAN_TOKEN}`,
+          'Authorization': `Bearer ${ayar.token}`,
           'Content-Type': mime,
           'X-Content-SHA256': hash,
         },
         body: bytes,
         signal: AbortSignal.timeout(30000),
       });
-    } else return { verdict: 'unavailable', hash };
-  } catch { return { verdict: 'unavailable', hash }; }
-  if (!response.ok) return { verdict: 'unavailable', hash };
+    } else if (provider === 'scanii') {
+      const form = new FormData();
+      form.append('file', new Blob([bytes], { type: mime }), `upload.${IZINLI_TIPLER[mime]}`);
+      response = await fetch('https://api-eu1.scanii.com/v2.2/files', {
+        method: 'POST',
+        headers: { Authorization: `Basic ${btoa(`${ayar.key}:${ayar.secret}`)}` },
+        body: form,
+        signal: AbortSignal.timeout(30000),
+      });
+    } else return { verdict: 'unavailable', hash, retryable: false };
+  } catch { return { verdict: 'unavailable', hash, retryable: true }; }
+  if (!response.ok) {
+    const retryable = response.status === 408 || response.status === 425 || response.status === 429 || response.status >= 500;
+    return { verdict: 'unavailable', hash, retryable };
+  }
   let result;
   try { result = await response.json(); }
-  catch { return { verdict: 'unavailable', hash }; }
+  catch { return { verdict: 'unavailable', hash, retryable: true }; }
   if (provider === 'cloudmersive') {
-    if (typeof result?.CleanResult !== 'boolean') return { verdict: 'unavailable', hash };
+    if (typeof result?.CleanResult !== 'boolean') return { verdict: 'unavailable', hash, retryable: true };
     const viruses = Array.isArray(result.FoundViruses) ? result.FoundViruses : [];
     const reasons = [
       ...viruses.map(value => value?.VirusName).filter(Boolean),
@@ -106,14 +150,39 @@ async function zararliYazilimTara(bytes, mime, env) {
       scan_id: null,
     };
   }
+  if (provider === 'scanii') {
+    if (!Array.isArray(result?.findings) || typeof result?.id !== 'string') {
+      return { verdict: 'unavailable', hash, retryable: true };
+    }
+    const findings = result.findings.map(scaniiBulguMetni).filter(Boolean);
+    return {
+      verdict: findings.length ? 'malicious' : 'clean',
+      hash, engine: 'Scanii Content Identification',
+      signature: findings.join(', ').slice(0, 160) || null,
+      scan_id: result.id.slice(0, 160),
+    };
+  }
   const verdict = String(result?.verdict || '').toLowerCase();
-  if (!['clean', 'malicious', 'suspicious'].includes(verdict)) return { verdict: 'unavailable', hash };
+  if (!['clean', 'malicious', 'suspicious'].includes(verdict)) return { verdict: 'unavailable', hash, retryable: true };
   return {
     verdict, hash,
     engine: String(result.engine || 'harici-tarayici').slice(0, 80),
     signature: String(result.signature || '').slice(0, 160) || null,
     scan_id: String(result.scan_id || '').slice(0, 160) || null,
   };
+}
+
+async function zararliYazilimTara(bytes, mime, env) {
+  const hash = await sha256Hex(bytes);
+  const birincilAyar = tarayiciAyari(env);
+  const birincil = await tekTarayiciIleTara(bytes, mime, birincilAyar, hash);
+  if (birincil.verdict !== 'unavailable' || !birincil.retryable) return taramaSonucu(birincil);
+
+  const yedekAyar = tarayiciAyari(env, true);
+  if (!tarayiciHazir(yedekAyar)) return taramaSonucu(birincil);
+  console.warn(JSON.stringify({ event: 'malware_scan_failover', primary: birincilAyar.provider, fallback: yedekAyar.provider }));
+  const yedek = await tekTarayiciIleTara(bytes, mime, yedekAyar, hash);
+  return { ...taramaSonucu(yedek), failover: true };
 }
 
 // Supabase projesi ES256 (asimetrik) imzalama anahtarları kullanıyor (canlıda

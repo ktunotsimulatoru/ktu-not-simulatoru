@@ -25,4 +25,9 @@ crons = ["*/10 * * * *"]
 #   wrangler secret put MALWARE_SCAN_URL
 #   wrangler secret put MALWARE_SCAN_TOKEN
 # cloudmersive seçiminde URL kullanılmaz; generic seçiminde URL zorunludur.
+# Cloudmersive kota/geçici servis hatalarında Scanii yedeği:
+#   wrangler secret put MALWARE_SCAN_FALLBACK_PROVIDER   # scanii
+#   wrangler secret put MALWARE_SCAN_FALLBACK_KEY
+#   wrangler secret put MALWARE_SCAN_FALLBACK_SECRET
+# Scanii için sabit Dublin (AB) uç noktası kullanılır.
 # Tarayıcı kesin "clean" sonucu vermeden dosya R2'ye yazılmaz.
