@@ -45,6 +45,8 @@ Paketleme PowerShell 7 (`pwsh`) gerektirir. Önizleme, Supabase için boş test 
 
 Zararlı dosya taramasının sağlayıcı sözleşmesi, olay yönetimi ve canlıya alma kontrolü için `docs/ZARARLI_DOSYA_GUVENLIGI.md` dosyasına bakın.
 
+Supabase Auth e-postalarının Resend kotası/kesintisinde Brevo'ya geçmesi için `supabase/functions/send-email` Edge Function'ı ve `docs/EPOSTA_FAILOVER_KURULUMU.md` kurulum adımları kullanılır.
+
 Yayın yolu değişmedi: örneğin `src/pages/index.html`, derlemede `dist/index.html` olur. Kaynaklarda `.min.js` dosyalarını elle oluşturmayın; bunları build üretir. `dist` üzerinde düzenleme yapmayın, bir sonraki build üzerine yazar.
 
 ## Belgeler

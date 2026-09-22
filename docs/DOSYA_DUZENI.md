@@ -5,6 +5,7 @@
 1. **Site:** HTML, CSS, tarayıcı JavaScript'i, görsel ve fontlar. `src` ve `public` kaynaklarından `dist` üretilir. Siteye yalnızca `dist` içeriği gönderilir.
 2. **Worker:** Dosya yükleme/okuma sunucusu. `worker/worker.js` ve `worker/wrangler.toml` Cloudflare Workers içindir. Site dosyalarına katılmaz. Yerel `.wrangler` araç önbelleği korunur ama paketlenmez.
 3. **Veritabanı:** `migrations` altındaki SQL değişiklikleri Supabase içindir. Web sunucusuna yüklenmez ve her site yayınında yeniden çalıştırılmaz.
+4. **Supabase Edge Functions:** `supabase/functions` altındaki sunucu kodları Supabase CLI ile ayrıca yayımlanır. `send-email`, Resend ve Brevo arasında Auth e-posta failover'ını yürütür; statik site paketine girmez.
 
 ## Hangi dosyayı düzenlemeliyim?
 
