@@ -12,7 +12,7 @@ create table if not exists public.nk_dosyalar (
     kullanici_id uuid not null,
     soru_id uuid references public.sorular(id) on delete set null deferrable initially deferred,
     durum text not null check (durum in ('reserved','ready','attached','legacy','deleting','deleted')),
-    boyut bigint not null check (boyut between 1 and 5242880),
+    boyut bigint not null check (boyut between 1 and 3500000),
     mime text not null check (mime in ('image/jpeg','image/png','image/webp','application/pdf')),
     etag text,
     kaynak text not null default 'upload' check (kaynak in ('upload','legacy','orphan')),
@@ -31,7 +31,7 @@ revoke all on public.nk_dosyalar, public.nk_dosya_ayarlari from public, anon, au
 
 -- Aynı yol birden fazla soruda ise sessizce sahip seçilmez: geçiş raporuna kalır.
 insert into public.nk_dosyalar(yol,kullanici_id,soru_id,durum,boyut,kaynak,mime)
-select yol, min(s.kullanici_id::text)::uuid, min(s.id::text)::uuid, 'legacy', 5242880, 'legacy',
+select yol, min(s.kullanici_id::text)::uuid, min(s.id::text)::uuid, 'legacy', 3500000, 'legacy',
     case right(yol,3) when 'pdf' then 'application/pdf' when 'png' then 'image/png'
       when 'jpg' then 'image/jpeg' else 'image/webp' end
 from public.sorular s cross join lateral unnest(s.element_yollari) e(yol)
@@ -116,7 +116,7 @@ begin
             from public.nk_dosyalar where kullanici_id=u;
         if p_islem='quota' then return jsonb_build_object('kullanilan_bayt',b,'kullanilan_adet',n,'gunluk_adet',g,
             'kota_bayt',a.kota_bayt,'kota_adet',a.kota_adet,'gunluk_limit',a.gunluk_adet); end if;
-        if (p_veri->>'boyut')::bigint not between 1 and 5242880 then return jsonb_build_object('hata','dosya_cok_buyuk'); end if;
+        if (p_veri->>'boyut')::bigint not between 1 and 3500000 then return jsonb_build_object('hata','dosya_cok_buyuk'); end if;
         if b+(p_veri->>'boyut')::bigint>a.kota_bayt or n>=a.kota_adet or g>=a.gunluk_adet then
             return jsonb_build_object('hata','kota_asildi'); end if;
         ext := case p_veri->>'mime' when 'application/pdf' then 'pdf' when 'image/jpeg' then 'jpg'
@@ -166,7 +166,7 @@ begin
             and p=any(s.element_yollari) and (yonetici or s.durum='onaylandi' or s.kullanici_id=u)
         ) then return jsonb_build_object('hata','bulunamadi'); end if;
         if p_islem='legacy_complete' then
-            if f.durum<>'legacy' or (p_veri->>'boyut')::bigint not between 1 and 5242880
+            if f.durum<>'legacy' or (p_veri->>'boyut')::bigint not between 1 and 3500000
                 or f.mime<>p_veri->>'mime' or coalesce(p_veri->>'etag','')='' then return jsonb_build_object('hata','durum_gecersiz'); end if;
             update public.nk_dosyalar set durum='attached',boyut=(p_veri->>'boyut')::bigint,etag=p_veri->>'etag' where yol=p;
         end if;

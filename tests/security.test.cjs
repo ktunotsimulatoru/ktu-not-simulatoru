@@ -62,9 +62,9 @@ async function upload(body, type = 'application/pdf', claims = {}, length, scann
     });
     return { response, saved };
 }
-test('Content-Length yokken ve yanlış küçükken gerçek 5 MB sınırı uygulanır', async () => {
+test('Content-Length yokken ve yanlış küçükken gerçek 3,5 MB sınırı uygulanır', async () => {
     for (const length of [undefined, 5]) {
-        const { response, saved } = await upload(new Uint8Array(5*1024*1024 + 1), 'application/pdf', {}, length);
+        const { response, saved } = await upload(new Uint8Array(3_500_001), 'application/pdf', {}, length);
         assert.equal(response.status, 413);
         assert.equal(saved.length, 0);
     }

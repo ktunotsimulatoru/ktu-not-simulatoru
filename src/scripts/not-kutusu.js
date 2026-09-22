@@ -566,7 +566,7 @@ async function nkBildirimGonder(event) {
 // giriş yapmış KTÜ üyeleri kendi klasörüne (auth.uid()) yükleyebiliyor.)
 // =============================================
 const NK_ELEMENT_MAX_ADET = 5;
-const NK_ELEMENT_MAX_BOYUT = 5 * 1024 * 1024;
+const NK_ELEMENT_MAX_BOYUT = 3_500_000;
 const NK_FOTO_KAYNAK_MAX_BOYUT = 20 * 1024 * 1024;
 const NK_ELEMENT_IZINLI_TIPLER = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const NK_ELEMENT_UZANTI = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
@@ -676,12 +676,12 @@ async function nkElementSecildi(e) {
         const fotograf = dosya.type.startsWith('image/');
         const secimSiniri = fotograf ? NK_FOTO_KAYNAK_MAX_BOYUT : NK_ELEMENT_MAX_BOYUT;
         if (dosya.size > secimSiniri) {
-            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: ${fotograf ? 'görsel 20MB' : 'dosya 5MB'} sınırını aşıyor.`, true);
+            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: ${fotograf ? 'görsel 20 MB' : 'dosya 3,5 MB'} sınırını aşıyor.`, true);
             continue;
         }
         const islenmisDosya = fotograf ? await nkFotografSikistir(dosya) : dosya;
         if (islenmisDosya.size > NK_ELEMENT_MAX_BOYUT) {
-            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: yüksek kaliteli optimizasyondan sonra da 5MB sınırını aşıyor.`, true);
+            nkSonucGoster('nk-soru-sonuc', `${dosya.name}: yüksek kaliteli optimizasyondan sonra da 3,5 MB sınırını aşıyor.`, true);
             continue;
         }
         nkSecilenElementler.push(islenmisDosya);

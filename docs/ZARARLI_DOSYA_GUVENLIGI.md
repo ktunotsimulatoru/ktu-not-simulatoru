@@ -2,7 +2,7 @@
 
 ## Koruma akışı
 
-1. Worker kullanıcı oturumunu, KTÜ öğrenci e-postasını, dosya türünü, gerçek dosya imzasını ve 5 MB sınırını doğrular.
+1. Worker kullanıcı oturumunu, KTÜ öğrenci e-postasını, dosya türünü, gerçek dosya imzasını ve 3,5 MB sınırını doğrular.
 2. Dosyanın SHA-256 özeti çıkarılır ve ham içerik yapılandırılmış tarama hizmetine gönderilir.
 3. Yalnızca kesin `clean` sonucu alan dosya için kota rezervasyonu açılır ve R2'ye yazılır.
 4. Tarama hizmeti yanıt vermez, zaman aşımına uğrar veya anlaşılmayan sonuç döndürürse yükleme `503` ile kapanır. Dosya R2'ye yazılmaz.
@@ -28,15 +28,6 @@ Dosya içeriği güvenlik olayları tablosuna yazılmaz. Tarama hizmetine Supaba
 - Gerçek sağlayıcının adı, veri merkezi, saklama süresi ve koşulları gizlilik politikasına eklenmeden canlı yükleme açılmamalıdır.
 - Temiz bir JPG/PDF, EICAR test dosyası ve tarayıcı kesintisi senaryosu deneme hesabıyla doğrulanmalıdır. EICAR gerçek zararlı yazılım değildir fakat yalnızca kontrollü testte kullanılmalıdır.
 
-## Eski dosyalar
-
-Tarama altyapısı kurulmadan önce R2'ye yazılmış dosyalar kendiliğinden taranmış olmaz. Kullanıcı arayüzü bu durumu açıkça bildirir. Eski dosyalar için şu ayrı çalışma yapılmalıdır:
-
-1. Admin depolama envanterinden bağlı dosyalar çıkarılır.
-2. Dosyalar özel erişimle tek tek taranır; ham dosya herkese açık URL'ye dönüştürülmez.
-3. Temiz sonuçlar kayda işlenir; şüpheli dosya erişime kapatılır ve sahibine bağlı güvenlik olayı açılır.
-4. Envanter tamamlandıktan sonra eski dosya uyarısı kaldırılabilir.
-
 ## Sağlayıcı kapasitesi
 
-Site dosya başına 5 MB kabul eder. Seçilen tarama planı da en az 5 MB dosyayı ve beklenen aylık yükleme sayısını desteklemelidir. Örneğin Cloudmersive'ın ücretsiz katmanında yayımlanan azami dosya boyutu 3,5 MB olduğundan mevcut 5 MB sınırıyla tam uyumlu değildir; bu katman seçilirse site sınırı düşürülmeli veya uygun ücretli plan kullanılmalıdır.
+Site ve Worker dosya başına en fazla 3,5 MB (3.500.000 bayt) kabul eder. Bu sınır Cloudmersive'ın ücretsiz katmanındaki yayımlanmış dosya boyutu sınırıyla uyumludur; aylık çağrı kotası ayrıca izlenmelidir. Kota aşılır veya tarama tamamlanamazsa sistem dosyayı depolamaz.

@@ -107,7 +107,7 @@
         }
     }
     async function indir(value) {
-        const kabul = confirm('Yeni yüklemeler otomatik zararlı yazılım taramasından geçirilir; tarama sistemi kurulmadan önce paylaşılmış eski dosyalar bu denetimden geçmemiş olabilir. Hiçbir tarama yüzde 100 güvence vermez. Dosyayı indirmek ve cihazında açmak kendi sorumluluğundadır. Devam edilsin mi?');
+        const kabul = confirm('Dosyalar otomatik zararlı yazılım taramasından geçirilir. Hiçbir tarama yüzde 100 güvence vermez. Dosyayı indirmek ve cihazında açmak kendi sorumluluğundadır. Devam edilsin mi?');
         if (!kabul) return;
         let objectUrl;
         try {

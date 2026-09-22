@@ -4,7 +4,7 @@
 
 Onaylı dosyaları yalnızca e-postası doğrulanmış, engellenmemiş KTÜ öğrenci hesabı okuyabilir. Bekleyen ve reddedilmiş dosyaları sahibi veya mevcut yönetici oturumuyla yönetici okuyabilir. Silinmiş, süresi dolmuş ve soruya bağlanmamış dosyalar okunamaz. Kontrol her istekte Worker ve veritabanında yapılır; dosya adresini bilmek yetmez. Token URL'ye eklenmez, yanıtlar `private, no-store` taşır.
 
-Üye başına **100 MiB (arayüzde MB), 100 dosya, kayan son 24 saatte 30 yükleme** sınırı vardır. Dosya başına 5 MiB ve paylaşım başına en fazla 5 farklı ek korunur. Başarısız/iptal edilmiş rezervasyonlar günlük sayaca dahildir; silip tekrar yükleyerek günlük sınır aşılamaz. Eski dosyalar ve eski sahipsiz dosya temizliği günlük yeni yükleme sayılmaz. Kota değerlerinin tek kaynağı `nk_dosya_ayarlari` tablosudur.
+Üye başına **100 MiB (arayüzde MB), 100 dosya, kayan son 24 saatte 30 yükleme** sınırı vardır. Dosya başına 3,5 MB (3.500.000 bayt) ve paylaşım başına en fazla 5 farklı ek korunur. Başarısız/iptal edilmiş rezervasyonlar günlük sayaca dahildir; silip tekrar yükleyerek günlük sınır aşılamaz. Eski dosyalar ve eski sahipsiz dosya temizliği günlük yeni yükleme sayılmaz. Kota değerlerinin tek kaynağı `nk_dosya_ayarlari` tablosudur.
 
 Akış: dosya içeriği ve JWT kontrolü → harici zararlı yazılım taraması → yalnızca kesin `clean` sonucunda kullanıcıya özel veritabanı kilidiyle kota rezervasyonu → R2 PUT ve HEAD doğrulaması → `ready` kaydı → paylaşım INSERT tetikleyicisiyle tek paylaşıma bağlama (`attached`). Tarama yapılandırılmamışsa, zaman aşımına uğrarsa veya belirsiz sonuç verirse dosya R2'ye yazılmadan yükleme reddedilir. Tarayıcı veritabanına sahte dosya yolu yazarak bu süreci atlayamaz. Nesnenin boyutu, MIME türü ve ETag bilgisi kaydedilir; sonraki okumada eşleşmeyen nesne servis edilmez.
 
@@ -16,11 +16,11 @@ Silinen kayıtlar yeniden kullanımını engellemek için tutulur. Yeni oluştur
 
 ## Eski kayıtlar
 
-Migration mevcut soruları veya R2 dosyalarını silmez. Geçerli ve tek bir soruya ait yollar `legacy` olarak kayda alınır. İlk yetkili görüntülemede gerçek dosyanın boyutu, içerik imzası, MIME ve ETag bilgisi kontrol edilir; uygun dosya `attached` olur. Doğrulanana kadar eski dosya kotada ihtiyatlı olarak 5 MiB sayılır. Çok eski eki olan kullanıcı, ekleri doğrulanana kadar kota dolu görebilir.
+Migration mevcut soruları veya R2 dosyalarını silmez. Geçerli ve tek bir soruya ait yollar `legacy` olarak kayda alınır. İlk yetkili görüntülemede gerçek dosyanın boyutu, içerik imzası, MIME ve ETag bilgisi kontrol edilir; uygun dosya `attached` olur. Doğrulanana kadar eski dosya kotada ihtiyatlı olarak 3,5 MB sayılır. Çok eski eki olan kullanıcı, ekleri doğrulanana kadar kota dolu görebilir.
 
 Birden fazla soruda kullanılan, bozuk veya sahiplikle uyuşmayan yollar migration sonundaki raporda çıkar. Bunlar otomatik sahiplenilmez/silinmez; erişime açılmadan önce ayrıca düzeltilmelidir. Kaydı var ama R2 nesnesi yoksa kullanıcıya dosya bulunamadığı bildirilir.
 
-Yönetici paneli → Not Kutusu → **Dosya depolama kontrolü** ile R2 sayfalar halinde taranır. Tarama salt okunurdur. Hiçbir soruya veya dosya kaydına bağlı olmayan, yolu geçerli ve en az 24 saatlik nesneler için ayrı temizleme düğmesi çıkar. Yönetici onayında ilişkiler sunucuda tekrar kontrol edilir; uygunsa dosya cron kuyruğuna alınır. Bozuk yollu veya 5 MiB üstü eski nesneler raporda kalır ve otomatik silinmez.
+Yönetici paneli → Not Kutusu → **Dosya depolama kontrolü** ile R2 sayfalar halinde taranır. Tarama salt okunurdur. Hiçbir soruya veya dosya kaydına bağlı olmayan, yolu geçerli ve en az 24 saatlik nesneler için ayrı temizleme düğmesi çıkar. Yönetici onayında ilişkiler sunucuda tekrar kontrol edilir; uygunsa dosya cron kuyruğuna alınır. Bozuk yollu veya 3,5 MB üstü eski nesneler raporda kalır ve otomatik silinmez.
 
 ## Canlıya geçiş — henüz uygulanmadı
 
@@ -32,8 +32,7 @@ Bu değişiklik site, Worker ve veritabanının birlikte güncellenmesini gerekt
 4. Bakım aralığında yeni Worker'ı yayımlayın; migration hazır değilse API güvenli biçimde 503 döner. Ardından Supabase SQL Editor'da yalnızca `migrations/002_dosya_yasam_dongusu.sql` çalıştırın ve sondaki geçiş raporunu inceleyin. Eski açık Worker sürümünü bu aralıkta erişimde bırakmayın.
 5. `release/site.zip` içeriğini statik siteye yayımlayın. Bu pakette yeni dosya istemcisi ve yönetici depolama ekranı vardır. Kaynak `src` veya migration dosyalarını siteye yüklemeyin.
 6. Cloudflare Worker cron tetikleyicisinin `*/10 * * * *` olarak kurulduğunu ve başarılı çalıştığını kontrol edin. Eski public dosya yanıtlarını tutan CDN önbelleğini temizleyin; eski sürüm tarayıcılara 1 saatlik cache verdiğinden önceden indirilmiş/önbelleğe alınmış kopyalar uzaktan geri alınamaz.
-7. Tarama altyapısından önce R2'ye yazılmış dosyalar otomatik olarak geriye dönük taranmış sayılmaz. Bu dosyalar için ayrı bir envanter ve yeniden tarama çalışması tamamlanana kadar kullanıcı uyarısını kaldırmayın.
-8. Aşağıdaki canlı kabul kontrollerini yapın. Sorun varsa eski herkese açık Worker'a dönmeyin; dosya API'sini kapalı tutup düzeltin. DB migrationını kaldırmak yükleme güvencelerini kaldırır; geri dönüş ayrı planlanmalıdır.
+7. Aşağıdaki canlı kabul kontrollerini yapın. Sorun varsa eski herkese açık Worker'a dönmeyin; dosya API'sini kapalı tutup düzeltin. DB migrationını kaldırmak yükleme güvencelerini kaldırır; geri dönüş ayrı planlanmalıdır.
 
 Worker klasöründe kullanılacak komutlar (sır etkileşimli girilir):
 

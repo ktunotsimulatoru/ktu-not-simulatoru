@@ -7,7 +7,7 @@
 - Harf notu, gereken final ve senaryo hesapları aynı çekirdeği kullanıyor. HBN/T-skoru yuvarlaması, bağıl/mutlak karşılaştırması ve barajlar ters hesapta da uygulanıyor.
 - 13.365 parametre/hedef birleşiminde gereken finalin yeterli olduğu ve 0,01 puan altının yetmediği kontrol ediliyor. BA ve AA regresyon örnekleri ayrıca test ediliyor.
 - Öğrenci, profil ve yönetim ekranındaki ek yolları UUID/UUID.uzantı biçimiyle filtreleniyor. Hata mesajları güvenli metin olarak gösteriliyor.
-- Worker gerçek dosya akışında 5 MB sınırı, dosya imzası, nosniff, JWT issuer/audience/süre kontrolleri uyguluyor. ES256 ve HS256 yolları yerel testlerle korunuyor.
+- Worker gerçek dosya akışında 3,5 MB sınırı, dosya imzası, nosniff, JWT issuer/audience/süre kontrolleri uyguluyor. ES256 ve HS256 yolları yerel testlerle korunuyor.
 - Veri silmeyen migrations/001_not_kutusu_guvenlik.sql hazır. Ders kurucusu silinince ders korunuyor; soru içeren dersin silinmesi engelleniyor; yeni ek yolları kayıt sahibine ait olmalı. PGlite üzerinde veri koruma ve tekrar uygulama testleri var.
 - Eski klasör sistemi SQL'indeki otomatik TRUNCATE kaldırıldı; eski ders eşlemesi gereken yerde işlem duruyor.
 - Not Kutusu katalog sorguları sayfalanıyor; ağ hatası boş katalog gibi gösterilmiyor ve yeniden deneme var. Oturum kapanışında katalog/önizleme temizleniyor. Eksiz soru gönderimi engelleniyor.

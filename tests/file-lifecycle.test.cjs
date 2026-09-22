@@ -29,6 +29,10 @@ test('Dosya yaşam döngüsü: gerçek SQL + Worker + bellek R2',async t=>{
         await db.exec(fs.readFileSync('migrations/001_not_kutusu_guvenlik.sql','utf8'));
         await db.exec(fs.readFileSync('migrations/002_dosya_yasam_dongusu.sql','utf8'));
         await db.exec(fs.readFileSync('migrations/002_dosya_yasam_dongusu.sql','utf8'));
+        const eskiFonksiyon=(await db.query("select pg_get_functiondef('public.nk_dosya_islem(text,jsonb)'::regprocedure) d")).rows[0].d.replaceAll('3500000','5242880');
+        await db.exec(eskiFonksiyon); // canlıdaki eski 5 MiB fonksiyonundan geçişi de sınar
+        await db.exec(fs.readFileSync('migrations/012_dosya_boyutu_35mb.sql','utf8'));
+        await db.exec(fs.readFileSync('migrations/012_dosya_boyutu_35mb.sql','utf8'));
         async function rpc(op,data={}){return (await db.query('select public.nk_dosya_islem($1,$2::jsonb) as r',[op,JSON.stringify(data)])).rows[0].r;}
         global.fetch=async(url,options)=>{
             if(url==='https://scanner.example/scan')return Response.json({verdict:'clean',engine:'test-av'});
@@ -54,6 +58,10 @@ test('Dosya yaşam döngüsü: gerçek SQL + Worker + bellek R2',async t=>{
         async function cleanup(){let task;await worker.scheduled({},env,{waitUntil:p=>{task=p;}});await task;}
         async function state(yol){return (await db.query('select * from public.nk_dosyalar where yol=$1',[yol])).rows[0];}
         let uploaded,question;
+        await t.test('Veritabanı rezervasyonu 3,5 MB üstünü reddeder',async()=>{
+            const result=await rpc('reserve',{uid,mime:'application/pdf',boyut:3_500_001});
+            assert.equal(result.hata,'dosya_cok_buyuk');
+        });
         await t.test('Anon ve doğrulanmamış üye yükleyemez; rezervasyon dışında R2 yazılmaz',async()=>{
             assert.equal((await upload(unconfirmed)).status,403);assert.equal(puts,0);
             const response=await worker.fetch(new Request('https://files.example/upload',{method:'POST',body:'%PDF-1.7'}),env);

@@ -6,7 +6,7 @@ const IZINLI_TIPLER = {
   "image/webp": "webp",
   "application/pdf": "pdf",
 };
-const MAKS_BOYUT = 5 * 1024 * 1024; // 5MB — fotoğraflar istemci tarafında zaten sıkıştırılıyor, PDF'ler sıkıştırılmadan gönderiliyor; bu son bir güvenlik sınırı
+const MAKS_BOYUT = 3_500_000; // Cloudmersive ücretsiz katmanıyla uyumlu 3,5 MB kesin sunucu sınırı
 const UUID_DESENI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 // Content-Length isteğe bağlıdır; gerçek sınır akış okunurken uygulanır.

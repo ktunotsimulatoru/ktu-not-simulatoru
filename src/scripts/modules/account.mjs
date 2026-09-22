@@ -168,7 +168,7 @@ function hsModallariEnjekteEt() {
                 </div>
                 <div class="modal-icerik">
                     <div class="nk-uyari">
-                        🔒 KTÜ öğrenci e-postan (<strong>@ogr.ktu.edu.tr</strong>) ile giriş yapabilirsin. Bu hesap hem Not Kutusu'nu kullanmanı hem de Not Yakala'da liderlik tablosuna girmeni sağlar. Her girişte mail atmıyoruz, sadece hesap oluştururken ve şifre sıfırlarken.
+                        🔒 KTÜ öğrenci e-postan (<strong>@ogr.ktu.edu.tr</strong>) ile giriş yapabilirsin. Şifren uygulama tarafından düz metin olarak saklanmaz; kimlik doğrulama Supabase Auth tarafından güvenli, tek yönlü parola özetiyle yürütülür.
                     </div>
                     <div class="nk-tab-bar" id="hs-auth-tab-bar">
                         <button type="button" class="nk-tab-btn active" data-nk-click="hsAuthGoster" data-nk-click-arg0="giris" data-nk-click-prevent="true">Giriş Yap</button>
