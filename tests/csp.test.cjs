@@ -30,6 +30,8 @@ test('CSP script için unsafe-inline ve unsafe-eval açmaz; temel başlıklar va
     const csp = headers.match(/Content-Security-Policy:\s*([^\r\n]+)/)[1];
     assert.equal(csp, HEADER_CSP);
     assert.match(csp, /script-src 'self'/);
+    assert.match(csp, /script-src[^;]*https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js/);
+    assert.match(csp, /connect-src[^;]*'self'/);
     assert.doesNotMatch(csp, /script-src[^;]*unsafe-(?:inline|eval)/);
     for (const name of ['default-src', 'base-uri', 'object-src', 'frame-ancestors', 'form-action', 'connect-src'])
         assert.match(csp, new RegExp(`(?:^|; )${name} `));

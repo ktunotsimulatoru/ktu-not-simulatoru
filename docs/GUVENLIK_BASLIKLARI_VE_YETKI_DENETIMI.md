@@ -8,7 +8,7 @@ Son yerel denetim: **21 Eylül 2026**
 - Olaylar `data-nk-*` öznitelikleri ve sabit işlem izin listesi kullanan `event-bindings.js` üzerinden bağlandı.
 - Admin ve gizlilik sayfalarının inline script/style blokları ayrı dosyalara çıkarıldı.
 - Supabase JS ve Chart.js sürümleri `package-lock.json` ile sabitlendi ve site paketine yerel olarak dahil edildi; tarayıcı artık JavaScript CDN'ine bağlanmıyor.
-- `script-src 'self'` kullanan CSP eklendi. `unsafe-inline` ve `unsafe-eval` script izni yoktur.
+- `script-src 'self'` kullanan CSP eklendi. Cloudflare Web Analytics için yalnız resmi `beacon.min.js` yolu ayrıca izinlidir; `unsafe-inline` ve `unsafe-eval` script izni yoktur.
 - Statik sunucu için `public/_headers`, Worker yanıtları için güvenlik başlıkları eklendi.
 - Derleme, inline olay/script/style bloğu veya harici JavaScript görürse durur.
 
