@@ -2523,6 +2523,9 @@ main { margin-top: 1.5rem; }
    bkz. KARŞILAMA EKRANI bloğu) ile Not Hesaplama'nın mavisinden ayrışıyor.
    ============================================================ */
 .nk-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 1.1rem; padding: 8px 10px; border: 1px solid var(--tab-border); border-radius: var(--radius-md); background: var(--surface2); }
+.nk-asama-geri { min-height: 34px; padding: 6px 11px; margin-right: 3px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--card-bg); color: var(--button-bg); font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.nk-asama-geri:hover { border-color: var(--button-bg); background: var(--secim-vurgu-bg); }
+.nk-asama-geri[hidden] { display: none; }
 .nk-breadcrumb-konum { color: var(--small-text); font-size: 0.7em; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .nk-breadcrumb-item {
     background: none; border: none; cursor: pointer; padding: 3px 2px;

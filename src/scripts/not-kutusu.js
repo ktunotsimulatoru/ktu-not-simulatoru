@@ -51,10 +51,11 @@ function nkSonucGoster(elId, mesaj, hataMi) {
 // =============================================
 window.addEventListener('hesapDurumuDegisti', (e) => {
     const oturum = e.detail && e.detail.oturum;
+    const ayniKullanici = Boolean(oturum?.id && String(oturum.id) === String(nkMevcutKullaniciId));
     nkMevcutKullaniciId = oturum?.id || null;
     if (oturum) {
         nkUyeGorunumunuAc(oturum.email);
-        nkKotaGuncelle();
+        if (!ayniKullanici) nkKotaGuncelle();
     } else {
         nkGirisGorunumunuAc();
     }
@@ -68,6 +69,10 @@ function nkGirisGorunumunuAc() {
     nkDersSayfa = { sayfa: 0, boyut: 24, toplam: 0, arama: '', siralama: 'ad' };
     nkSoruSayfa = { sayfa: 0, boyut: 12, toplam: 0, sinav: '', yil: '' };
     nkState = { fakulteId: null, bolumId: null, dersId: null };
+    nkAktifAltSekme = 'gor';
+    nkKonumGeriYuklendi = false;
+    try { sessionStorage.removeItem(NK_KONUM_ANAHTARI); } catch {}
+    if (history.state?.nkNotKutusu) history.replaceState({ nkNotKutusu: true, fakulteId: null, bolumId: null, dersId: null, tab: 'gor' }, '', location.href);
     nkSecilenElementler = [];
     nkElementOnizlemeGuncelle();
     document.getElementById('nk-giris-alani').style.display = 'block';
@@ -77,7 +82,9 @@ function nkGirisGorunumunuAc() {
 function nkUyeGorunumunuAc(eposta) {
     document.getElementById('nk-giris-alani').style.display = 'none';
     document.getElementById('nk-uye-alani').style.display = 'block';
-    nkUyeVerileriniYukle();
+    // Supabase sekme yeniden odaklandığında SIGNED_IN olayını tekrar gönderebilir.
+    // Arşiv zaten açıksa bu olay kullanıcıyı fakülte ekranına geri atmamalı.
+    if (!nkVeriYuklendi) nkUyeVerileriniYukle();
 }
 
 // =============================================
@@ -100,6 +107,100 @@ const nkIfadeIslemleri = new Set();
 let nkDersAramaZamanlayici;
 let nkVeriYuklendi = false;
 let nkYuklemeSurumu = 0;
+let nkAktifAltSekme = 'gor';
+let nkGecmisUygulaniyor = false;
+let nkKonumGeriYuklendi = false;
+const NK_KONUM_ANAHTARI = 'ktu-not-kutusu-konum-v1';
+
+function nkKonumDerinligi(konum = nkState) {
+    if (konum?.dersId != null) return 3;
+    if (konum?.bolumId != null) return 2;
+    if (konum?.fakulteId != null) return 1;
+    return 0;
+}
+
+function nkKonumDurumu() {
+    return {
+        nkNotKutusu: true,
+        fakulteId: nkState.fakulteId == null ? null : String(nkState.fakulteId),
+        bolumId: nkState.bolumId == null ? null : String(nkState.bolumId),
+        dersId: nkState.dersId == null ? null : String(nkState.dersId),
+        tab: nkAktifAltSekme === 'paylas' ? 'paylas' : 'gor'
+    };
+}
+
+function nkKonumAyni(a, b) {
+    return Boolean(a?.nkNotKutusu && b?.nkNotKutusu
+        && String(a.fakulteId ?? '') === String(b.fakulteId ?? '')
+        && String(a.bolumId ?? '') === String(b.bolumId ?? '')
+        && String(a.dersId ?? '') === String(b.dersId ?? '')
+        && (a.tab || 'gor') === (b.tab || 'gor'));
+}
+
+function nkKonumuSakla(gecmiseEkle = true) {
+    if (nkGecmisUygulaniyor) return;
+    const durum = nkKonumDurumu();
+    try { sessionStorage.setItem(NK_KONUM_ANAHTARI, JSON.stringify(durum)); } catch { /* Depolama kapalıysa geçmiş yine çalışır. */ }
+    if (nkKonumAyni(history.state, durum)) return;
+    const islem = gecmiseEkle ? 'pushState' : 'replaceState';
+    history[islem](durum, '', location.href);
+}
+
+function nkGeriButonunuGuncelle() {
+    const btn = document.getElementById('nk-asama-geri');
+    if (btn) btn.hidden = nkKonumDerinligi() === 0;
+}
+
+async function nkKayitliKonumuUygula(konum) {
+    if (!konum?.nkNotKutusu) return false;
+    nkGecmisUygulaniyor = true;
+    try {
+        nkState = { fakulteId: konum.fakulteId || null, bolumId: konum.bolumId || null, dersId: konum.dersId || null };
+        nkAktifAltSekme = konum.tab === 'paylas' ? 'paylas' : 'gor';
+        if (nkState.dersId) {
+            let ders = nkTumDersler.find(x => String(x.id) === String(nkState.dersId));
+            if (!ders) {
+                const { data, error } = await nkGetirSupabase().from('nk_dersler')
+                    .select('id,ders_adi,ders_kodu,bolum_id').eq('id', nkState.dersId).maybeSingle();
+                if (!error && data) { ders = data; nkTumDersler = [data]; }
+            }
+            if (!ders) { nkState.dersId = null; }
+            else nkDersDetayiGoster(false, nkAktifAltSekme);
+        }
+        if (!nkState.dersId && nkState.bolumId) await nkDersGridiGoster(false);
+        else if (!nkState.dersId && nkState.fakulteId) nkBolumGridiGoster(false);
+        else if (!nkState.dersId) nkFakulteGridiGoster(false);
+        nkGeriButonunuGuncelle();
+        try { sessionStorage.setItem(NK_KONUM_ANAHTARI, JSON.stringify(nkKonumDurumu())); } catch {}
+        return true;
+    } finally { nkGecmisUygulaniyor = false; }
+}
+
+async function nkIlkKonumuGeriYukle() {
+    if (nkKonumGeriYuklendi) return;
+    nkKonumGeriYuklendi = true;
+    let kayit = history.state?.nkNotKutusu ? history.state : null;
+    if (!kayit) {
+        try { kayit = JSON.parse(sessionStorage.getItem(NK_KONUM_ANAHTARI) || 'null'); } catch { kayit = null; }
+    }
+    if (!kayit?.nkNotKutusu || nkKonumDerinligi(kayit) === 0) {
+        nkFakulteGridiGoster(false); nkKonumuSakla(false); return;
+    }
+    // Yenilenmiş sayfada da telefonun geri tuşu fakülte > bölüm > ders sırasını izlesin.
+    history.replaceState({ nkNotKutusu: true, fakulteId: null, bolumId: null, dersId: null, tab: 'gor' }, '', location.href);
+    if (kayit.fakulteId) history.pushState({ ...kayit, bolumId: null, dersId: null, tab: 'gor' }, '', location.href);
+    if (kayit.bolumId) history.pushState({ ...kayit, dersId: null, tab: 'gor' }, '', location.href);
+    if (kayit.dersId) history.pushState({ ...kayit, tab: 'gor' }, '', location.href);
+    await nkKayitliKonumuUygula(kayit);
+}
+
+function nkAsamaGeri() {
+    if (nkKonumDerinligi() > 0) history.back();
+}
+
+window.addEventListener('popstate', event => {
+    if (event.state?.nkNotKutusu && nkVeriYuklendi) nkKayitliKonumuUygula(event.state);
+});
 
 async function nkUyeVerileriniYukle() {
     if (nkVeriYuklendi) { nkFakulteGridiGoster(); return; }
@@ -121,7 +222,7 @@ async function nkUyeVerileriniYukle() {
         for (const item of sayacYaniti.data?.fakulteler || []) nkKlasorSayilari.fakulte[item.id] = item;
         for (const item of sayacYaniti.data?.bolumler || []) nkKlasorSayilari.bolum[item.id] = item;
         nkVeriYuklendi = true;
-        nkFakulteGridiGoster();
+        await nkIlkKonumuGeriYukle();
     } catch (error) {
         if (yuklemeSurumu !== nkYuklemeSurumu) return;
         nkVeriYuklendi = false;
@@ -138,7 +239,7 @@ function nkKlasorSayisi(seviye, id) {
 
 function nkBreadcrumbGuncelle() {
     const bc = document.getElementById('nk-breadcrumb');
-    let html = `<span class="nk-breadcrumb-konum">Konum</span><button type="button" class="nk-breadcrumb-item" data-nk-click="nkFakulteGridiGoster">Fakülteler</button>`;
+    let html = `<button type="button" id="nk-asama-geri" class="nk-asama-geri" data-nk-click="nkAsamaGeri" ${nkKonumDerinligi() === 0 ? 'hidden' : ''}>← Geri</button><span class="nk-breadcrumb-konum">Konum</span><button type="button" class="nk-breadcrumb-item" data-nk-click="nkFakulteGridiGoster">Fakülteler</button>`;
     if (nkState.fakulteId != null) {
         const f = nkTumFakulteler.find(x => String(x.id) === String(nkState.fakulteId));
         html += `<span class="nk-breadcrumb-ok">›</span><button type="button" class="nk-breadcrumb-item" data-nk-click="nkBolumGridiGoster">${nkEscHtml(f ? f.ad : '')}</button>`;
@@ -161,11 +262,13 @@ function nkKatalogBaslik(baslik, aciklama, adet, etiket) {
     </div>`;
 }
 
-function nkFakulteGridiGoster() {
+function nkFakulteGridiGoster(gecmiseEkle = true) {
     nkState.fakulteId = null; nkState.bolumId = null; nkState.dersId = null;
     document.getElementById('nk-ders-alani').style.display = 'none';
     document.getElementById('nk-klasor-alani').style.display = '';
     nkBreadcrumbGuncelle();
+    nkAktifAltSekme = 'gor';
+    nkKonumuSakla(gecmiseEkle);
     const alan = document.getElementById('nk-klasor-alani');
     if (!nkTumFakulteler.length) { alan.innerHTML = '<div class="nk-katalog-bos"><strong>Henüz fakülte eklenmemiş.</strong><span>Yeni fakülteler eklendiğinde burada listelenecek.</span></div>'; return; }
     alan.innerHTML = nkKatalogBaslik('Fakülteler', 'Bölümünü seçerek ders arşivine ulaş.', nkTumFakulteler.length, 'Başlangıç') + `<div class="nk-klasor-grid">${nkTumFakulteler.map(f => `
@@ -176,13 +279,15 @@ function nkFakulteGridiGoster() {
         </button>`).join('')}</div>`;
 }
 
-function nkFakulteSec(id) { nkState.fakulteId = id; nkBolumGridiGoster(); }
+function nkFakulteSec(id) { nkState.fakulteId = id; nkBolumGridiGoster(true); }
 
-function nkBolumGridiGoster() {
+function nkBolumGridiGoster(gecmiseEkle = true) {
     nkState.bolumId = null; nkState.dersId = null;
     document.getElementById('nk-ders-alani').style.display = 'none';
     document.getElementById('nk-klasor-alani').style.display = '';
     nkBreadcrumbGuncelle();
+    nkAktifAltSekme = 'gor';
+    nkKonumuSakla(gecmiseEkle);
     const alan = document.getElementById('nk-klasor-alani');
     const bolumler = nkTumBolumler.filter(b => String(b.fakulte_id) === String(nkState.fakulteId));
     const fakulte = nkTumFakulteler.find(f => String(f.id) === String(nkState.fakulteId));
@@ -198,15 +303,17 @@ function nkBolumGridiGoster() {
 function nkBolumSec(id) {
     nkState.bolumId = id;
     nkDersSayfa = { sayfa: 0, boyut: 24, toplam: 0, arama: '', siralama: 'ad' };
-    nkDersGridiGoster();
+    nkDersGridiGoster(true);
 }
 
-async function nkDersGridiGoster() {
+async function nkDersGridiGoster(gecmiseEkle = true) {
     const aramaOdakliydi = document.activeElement?.id === 'nk-ders-arama-input';
     nkState.dersId = null;
     document.getElementById('nk-ders-alani').style.display = 'none';
     document.getElementById('nk-klasor-alani').style.display = '';
     nkBreadcrumbGuncelle();
+    nkAktifAltSekme = 'gor';
+    nkKonumuSakla(gecmiseEkle);
     const alan = document.getElementById('nk-klasor-alani');
     const bolum = nkTumBolumler.find(b => String(b.id) === String(nkState.bolumId));
     alan.innerHTML = '<p class="veri-yukle">Dersler aranıyor...</p>';
@@ -329,10 +436,10 @@ async function nkYeniDersFormSubmit(e) {
 function nkDersSec(id) {
     nkState.dersId = id;
     nkSoruSayfa = { sayfa: 0, boyut: 12, toplam: 0, sinav: '', yil: '' };
-    nkDersDetayiGoster();
+    nkDersDetayiGoster(true, 'gor');
 }
 
-function nkDersDetayiGoster() {
+function nkDersDetayiGoster(gecmiseEkle = true, tab = 'gor') {
     document.getElementById('nk-klasor-alani').style.display = 'none';
     document.getElementById('nk-ders-alani').style.display = '';
     nkBreadcrumbGuncelle();
@@ -340,18 +447,21 @@ function nkDersDetayiGoster() {
     document.getElementById('nk-ders-baslik').textContent = d
         ? (d.ders_kodu ? `${d.ders_kodu} — ${d.ders_adi}` : d.ders_adi)
         : '';
-    nkSwitchTab('gor');
+    nkSwitchTab(tab, gecmiseEkle);
 }
 
 // =============================================
 // SEKME GEÇİŞİ (Soruları Gör / Soru Paylaş)
 // =============================================
-function nkSwitchTab(tab) {
+function nkSwitchTab(tab, gecmiseEkle = false) {
+    tab = tab === 'paylas' ? 'paylas' : 'gor';
+    nkAktifAltSekme = tab;
     const alan = document.getElementById('nk-uye-alani');
     alan.querySelectorAll('.nk-tab-btn').forEach(b => b.classList.remove('active'));
     alan.querySelectorAll('.nk-tab-content').forEach(c => c.classList.remove('active'));
     alan.querySelector(`.nk-tab-btn[data-nk-click="nkSwitchTab"][data-nk-click-arg0="${tab}"]`).classList.add('active');
     document.getElementById(`nk-tab-${tab}`).classList.add('active');
+    nkKonumuSakla(gecmiseEkle);
     if (tab === 'gor' && nkState.dersId) nkSoruListele();
 }
 
@@ -445,8 +555,9 @@ async function nkSoruListele() {
 
     let sorgu = nkGetirSupabase()
         .from('sorular')
-        .select('id, kullanici_id, sinav_turu, akademik_yil, durum, element_yollari, olusturulma_tarihi, moderasyon_nedeni, moderasyon_notu', { count: 'exact' })
+        .select('id, kullanici_id, sinav_turu, akademik_yil, goruntuleme_sirasi, durum, element_yollari, olusturulma_tarihi, moderasyon_nedeni, moderasyon_notu', { count: 'exact' })
         .eq('ders_id', nkState.dersId)
+        .order('goruntuleme_sirasi', { ascending: true, nullsFirst: false })
         .order('akademik_yil', { ascending: false })
         .order('olusturulma_tarihi', { ascending: false });
     if (nkSoruSayfa.sinav) sorgu = sorgu.eq('sinav_turu', nkSoruSayfa.sinav);

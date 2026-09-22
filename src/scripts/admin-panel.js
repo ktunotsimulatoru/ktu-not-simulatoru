@@ -778,6 +778,7 @@ async function guvenlikOlayiKarar(id, karar) {
 const MODERASYON_NEDEN_ETIKET = { uygun:'Uygun',okunmuyor:'Okunmuyor',yanlis_ders:'Yanlış ders',yanlis_bilgi:'Yanlış bilgi',tekrar:'Tekrar içerik',telif:'Telif hakkı',kisisel_veri:'Kişisel veri',spam:'Spam',diger:'Diğer' };
 const ADMIN_SAYFA_BOYUTU = 25;
 let soruBekleyenSayfa = 0, soruTumSayfa = 0, soruAramaZamanlayici;
+const adminSoruKayitlari = new Map();
 
 function adminSayfalamaHtml(islem, sayfa, toplam, boyut = ADMIN_SAYFA_BOYUTU) {
     const toplamSayfa = Math.max(1, Math.ceil(Number(toplam || 0) / boyut));
@@ -793,6 +794,7 @@ function nkSoruElementUrlAl(yol) { return NKDosya.dosyaUrl(yol, NK_SORU_ELEMENT_
 function nkSoruElementPdfMi(yol) { return /\.pdf$/i.test(String(yol || '')); }
 
 function soruSatiriOlustur(s, mod) {
+    adminSoruKayitlari.set(String(s.id), s);
     const dersEtiket = s.ders_kodu ? `${escHtml(s.ders_kodu)} — ${escHtml(s.ders_adi)}` : escHtml(s.ders_adi || '—');
     const sinavEtiket = SINAV_TURU_ETIKET[s.sinav_turu] || escHtml(s.sinav_turu || '—');
     const yilEtiket = s.akademik_yil ? `${s.akademik_yil}-${s.akademik_yil + 1}` : '—';
@@ -808,13 +810,13 @@ function soruSatiriOlustur(s, mod) {
             <button class="btn btn-kirmizi" data-nk-click="soruyuReddet" data-nk-click-arg0="${s.id}">✕ Reddet</button>
             ${gecmis}
         </div>`
-        : `<div class="btn-grup">${gecmis}<button class="btn btn-kirmizi" data-nk-click="soruyuSil" data-nk-click-arg0="${s.id}">✕ Sil</button></div>`;
+        : `<div class="btn-grup"><button class="btn btn-mavi" data-nk-click="adminSoruDuzenleAc" data-nk-click-arg0="${s.id}">✏️ Düzenle</button>${gecmis}<button class="btn btn-kirmizi" data-nk-click="soruyuSil" data-nk-click-arg0="${s.id}">✕ Sil</button></div>`;
     const neden = s.moderasyon_nedeni ? `<small class="moderasyon-nedeni">${escHtml(MODERASYON_NEDEN_ETIKET[s.moderasyon_nedeni] || s.moderasyon_nedeni)}${s.moderasyon_notu ? ': ' + escHtml(s.moderasyon_notu) : ''}</small>` : '';
     return `<tr>
         <td>${dersEtiket}</td>
         <td style="font-size:0.8em;color:var(--muted)">${escHtml(s.bolum_adi || '—')} / ${escHtml(s.fakulte_adi || '—')}</td>
         <td>${sinavEtiket}</td>
-        <td>${yilEtiket}</td>
+        <td>${yilEtiket}<br><small>${s.goruntuleme_sirasi == null ? 'Otomatik sıra' : `Sıra: ${s.goruntuleme_sirasi}`}</small></td>
         <td style="font-size:0.8em;color:var(--muted)">${escHtml(s.kullanici_email || '—')}</td>
         <td style="font-size:0.8em;color:var(--muted)">${tarih}</td>
         <td style="font-size:0.85em;white-space:nowrap;">${fotoEtiket}</td>
@@ -868,6 +870,34 @@ function soruBekleyenSayfaDegistir(sayfa) { soruBekleyenSayfa = Math.max(0, Numb
 function soruTumSayfaDegistir(sayfa) { soruTumSayfa = Math.max(0, Number(sayfa) || 0); tumSorulariYukle(); }
 function adminSoruAramaPlanla() { soruTumSayfa = 0; clearTimeout(soruAramaZamanlayici); soruAramaZamanlayici = setTimeout(tumSorulariYukle, 300); }
 function adminSoruFiltresiDegisti() { soruTumSayfa = 0; tumSorulariYukle(); }
+
+function adminSoruDuzenleAc(id) {
+    const soru = adminSoruKayitlari.get(String(id));
+    if (!soru) return;
+    document.getElementById('soru-duzenle-id').value = soru.id;
+    document.getElementById('soru-duzenle-tur').value = soru.sinav_turu;
+    document.getElementById('soru-duzenle-yil').value = soru.akademik_yil;
+    document.getElementById('soru-duzenle-sira').value = soru.goruntuleme_sirasi ?? '';
+    document.getElementById('soru-duzenle-modal').classList.add('aktif');
+}
+function adminSoruDuzenleKapat() { document.getElementById('soru-duzenle-modal').classList.remove('aktif'); }
+async function adminSoruDuzenleKaydet() {
+    const id = document.getElementById('soru-duzenle-id').value;
+    const tur = document.getElementById('soru-duzenle-tur').value;
+    const yil = Number(document.getElementById('soru-duzenle-yil').value);
+    const siraDegeri = document.getElementById('soru-duzenle-sira').value.trim();
+    const sira = siraDegeri === '' ? null : Number(siraDegeri);
+    if (!Number.isInteger(yil) || yil < 2000 || !Number.isInteger(sira ?? 0)) { bildirimGoster('Yıl ve sıra değerlerini kontrol et.', 'hata'); return; }
+    const { data, error } = await sb.rpc('admin_soru_duzenle', {
+        p_admin_token: adminToken(), p_id: id, p_sinav_turu: tur,
+        p_akademik_yil: yil, p_goruntuleme_sirasi: sira
+    });
+    if (error) { bildirimGoster('Hata: ' + error.message, 'hata'); return; }
+    if (adminYetkisizIseGirisEkraninaDon(data)) return;
+    if (!data?.basarili) { bildirimGoster(data?.hata || 'Paylaşım güncellenemedi.', 'hata'); return; }
+    adminSoruDuzenleKapat(); bildirimGoster('Paylaşım bilgileri güncellendi.', 'basari');
+    sorulariYukle(); tumSorulariYukle();
+}
 
 async function soruyuOnayla(id) {
     const { data: sonuc, error } = await sb.rpc('admin_soru_modere_et', { p_admin_token: adminToken(), p_id: id, p_karar: 'onaylandi', p_neden: 'uygun', p_not: null });
@@ -1058,6 +1088,7 @@ async function bildirimKapat(id) {
 let adminDuzeltmeSayfa=0;
 function adminDuzeltmeDegerMetni(t,deger){
     const o=deger||{};
+    if(t.hedef_turu==='soru')return `${SINAV_TURU_ETIKET[o.sinav_turu]||o.sinav_turu||'—'} · ${o.akademik_yil?`${o.akademik_yil}-${Number(o.akademik_yil)+1}`:'—'}`;
     if(t.hedef_turu==='ders_verisi')return [o.ortalama!==undefined?`HBN: ${o.ortalama}`:'',o.std_sapma!==undefined?`Std: ${o.std_sapma}`:'',o.ogrenci_sayisi!==undefined?`Öğrenci: ${o.ogrenci_sayisi}`:''].filter(Boolean).join(' · ');
     return `${o.ders_kodu?o.ders_kodu+' — ':''}${o.ders_adi||'—'}`;
 }
@@ -1067,7 +1098,7 @@ async function adminDuzeltmeTalepleriniYukle(){
     const {data,error}=await sb.rpc('admin_duzeltme_talepleri_listele',{p_admin_token:adminToken(),p_durum:durum,p_limit:ADMIN_SAYFA_BOYUTU,p_offset:adminDuzeltmeSayfa*ADMIN_SAYFA_BOYUTU});
     if(error){alan.innerHTML=`<div style="color:var(--red);padding:12px;font-size:.9em;">⚠️ ${escHtml(error.message)}</div>`;return;}
     const satirlar=data?.satirlar||[],toplam=Number(data?.toplam||0);if(!satirlar.length){alan.innerHTML='<div class="bos-mesaj">Bu durumda düzeltme talebi yok.</div>';return;}
-    const tur={nk_ders:'Not Kutusu dersi',ders:'Ders',ders_verisi:'Ders verisi'};
+    const tur={soru:'Not Kutusu paylaşımı',nk_ders:'Not Kutusu dersi',ders:'Ders',ders_verisi:'Ders verisi'};
     alan.innerHTML=`<table><thead><tr><th>Tür / Kayıt</th><th>Mevcut → Öneri</th><th>Gerekçe</th><th>Gönderen</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>${satirlar.map(t=>`<tr><td>${escHtml(tur[t.hedef_turu]||t.hedef_turu)} #${escHtml(t.hedef_id)}</td><td><div style="color:var(--muted);font-size:.78em;">${escHtml(adminDuzeltmeDegerMetni(t,t.mevcut))}</div><strong>→ ${escHtml(adminDuzeltmeDegerMetni(t,t.oneri))}</strong></td><td>${escHtml(t.aciklama)}</td><td>${escHtml(t.email||'—')}</td><td>${escHtml(t.durum)}</td><td>${t.durum==='beklemede'?`<div class="btn-grup"><button class="btn btn-yesil" data-nk-click="adminDuzeltmeKarar" data-nk-click-arg0="${t.id}" data-nk-click-arg1="onaylandi">Onayla</button><button class="btn btn-kirmizi" data-nk-click="adminDuzeltmeKarar" data-nk-click-arg0="${t.id}" data-nk-click-arg1="reddedildi">Reddet</button></div>`:escHtml(t.sonuc_notu||'—')}</td></tr>`).join('')}</tbody></table>${adminSayfalamaHtml('adminDuzeltmeSayfaDegistir',adminDuzeltmeSayfa,toplam)}`;
 }
 function adminDuzeltmeFiltresiDegisti(){adminDuzeltmeSayfa=0;adminDuzeltmeTalepleriniYukle();}

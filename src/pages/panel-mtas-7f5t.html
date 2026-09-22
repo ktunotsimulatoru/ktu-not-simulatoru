@@ -214,7 +214,7 @@
                         <button class="btn btn-gri" data-nk-click="adminDuzeltmeTalepleriniYukle">↻ Yenile</button>
                     </div>
                 </div>
-                <div style="font-size:0.82em;color:var(--muted);padding:0 2px 8px;">Öğrencilerin kendi ekledikleri ders ve ders verileri için gönderdiği değişiklik önerileri. Onay, önerilen değerleri doğrudan uygular.</div>
+                <div style="font-size:0.82em;color:var(--muted);padding:0 2px 8px;">Öğrencilerin kendi paylaşımları, ekledikleri dersler ve ders verileri için gönderdiği değişiklik önerileri. Onay, önerilen değerleri uygular ve paylaşım değişikliklerini moderasyon geçmişine yazar.</div>
                 <div id="duzeltme-talebi-icerik"><div class="yukleniyor">Yükleniyor...</div></div>
             </div>
         </div>
@@ -481,6 +481,21 @@
             <button class="btn btn-gri" data-nk-click="nkAdminDersModalKapat">İptal</button>
             <button class="btn btn-mavi" data-nk-click="nkAdminDersiKaydet">💾 Kaydet</button>
         </div>
+    </div>
+</div>
+
+<!-- PAYLAŞIM BİLGİLERİ DÜZENLEME MODALI -->
+<div class="modal-overlay" id="soru-duzenle-modal" data-nk-click="adminSoruDuzenleKapat" data-nk-click-self="true">
+    <div class="modal-kutu" role="dialog" aria-modal="true" aria-labelledby="soru-duzenle-baslik">
+        <div class="modal-baslik" id="soru-duzenle-baslik">Paylaşım Bilgilerini Düzenle</div>
+        <input type="hidden" id="soru-duzenle-id">
+        <div class="modal-form-grup"><label for="soru-duzenle-tur">Kategori</label><select id="soru-duzenle-tur">
+            <option value="vize">Vize</option><option value="final">Final</option><option value="butunleme">Bütünleme</option>
+            <option value="ders_notu">Ders Notu</option><option value="diger">Diğer</option>
+        </select></div>
+        <div class="modal-form-grup"><label for="soru-duzenle-yil">Akademik yılın başlangıcı</label><input type="number" id="soru-duzenle-yil" min="2000" max="2100" step="1"><small>Örneğin 2025 değeri, 2025-2026 dönemini gösterir.</small></div>
+        <div class="modal-form-grup"><label for="soru-duzenle-sira">Görüntülenme sırası</label><input type="number" id="soru-duzenle-sira" min="-100000" max="100000" step="1" placeholder="Otomatik"><small>Boş bırakırsan otomatik sıralanır. Küçük sayı daha önce gösterilir.</small></div>
+        <div class="modal-btn-grup"><button class="btn btn-gri" data-nk-click="adminSoruDuzenleKapat">İptal</button><button class="btn btn-mavi" data-nk-click="adminSoruDuzenleKaydet">Kaydet</button></div>
     </div>
 </div>
 

@@ -593,6 +593,7 @@ function hsProfilSayfasiBaslat() {
 async function hsProfilVerileriniYukle() {
     if (!hsMevcutOturum) return;
     const sb = getSupabase();
+    hsDuzeltmeHedefleri = new Map();
 
     const guvenlikEl = document.getElementById('hs-guvenlik-durumu');
     if (guvenlikEl) {
@@ -645,6 +646,7 @@ async function hsProfilVerileriniYukle() {
             const durumRozeti = { onaylandi: '✅ Onaylandı', beklemede: '⏳ Beklemede', reddedildi: '❌ Reddedildi' };
             const turEtiketi = { vize: 'Vize', final: 'Final', butunleme: 'Bütünleme', ders_notu: 'Ders Notu', diger: 'Diğer' };
             cikmislarEl.innerHTML = sorularData.map(s => {
+                hsDuzeltmeHedefleri.set(`soru:${s.id}`, s);
                 const elementler = NKDosya.guvenliYollar(s.element_yollari);
                 const galeriId = `hs-soru-${s.id}`;
                 hsGaleriKaydet(galeriId, elementler.filter(yol => !hsElementPdfMi(yol)).map(yol => NKDosya.dosyaUrl(yol, NK_ELEMENT_WORKER_URL)));
@@ -665,13 +667,14 @@ async function hsProfilVerileriniYukle() {
                     <div><strong>${escHtml(s.nk_dersler?.ders_adi || 'Ders')}</strong> <span class="ny-ipucu">${escHtml(s.nk_dersler?.bolumler?.ad || '')}</span></div>
                     <div class="ny-ipucu">${turEtiketi[s.sinav_turu] || escHtml(s.sinav_turu)} · ${s.akademik_yil}-${s.akademik_yil + 1} · ${durumRozeti[s.durum] || escHtml(s.durum)}</div>
                     ${fotoHtml}${indirmeHtml}
+                    <div class="profil-kayit-eylemler"><button type="button" class="profil-ikincil-buton" data-nk-click="hsDuzeltmeModalAc" data-nk-click-arg0="soru" data-nk-click-arg1="${s.id}">Bilgi düzeltme isteği</button></div>
                 </div>
             `;
             }).join('');
         }
     }
 
-    hsDuzeltmeHedefleri = new Map();
+    // Paylaşım hedefleri yukarıda eklendi; diğer katkıları aynı haritaya ekle.
     const {data:anaKatkilar,error:anaKatkiHata}=await sb.rpc('profil_katkilarim');
     const derslerEl = document.getElementById('hs-dersler-listesi');
     if (derslerEl) {
@@ -721,7 +724,7 @@ async function hsDuzeltmeTalepleriniYukle(){
     const {data,error}=await getSupabase().rpc('duzeltme_taleplerim');
     if(error){alan.innerHTML='<p class="ny-form-hata">Düzeltme talepleri yüklenemedi.</p>';return;}
     if(!data?.length){alan.innerHTML='<p class="ny-ipucu">Henüz düzeltme talebin yok.</p>';return;}
-    const etiket={nk_ders:'Not Kutusu dersi',ders:'Ders',ders_verisi:'Ders verisi'};
+    const etiket={soru:'Not Kutusu paylaşımı',nk_ders:'Not Kutusu dersi',ders:'Ders',ders_verisi:'Ders verisi'};
     alan.innerHTML=data.map(t=>`<article class="hs-liste-satir profil-kayit-satir"><div><strong>${etiket[t.hedef_turu]||'Kayıt'} düzeltmesi</strong><div class="ny-ipucu">${escHtml(t.aciklama)}</div><span class="profil-talep-rozet ${t.durum}">${t.durum==='beklemede'?'İncelemede':t.durum==='onaylandi'?'Onaylandı':t.durum==='reddedildi'?'Reddedildi':'İptal edildi'}</span>${t.sonuc_notu?`<div class="ny-ipucu">Moderasyon: ${escHtml(t.sonuc_notu)}</div>`:''}</div>${t.durum==='beklemede'?`<div class="profil-kayit-eylemler"><button type="button" class="profil-ikincil-buton" data-nk-click="hsDuzeltmeTalebiIptal" data-nk-click-arg0="${t.id}">İptal et</button></div>`:''}</article>`).join('');
 }
 
@@ -729,7 +732,8 @@ function hsDuzeltmeModalAc(tur,id){
     const hedef=hsDuzeltmeHedefleri.get(`${tur}:${id}`);if(!hedef)return;
     hsAktifDuzeltme={tur,id:String(id)};
     const alan=document.getElementById('hs-duzeltme-alanlari');
-    if(tur==='ders_verisi')alan.innerHTML=`<div class="form-group"><label for="hs-duzeltme-ortalama">HBN ortalaması</label><input id="hs-duzeltme-ortalama" type="number" min="0" max="100" step="0.01" value="${hedef.ortalama??''}"></div><div class="form-group"><label for="hs-duzeltme-std">Standart sapma</label><input id="hs-duzeltme-std" type="number" min="0" max="50" step="0.01" value="${hedef.std_sapma??''}"></div><div class="form-group"><label for="hs-duzeltme-ogrenci">Öğrenci sayısı</label><input id="hs-duzeltme-ogrenci" type="number" min="1" max="10000" step="1" value="${hedef.ogrenci_sayisi??''}"></div>`;
+    if(tur==='soru')alan.innerHTML=`<div class="form-group"><label for="hs-duzeltme-soru-tur">Kategori</label><select id="hs-duzeltme-soru-tur"><option value="vize" ${hedef.sinav_turu==='vize'?'selected':''}>Vize</option><option value="final" ${hedef.sinav_turu==='final'?'selected':''}>Final</option><option value="butunleme" ${hedef.sinav_turu==='butunleme'?'selected':''}>Bütünleme</option><option value="ders_notu" ${hedef.sinav_turu==='ders_notu'?'selected':''}>Ders Notu</option><option value="diger" ${hedef.sinav_turu==='diger'?'selected':''}>Diğer</option></select></div><div class="form-group"><label for="hs-duzeltme-soru-yil">Akademik yılın başlangıcı</label><input id="hs-duzeltme-soru-yil" type="number" min="2000" max="2100" step="1" value="${hedef.akademik_yil}"><small>Örneğin 2025, 2025-2026 dönemidir.</small></div>`;
+    else if(tur==='ders_verisi')alan.innerHTML=`<div class="form-group"><label for="hs-duzeltme-ortalama">HBN ortalaması</label><input id="hs-duzeltme-ortalama" type="number" min="0" max="100" step="0.01" value="${hedef.ortalama??''}"></div><div class="form-group"><label for="hs-duzeltme-std">Standart sapma</label><input id="hs-duzeltme-std" type="number" min="0" max="50" step="0.01" value="${hedef.std_sapma??''}"></div><div class="form-group"><label for="hs-duzeltme-ogrenci">Öğrenci sayısı</label><input id="hs-duzeltme-ogrenci" type="number" min="1" max="10000" step="1" value="${hedef.ogrenci_sayisi??''}"></div>`;
     else { alan.innerHTML='<div class="form-group"><label for="hs-duzeltme-ders-adi">Ders adı</label><input id="hs-duzeltme-ders-adi" type="text" maxlength="160" required></div><div class="form-group"><label for="hs-duzeltme-ders-kodu">Ders kodu</label><input id="hs-duzeltme-ders-kodu" type="text" maxlength="30"></div>'; document.getElementById('hs-duzeltme-ders-adi').value=hedef.ders_adi||'';document.getElementById('hs-duzeltme-ders-kodu').value=hedef.ders_kodu||''; }
     document.getElementById('hs-duzeltme-aciklama').value='';document.getElementById('hs-duzeltme-sonuc').style.display='none';document.getElementById('hs-duzeltme-modal').classList.add('aktif');
 }
@@ -738,7 +742,9 @@ async function hsDuzeltmeFormSubmit(e){
     e.preventDefault();if(!hsAktifDuzeltme)return;
     const aciklama=document.getElementById('hs-duzeltme-aciklama').value.trim();if(aciklama.length<5){hsSonucGoster('hs-duzeltme-sonuc','Lütfen en az 5 karakterlik bir gerekçe yaz.',true);return;}
     let oneri;
-    if(hsAktifDuzeltme.tur==='ders_verisi'){
+    if(hsAktifDuzeltme.tur==='soru'){
+        oneri={sinav_turu:document.getElementById('hs-duzeltme-soru-tur').value,akademik_yil:Number(document.getElementById('hs-duzeltme-soru-yil').value)};
+    }else if(hsAktifDuzeltme.tur==='ders_verisi'){
         oneri={};const alanlar=[['ortalama','hs-duzeltme-ortalama'],['std_sapma','hs-duzeltme-std'],['ogrenci_sayisi','hs-duzeltme-ogrenci']];alanlar.forEach(([k,id])=>{const v=document.getElementById(id).value;if(v!=='')oneri[k]=Number(v);});
     }else oneri={ders_adi:document.getElementById('hs-duzeltme-ders-adi').value.trim(),ders_kodu:document.getElementById('hs-duzeltme-ders-kodu').value.trim()};
     const btn=e.target.querySelector('button[type="submit"]'),eski=btn.textContent;btn.disabled=true;btn.textContent='Gönderiliyor...';
