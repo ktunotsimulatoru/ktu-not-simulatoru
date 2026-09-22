@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 
-test('Canlı yetki onarımı kapalı üyelik yardımcısını açmadan AGNO RLS erişimini düzeltir',async()=>{
+test('AGNO RLS kurulumu ve canlı onarımı kapalı üyelik yardımcısını açmadan çalışır',async()=>{
     const {PGlite}=await import('@electric-sql/pglite');
     const db=new PGlite();
     const owner='11111111-1111-4111-8111-111111111111';
@@ -17,10 +17,18 @@ test('Canlı yetki onarımı kapalı üyelik yardımcısını açmadan AGNO RLS 
         await db.exec(fs.readFileSync('migrations/004_gano_donemler_isletim.sql','utf8'));
         await db.query("select set_config('request.jwt.claim.sub',$1,false)",[owner]);
         await db.exec('set role authenticated');
+        assert.equal((await db.query('select count(*)::integer n from public.kayitli_donemler')).rows[0].n,0);
+        await db.exec('reset role');
+
+        // Eski 004 kopyasının 007'den sonra çalıştırılmasını taklit et.
+        await db.exec(`drop policy kayitli_donemler_select_own on public.kayitli_donemler;
+            create policy kayitli_donemler_select_own on public.kayitli_donemler for select to authenticated
+            using (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()));`);
+        await db.exec('set role authenticated');
         await assert.rejects(db.query('select count(*) from public.kayitli_donemler'),/permission denied/i);
         await db.exec('reset role');
 
-        const repair=fs.readFileSync('migrations/007_canli_yetki_ve_sema_onarimi.sql','utf8');
+        const repair=fs.readFileSync('migrations/015_agno_yetki_onarimi.sql','utf8');
         await db.exec(repair);await db.exec(repair);
         await db.exec('set role authenticated');
         assert.equal((await db.query('select count(*)::integer n from public.kayitli_donemler')).rows[0].n,0);

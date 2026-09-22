@@ -38,6 +38,20 @@ create table if not exists public.kayitli_donemler (
 );
 create index if not exists kayitli_donemler_kullanici_idx
     on public.kayitli_donemler(kullanici_id,guncelleme_tarihi desc);
+
+-- Temel üyelik yardımcısı tarayıcı rollerine bilinçli olarak kapalıdır. RLS'nin
+-- onu doğrudan çağırması authenticated rolünde 42501 üretir. Yalnız çağıranın
+-- kendi üyelik durumunu döndüren bu dar güvenlik tanımlı yardımcıyı kullan.
+create or replace function public.kayitli_donem_yetkili_mi()
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$ select public.nk_dogrulanmis_uye(auth.uid()) $$;
+revoke all on function public.kayitli_donem_yetkili_mi() from public, anon, authenticated;
+grant execute on function public.kayitli_donem_yetkili_mi() to authenticated;
+
 create or replace function public.kayitli_donem_limit_kontrol()
 returns trigger language plpgsql security definer set search_path = pg_catalog,public
 as $$ begin
@@ -52,17 +66,17 @@ for each row execute function public.kayitli_donem_limit_kontrol();
 alter table public.kayitli_donemler enable row level security;
 drop policy if exists kayitli_donemler_select_own on public.kayitli_donemler;
 create policy kayitli_donemler_select_own on public.kayitli_donemler for select to authenticated
-    using (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()));
+    using (kullanici_id=auth.uid() and public.kayitli_donem_yetkili_mi());
 drop policy if exists kayitli_donemler_insert_own on public.kayitli_donemler;
 create policy kayitli_donemler_insert_own on public.kayitli_donemler for insert to authenticated
-    with check (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()));
+    with check (kullanici_id=auth.uid() and public.kayitli_donem_yetkili_mi());
 drop policy if exists kayitli_donemler_update_own on public.kayitli_donemler;
 create policy kayitli_donemler_update_own on public.kayitli_donemler for update to authenticated
-    using (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()))
-    with check (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()));
+    using (kullanici_id=auth.uid() and public.kayitli_donem_yetkili_mi())
+    with check (kullanici_id=auth.uid() and public.kayitli_donem_yetkili_mi());
 drop policy if exists kayitli_donemler_delete_own on public.kayitli_donemler;
 create policy kayitli_donemler_delete_own on public.kayitli_donemler for delete to authenticated
-    using (kullanici_id=auth.uid() and public.nk_dogrulanmis_uye(auth.uid()));
+    using (kullanici_id=auth.uid() and public.kayitli_donem_yetkili_mi());
 revoke all on public.kayitli_donemler from public,anon;
 grant select,insert,update,delete on public.kayitli_donemler to authenticated;
 

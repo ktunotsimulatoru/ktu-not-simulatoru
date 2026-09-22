@@ -190,9 +190,11 @@ function openTab(evt, tabName) {
         currentTab.style.display = "block";
         currentTab.classList.add("active");
     }
-    if (evt && evt.currentTarget) {
-        evt.currentTarget.classList.add("active");
-    }
+    // Olaylar ortak belge dinleyicisinden yönlendirildiğinde currentTarget belgeyi
+    // gösterir. Köprü işlevi tıklanan öğeyi `this` olarak bağladığı için önce onu
+    // kullan; doğrudan yapılan çağrılarda eski currentTarget desteğini koru.
+    const tetikleyici = this?.classList ? this : evt?.currentTarget;
+    tetikleyici?.classList?.add("active");
 }
 
 
