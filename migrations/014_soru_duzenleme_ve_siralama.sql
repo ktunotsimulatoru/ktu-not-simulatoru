@@ -129,7 +129,7 @@ as $$ declare t public.duzeltme_talepleri; eski text; yeni text; begin
                 akademik_yil=case when t.oneri?'akademik_yil' then (t.oneri->>'akademik_yil')::integer else akademik_yil end
                 where id=t.hedef_id::uuid returning concat_ws(' · ',sinav_turu,akademik_yil::text) into yeni;
             if found then insert into public.nk_moderasyon_gecmisi(hedef_turu,hedef_id,islem,onceki_durum,yeni_durum,neden,aciklama)
-                values('soru',t.hedef_id,'bilgi_duzeltildi',eski,yeni,'yanlis_bilgi',coalesce(nullif(btrim(p_not),''),t.aciklama)); end if;
+                values('soru',t.hedef_id,'duzenlendi',eski,yeni,'yanlis_bilgi',coalesce(nullif(btrim(p_not),''),t.aciklama)); end if;
         elsif t.hedef_turu='nk_ders' then update public.nk_dersler set ders_adi=t.oneri->>'ders_adi',ders_kodu=t.oneri->>'ders_kodu' where id=t.hedef_id::bigint;
         elsif t.hedef_turu='ders' then update public.dersler set ders_adi=t.oneri->>'ders_adi',ders_kodu=nullif(t.oneri->>'ders_kodu','') where id=t.hedef_id::bigint;
         else update public.ders_verileri set
@@ -159,7 +159,7 @@ as $$ declare eski public.sorular; yeni public.sorular; begin
     update public.sorular set sinav_turu=p_sinav_turu,akademik_yil=p_akademik_yil,goruntuleme_sirasi=p_goruntuleme_sirasi
         where id=p_id returning * into yeni;
     insert into public.nk_moderasyon_gecmisi(hedef_turu,hedef_id,islem,onceki_durum,yeni_durum,neden,aciklama)
-    values('soru',p_id::text,'bilgi_duzenlendi',
+    values('soru',p_id::text,'duzenlendi',
         concat_ws(' · ',eski.sinav_turu,eski.akademik_yil::text,coalesce('sıra '||eski.goruntuleme_sirasi::text,'otomatik sıra')),
         concat_ws(' · ',yeni.sinav_turu,yeni.akademik_yil::text,coalesce('sıra '||yeni.goruntuleme_sirasi::text,'otomatik sıra')),
         'yanlis_bilgi','Paylaşım bilgileri yönetici tarafından güncellendi.');
