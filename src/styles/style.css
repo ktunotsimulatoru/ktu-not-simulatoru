@@ -579,6 +579,20 @@ p.tab-description { text-align: center; margin-top:-1rem; margin-bottom: 1.5rem;
 .hs-beni-hatirla span { display:flex; flex-direction:column; line-height:1.35; }
 .hs-beni-hatirla strong { font-weight:600; }
 .hs-beni-hatirla small { color:var(--small-text); font-size:.82em; }
+.hs-yasal-beyanlar {
+    display:flex; flex-direction:column; gap:10px; margin:.25rem 0 1rem;
+    padding:12px; border:1px solid var(--input-border); border-radius:var(--radius-md);
+    background:var(--tab-bg);
+}
+.hs-yasal-onay {
+    display:flex; align-items:flex-start; gap:10px; color:var(--text-color);
+    font-size:.82rem; line-height:1.45; cursor:pointer;
+}
+.hs-yasal-onay input { width:18px; height:18px; margin:1px 0 0; flex:0 0 auto; accent-color:var(--button-bg); cursor:pointer; }
+.hs-yasal-onay a { color:var(--content-title); font-weight:600; text-underline-offset:2px; }
+.hs-yasal-onay a:hover { color:var(--button-hover-bg); }
+.hs-yasal-onay input:focus-visible { outline:3px solid var(--input-focus-shadow); outline-offset:2px; }
+.hs-yasal-beyanlar > small { color:var(--small-text); font-size:.74rem; line-height:1.45; }
 .form-group select option { background-color: var(--main-bg); color: var(--input-text); }
 .form-group small { display: block; font-size: 0.8em; color: var(--small-text); margin-top: 0.4rem; }
 small.weight-warning { text-align: center; display: block; margin-top: -10px; margin-bottom: 15px; font-size: 0.85em; }

@@ -18,6 +18,7 @@
 | Form akışları ve doğrulama | `calculator-page.mjs`, `calculator-ui.mjs`, `validation.mjs` |
 | Birleşik ANO/AGNO hesabı ve kayıtlı dönemler | `src/scripts/modules/gpa-core.mjs`, `src/scripts/modules/gpa.mjs` |
 | Profil, kullanıcı adı, kayıtlar ve düzeltme talepleri | `src/pages/profil.html`, `src/scripts/modules/account.mjs`, `migrations/005_genel_kullanici_adi.sql`, `migrations/006_profil_duzeltme_talepleri.sql`, `migrations/009_profil_ve_duyuru_tercihleri.sql` |
+| Üyelik koşulları ve sürümlü kabul kaydı | `src/pages/kullanim-kosullari.html`, `src/pages/gizlilik-politikasi.html`, `src/scripts/modules/account.mjs`, `migrations/013_uyelik_kosullari_kabulu.sql` |
 | Duyurular ve hesaba bağlı kapatma tercihi | `src/scripts/modules/announcements.mjs`, `migrations/009_profil_ve_duyuru_tercihleri.sql` |
 | İstemci hata kaydı | `src/scripts/modules/error-monitor.mjs`, `migrations/004_gano_donemler_isletim.sql` |
 | Pencere klavye/odak erişilebilirliği | `src/scripts/modal-accessibility.js` |

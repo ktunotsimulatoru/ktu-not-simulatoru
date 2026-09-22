@@ -23,6 +23,8 @@ import { hsGaleriKaydet } from './gallery.mjs';
 
 const HS_EPOSTA_REGEX = /^[^\s@]+@ogr\.ktu\.edu\.tr$/i;
 const HS_PROFIL_CACHE_KEY = 'ktu-hesap-profili-v1';
+const HS_KULLANIM_KOSULLARI_SURUMU = '2026-09-22';
+const HS_KVKK_AYDINLATMA_SURUMU = '2026-09-22';
 
 let hsBekleyenKayitEposta = '';
 
@@ -210,6 +212,17 @@ function hsModallariEnjekteEt() {
                                 <label for="hs-kayit-sifre-tekrar">Şifre (Tekrar):</label>
                                 <input type="password" id="hs-kayit-sifre-tekrar" minlength="8" autocomplete="new-password" required>
                             </div>
+                            <div class="hs-yasal-beyanlar">
+                                <label class="hs-yasal-onay">
+                                    <input type="checkbox" id="hs-kullanim-kosullari-kabul" required>
+                                    <span><a href="kullanim-kosullari.html" target="_blank" rel="noopener">Kullanım Koşulları</a>'nı okudum ve kabul ediyorum.</span>
+                                </label>
+                                <label class="hs-yasal-onay">
+                                    <input type="checkbox" id="hs-kvkk-aydinlatma-okundu" required>
+                                    <span><a href="gizlilik-politikasi.html" target="_blank" rel="noopener">KVKK Aydınlatma Metni</a>'ni okudum ve kişisel verilerimin işlenmesi hakkında bilgilendirildim.</span>
+                                </label>
+                                <small>KVKK beyanı açık rıza değildir; hangi verilerin neden işlendiği konusunda bilgilendirildiğini gösterir.</small>
+                            </div>
                             <button type="submit">Kayıt Ol</button>
                         </form>
                         <form id="hs-kayit-kod-form" novalidate style="display:none; margin-top:1.25rem;">
@@ -344,6 +357,8 @@ async function hsKayitFormSubmit(e) {
     const eposta = document.getElementById('hs-kayit-eposta').value.trim().toLowerCase();
     const sifre = document.getElementById('hs-kayit-sifre').value;
     const sifreTekrar = document.getElementById('hs-kayit-sifre-tekrar').value;
+    const kosullarKabul = document.getElementById('hs-kullanim-kosullari-kabul')?.checked === true;
+    const kvkkOkundu = document.getElementById('hs-kvkk-aydinlatma-okundu')?.checked === true;
 
     if (!HS_EPOSTA_REGEX.test(eposta)) {
         hsSonucGoster('hs-kayit-sonuc', 'Lütfen geçerli bir @ogr.ktu.edu.tr adresi gir.', true);
@@ -357,12 +372,31 @@ async function hsKayitFormSubmit(e) {
         hsSonucGoster('hs-kayit-sonuc', 'Şifreler eşleşmiyor.', true);
         return;
     }
+    if (!kosullarKabul) {
+        hsSonucGoster('hs-kayit-sonuc', 'Üyelik oluşturmak için Kullanım Koşulları’nı kabul etmelisin.', true);
+        document.getElementById('hs-kullanim-kosullari-kabul')?.focus();
+        return;
+    }
+    if (!kvkkOkundu) {
+        hsSonucGoster('hs-kayit-sonuc', 'Kayıttan önce KVKK Aydınlatma Metni’ni okuyup bilgilendirildiğini belirtmelisin.', true);
+        document.getElementById('hs-kvkk-aydinlatma-okundu')?.focus();
+        return;
+    }
 
     btn.disabled = true;
     const eskiMetin = btn.textContent;
     btn.textContent = 'Kayıt oluşturuluyor...';
     try {
-        const { data, error } = await getSupabase().auth.signUp({ email: eposta, password: sifre });
+        const { data, error } = await getSupabase().auth.signUp({
+            email: eposta,
+            password: sifre,
+            options: { data: {
+                kullanim_kosullari_kabul: true,
+                kullanim_kosullari_surumu: HS_KULLANIM_KOSULLARI_SURUMU,
+                kvkk_aydinlatma_okundu: true,
+                kvkk_aydinlatma_surumu: HS_KVKK_AYDINLATMA_SURUMU
+            } }
+        });
         if (error) {
             hsSonucGoster('hs-kayit-sonuc', 'Kayıt oluşturulamadı: ' + error.message, true);
             return;
